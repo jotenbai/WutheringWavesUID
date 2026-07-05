@@ -117,7 +117,6 @@ async def draw_char_list_img(
     is_refresh: bool = False,
     is_peek: bool = False,
     user_waves_id: str = "",
-    page_index: int = 1,
 ) -> str | bytes:
     _, ck = await waves_api.get_ck_result(user_waves_id, user_id, ev.bot_id)
     account_info = await get_user_detail_info(uid)
@@ -174,13 +173,8 @@ async def draw_char_list_img(
         if rank.starLevel == 5:
             all_num_5 += 1
 
-    # 分页处理
-    page_size = 15
-    total_pages = (len(waves_char_rank) + page_size - 1) // page_size
-    if page_index > total_pages:
-        page_index = total_pages
-
-    render_list = waves_char_rank[(page_index - 1) * page_size : page_index * page_size]
+    # 单页显示全部角色（鸣潮角色数量尚少，无需分页）
+    render_list = waves_char_rank
 
     avatar_h = 230
     info_bg_h = 260
@@ -338,8 +332,8 @@ async def draw_char_list_img(
     info_bg_draw.text((750, 120), f"{chain_num_5}/{all_num_5}", "white", waves_font_40, "mm")
     info_bg_draw.text((750, 160), "高链5星", "white", waves_font_20, "mm")
 
-    page_info = f"-= 第{page_index}/{total_pages}页 =-"
-    info_bg_draw.text((500, 240), page_info, "white", waves_font_38, "mm")
+    char_info = f"共 {len(waves_char_rank)} 名角色"
+    info_bg_draw.text((500, 240), char_info, "white", waves_font_38, "mm")
 
     card_img.paste(info_bg, (0, avatar_h), info_bg)
 

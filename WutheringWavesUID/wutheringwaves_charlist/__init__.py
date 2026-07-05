@@ -26,8 +26,6 @@ async def send_char_list_msg_new(bot: Bot, ev: Event):
         return
     query_waves_id = match.group("waves_id")
     query_type = match.group("query_type")
-    num = match.group("num")
-    index = max(int(num), 1) if num else 1
 
     is_refresh = False
     if "刷新" in query_type:
@@ -59,6 +57,5 @@ async def send_char_list_msg_new(bot: Bot, ev: Event):
         is_refresh,
         is_peek,
         user_waves_id,
-        index,
     )
     return await bot.send(im)
