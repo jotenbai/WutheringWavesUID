@@ -12,6 +12,7 @@ from opencc import OpenCC
 from PIL import Image, ImageFilter
 
 from ..utils.cache import TimedCache
+from ..utils.name_convert import alias_to_char_name, char_id_to_char_name, char_name_to_char_id
 from ..utils.resource.constant import CHAR_DETAIL
 from ..wutheringwaves_analyzecard.userData import save_card_dict_to_json
 from ..wutheringwaves_config import WutheringWavesConfig
@@ -518,6 +519,7 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
                             "千唉": "千咲",
                             "千眹": "千咲",
                             "蕾貝卡": "丽贝卡",
+                            "莫寧": "莫宁",
                         }
                         for old, new in REPLACE_MAP.items():
                             name = name.replace(old, new)
@@ -645,17 +647,27 @@ async def which_char(bot: Bot, ev: Event, char: str) -> tuple[None | str, None |
     if not char.strip():  # 为空
         return None, None
 
+    char_norm = cc.convert(char.strip().replace("·", "").replace(" ", ""))
+    char_norm = alias_to_char_name(char_norm)
+
     at_sender = True if ev.group_id else False
+
+    char_id = char_name_to_char_id(char_norm)
+    if char_id:
+        canonical = char_id_to_char_name(char_id)
+        if canonical:
+            char_norm = canonical
+
     # 角色信息
     candidates = []
-    for char_id, info in CHAR_DETAIL.items():
+    for cid, info in CHAR_DETAIL.items():
         normalized_name = info["name"].replace("·", "").replace(" ", "")
-        if char in normalized_name:
-            candidates.append((char_id, info))
+        if char_norm == normalized_name or char_norm in normalized_name or normalized_name in char_norm:
+            candidates.append((cid, info))
     logger.debug(f"[鸣潮][dc卡片识别] 角色匹配结果：{candidates}")
 
     if len(candidates) == 0:  # 无匹配
-        return char, None
+        return char_norm or char, None
 
     if len(candidates) == 1:  # 唯一匹配
         char_id, info = candidates[0]

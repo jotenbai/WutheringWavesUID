@@ -8,6 +8,8 @@ from gsuid_core.models import Event
 
 from ..utils.ascension.echo import get_echo_model
 from ..utils.ascension.weapon import get_weapon_detail
+from ..utils.at_help import ruser_id
+from ..utils.database.models import WavesBind
 from ..utils.name_convert import alias_to_weapon_name, char_id_to_char_name, phantom_id_to_phantom_name, weapon_name_to_weapon_id
 from ..utils.refresh_char_detail import save_card_info
 from ..wutheringwaves_config import PREFIX, WutheringWavesConfig
@@ -19,13 +21,35 @@ from .user_info_utils import get_region_by_uid, save_user_info
 
 async def save_card_dict_to_json(bot: Bot, ev: Event, result_dict: dict):
     at_sender = True if ev.group_id else False
+    uid_mismatch_msg = ""
 
     try:
-        uid = result_dict["用户信息"]["UID"]
-        if len(uid) != 9:
-            logger.warning(f"[鸣潮][dc卡片识别]识别结果 UID 长度错误：{uid}")
-            await bot.send(f"[鸣潮]识别结果 UID 长度错误：{uid}\n", at_sender)
-            return
+        ocr_uid = str(result_dict["用户信息"].get("UID", "")).strip()
+        bound_uid = await WavesBind.get_uid_by_game(ruser_id(ev), ev.bot_id)
+
+        if bound_uid:
+            if len(ocr_uid) == 9 and ocr_uid != bound_uid:
+                uid_mismatch_msg = (
+                    f"\n[提示] OCR识别特征码为{ocr_uid}，与已绑定{bound_uid}不一致，已按绑定UID保存。"
+                )
+                logger.warning(
+                    f"[鸣潮][dc卡片识别] OCR UID {ocr_uid} != 绑定 UID {bound_uid}，按绑定保存"
+                )
+            elif len(ocr_uid) != 9:
+                uid_mismatch_msg = (
+                    f"\n[提示] OCR未能可靠识别特征码（{ocr_uid or '空'}），已按已绑定{bound_uid}保存。"
+                )
+                logger.warning(
+                    f"[鸣潮][dc卡片识别] OCR UID 无效: {ocr_uid!r}，按绑定 {bound_uid} 保存"
+                )
+            uid = bound_uid
+        else:
+            uid = ocr_uid
+            if len(uid) != 9:
+                logger.warning(f"[鸣潮][dc卡片识别]识别结果 UID 长度错误：{uid}")
+                await bot.send(f"[鸣潮]识别结果 UID 长度错误：{uid}\n", at_sender)
+                return
+
         user_name = result_dict["用户信息"].get("玩家名称")
         if not user_name:
             user_name = get_region_by_uid(uid)
@@ -223,7 +247,7 @@ async def save_card_dict_to_json(bot: Bot, ev: Event, result_dict: dict):
         prefix_msg = "识别套装使用图像匹配，可能存在误差(影响伤害计算不影响声骸评分)"
 
     await bot.send(
-        f"[鸣潮]uid:{uid}的dc卡片数据提取成功！{prefix_msg}\n可使用：\n【{PREFIX}{char_name_print}面板】查看您的角色面板\n【{PREFIX}改{char_name_print}套装<合鸣效果>】 (可使用如 {PREFIX}改{char_name_print}套装高天3不绝2 改为3+2套装) 修改声骸套装\n【{PREFIX}改{char_name_print}声骸】修改当前套装的首位声骸\n",
+        f"[鸣潮]uid:{uid}的dc卡片数据提取成功！{prefix_msg}{uid_mismatch_msg}\n可使用：\n【{PREFIX}{char_name_print}面板】查看您的角色面板\n【{PREFIX}改{char_name_print}套装<合鸣效果>】 (可使用如 {PREFIX}改{char_name_print}套装高天3不绝2 改为3+2套装) 修改声骸套装\n【{PREFIX}改{char_name_print}声骸】修改当前套装的首位声骸\n",
         at_sender,
     )
     logger.info(f" [鸣潮][dc卡片识别] 数据识别完毕，用户{uid}的{char_name_print}面板数据已保存到本地！")
