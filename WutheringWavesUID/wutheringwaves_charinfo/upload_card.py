@@ -66,6 +66,14 @@ async def get_image(ev: Event) -> list[str] | None:
             and content.data["url"].startswith("http")
         ):  # discord attachment 类
             res.append(content.data["url"])
+        elif (
+            content.type == "attachment"
+            and content.data
+            and isinstance(content.data, dict)
+            and content.data.get("url")
+            and str(content.data["url"]).startswith("http")
+        ):  # discord 上传图片
+            res.append(str(content.data["url"]))
         elif content.type == "text" and content.data and isinstance(content.data, str):
             import re
 

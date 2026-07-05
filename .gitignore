@@ -210,6 +210,9 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+.env
+.env.*
+!.env.example
 .env/
 .venv
 env/
@@ -682,3 +685,6 @@ condition-*.json
 wutheringwaves_import
 
 .ruff_cache
+
+### Local dev notes (never commit)
+note.txt
