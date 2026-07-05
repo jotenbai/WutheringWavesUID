@@ -686,5 +686,15 @@ wutheringwaves_import
 
 .ruff_cache
 
+### discord_bot (NoneBot bridge on VPS — secrets & runtime)
+discord_bot/.env
+discord_bot/.env.*
+!discord_bot/.env.example
+discord_bot/.venv/
+discord_bot/.vscode/
+discord_bot/data/
+discord_bot/.nb-cli/
+discord_bot/store/
+
 ### Local dev notes (never commit)
 note.txt
