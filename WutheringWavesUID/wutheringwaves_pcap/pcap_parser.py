@@ -16,6 +16,32 @@ from .detail_json import m_id2monsterId_strange, main_first_props, main_second_p
 TEXT_PATH = Path(__file__).parent
 
 
+def _normalize_attribute_key(key) -> int | None:
+    if key is None:
+        return None
+    if isinstance(key, int):
+        return key
+    if isinstance(key, str) and key.isdigit():
+        return int(key)
+    return None
+
+
+def _get_attribute_int32(attribute: dict[str, Any]) -> int:
+    for field in ("int32_value", "int32Value"):
+        val = attribute.get(field)
+        if val is not None:
+            return int(val)
+    return 0
+
+
+def _get_attribute_string(attribute: dict[str, Any]) -> str:
+    for field in ("string_value", "stringValue"):
+        val = attribute.get(field)
+        if val:
+            return str(val)
+    return ""
+
+
 @dataclass
 class RoleInfo:
     """角色信息"""
@@ -285,6 +311,18 @@ class PcapDataParser:
             logger.exception("PCAP 數據解析失敗", e)
             return []
 
+    def _save_basic_info_debug(self, uid: int, base_info: dict[str, Any]):
+        """保存 BasicInfoNotify 原始数据，便于排查 attributes 解析问题"""
+        try:
+            user_data_dir = Path("data/pcap_data") / str(uid)
+            user_data_dir.mkdir(parents=True, exist_ok=True)
+            debug_file = user_data_dir / "debug_basic_info.json"
+            with open(debug_file, "w", encoding="utf-8") as f:
+                json.dump(base_info, f, ensure_ascii=False, indent=2)
+            logger.warning(f"BasicInfoNotify 解析不完整，已保存原始数据到：{debug_file}")
+        except Exception as e:
+            logger.error(f"保存 BasicInfoNotify 调试数据失败: {e}")
+
     def _extract_base_info_data_from_wuthery(self, base_info: dict[str, Any]):
         """從 Wuthery API 格式提取用户基本數據"""
         try:
@@ -298,16 +336,43 @@ class PcapDataParser:
             name = "获取失败"
             world_level = 0
 
-            # 遍历属性列表提取所需值
-            attributes = base_info.get("attributes", [])
+            attributes = base_info.get("attributes") or base_info.get("Attributes") or []
+            if not isinstance(attributes, list):
+                attributes = []
+
             for attribute in attributes:
-                key = attribute.get("key")
+                if not isinstance(attribute, dict):
+                    continue
+                key = _normalize_attribute_key(attribute.get("key"))
                 if key == 0:  # level
-                    level = attribute.get("int32_value", 0)
+                    level = _get_attribute_int32(attribute)
                 elif key == 7:  # name
-                    name = attribute.get("string_value", "获取失败")
+                    name_val = _get_attribute_string(attribute)
+                    if name_val:
+                        name = name_val
                 elif key == 11:  # worldLevel
-                    world_level = attribute.get("int32_value", 0)
+                    world_level = _get_attribute_int32(attribute)
+
+            parse_incomplete = name == "获取失败" or (level == 0 and world_level == 0)
+            if not attributes:
+                logger.warning(
+                    f"BasicInfoNotify.attributes 为空，uid={uid}，"
+                    f"可用键：{list(base_info.keys())}"
+                )
+            elif parse_incomplete:
+                attr_keys = [
+                    _normalize_attribute_key(a.get("key"))
+                    for a in attributes
+                    if isinstance(a, dict)
+                ]
+                logger.warning(
+                    f"BasicInfoNotify 属性解析不完整，uid={uid}，"
+                    f"解析结果 name={name!r} level={level} worldLevel={world_level}，"
+                    f"attributes 共 {len(attributes)} 项，keys={attr_keys}"
+                )
+
+            if not attributes or parse_incomplete:
+                self._save_basic_info_debug(uid, base_info)
 
             self.account_info = BaseInfo(id=uid, name=name, level=level, worldLevel=world_level)
 
