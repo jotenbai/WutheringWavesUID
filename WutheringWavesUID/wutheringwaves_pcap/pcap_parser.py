@@ -26,20 +26,63 @@ def _normalize_attribute_key(key) -> int | None:
     return None
 
 
+def _get_value_type(attribute: dict[str, Any]) -> int | None:
+    if "value_type" in attribute:
+        return int(attribute["value_type"])
+    if "valueType" in attribute:
+        return int(attribute["valueType"])
+    return None
+
+
 def _get_attribute_int32(attribute: dict[str, Any]) -> int:
-    for field in ("int32_value", "int32Value"):
-        val = attribute.get(field)
-        if val is not None:
-            return int(val)
+    for field in ("int32_value", "int32Value", "Int32Value"):
+        if field in attribute:
+            return int(attribute[field])
+
+    nested = attribute.get("value")
+    if isinstance(nested, dict):
+        for field in ("int32_value", "int32Value", "Int32Value", "int32"):
+            if field in nested:
+                return int(nested[field])
+
+    value_type = _get_value_type(attribute)
+    val = attribute.get("value")
+    if val is not None and not isinstance(val, (dict, list, bool)):
+        if value_type in (None, 0):
+            if isinstance(val, str) and val.lstrip("-").isdigit():
+                return int(val)
+            if not isinstance(val, str):
+                return int(val)
     return 0
 
 
 def _get_attribute_string(attribute: dict[str, Any]) -> str:
-    for field in ("string_value", "stringValue"):
-        val = attribute.get(field)
-        if val:
-            return str(val)
+    for field in ("string_value", "stringValue", "StringValue"):
+        if field in attribute:
+            val = attribute[field]
+            if val:
+                return str(val)
+
+    nested = attribute.get("value")
+    if isinstance(nested, dict):
+        for field in ("string_value", "stringValue", "StringValue", "string"):
+            if field in nested:
+                val = nested[field]
+                if val:
+                    return str(val)
+
+    value_type = _get_value_type(attribute)
+    val = attribute.get("value")
+    if isinstance(val, str) and val and value_type in (None, 1):
+        return val
     return ""
+
+
+def _find_attribute_by_key(attributes: list, key: int) -> dict[str, Any] | None:
+    for attribute in attributes:
+        if isinstance(attribute, dict) and _normalize_attribute_key(attribute.get("key")) == key:
+            return attribute
+    return None
 
 
 @dataclass
@@ -365,10 +408,15 @@ class PcapDataParser:
                     for a in attributes
                     if isinstance(a, dict)
                 ]
+                key_samples = {
+                    key: _find_attribute_by_key(attributes, key)
+                    for key in (0, 7, 11)
+                }
                 logger.warning(
                     f"BasicInfoNotify 属性解析不完整，uid={uid}，"
                     f"解析结果 name={name!r} level={level} worldLevel={world_level}，"
-                    f"attributes 共 {len(attributes)} 项，keys={attr_keys}"
+                    f"attributes 共 {len(attributes)} 项，keys={attr_keys}，"
+                    f"key0/7/11样本={key_samples}"
                 )
 
             if not attributes or parse_incomplete:
