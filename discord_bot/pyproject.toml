@@ -4,7 +4,7 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "nonebot2[fastapi]",
-    "nonebot-cli",
+    "nb-cli",
     "nonebot-adapter-discord",
     "nonebot-plugin-genshinuid",
     "nonebot-plugin-apscheduler",
@@ -14,7 +14,7 @@ dependencies = [
 
 [tool.nonebot]
 adapters = [{ name = "Discord", module_name = "nonebot.adapters.discord" }]
-plugins = ["nonebot_plugin_genshinuid"]
+plugins = ["GenshinUID"]
 
 [tool.nonebot.plugin]
 plugin_dirs = []

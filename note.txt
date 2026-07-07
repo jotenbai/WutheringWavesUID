@@ -1,0 +1,484 @@
+# WutheringWavesUID for Discord — 开发笔记
+# 本地私有笔记，已加入 .gitignore，勿提交到 GitHub
+# 最后更新：2026-07-07
+
+================================================================================
+一、项目目标
+================================================================================
+
+为鸣潮国际服搭建 Discord 机器人「守岸人」，核心能力是生成角色面板等。
+用户是前端开发者（JS/HTML/CSS），Python 较弱；优先国际服，个性化以后再做。
+小 VPS 自用，不打算大规模推广。
+
+参考体验：与群里已有的纳西妲 bot 一致 ——
+  - 私聊：无前缀，直接发「帮助」「练度统计」
+  - 服务器频道：@机器人 后无前缀指令（如 @守岸人 帮助）
+  参考：https://github.com/gamer-mitsuha/nahida-examples
+
+================================================================================
+二、整体架构
+================================================================================
+
+Discord 消息流：
+  Discord → nonebot-adapter-discord → nonebot-plugin-genshinuid（连接器）
+         → WebSocket → gsuid_core → WutheringWavesUID 插件
+
+| 组件              | 位置 / 仓库 |
+|-------------------|-------------|
+| 核心              | gsuid_core — https://github.com/Genshin-bots/gsuid_core |
+| 鸣潮插件（本 fork）| jotenbai/WutheringWavesUID（自 MoonShadow1976 同步）|
+| Discord 桥接      | nonebot2 + nonebot-adapter-discord + nonebot-plugin-genshinuid |
+| 本地仓库          | e:\编程\WutheringWavesUID_for_discord |
+
+VPS 上路径：
+  ~/gsuid_core                          # core + 插件目录
+  ~/gsuid_core/gsuid_core/plugins/WutheringWavesUID
+  ~/discord_bot                         # nb 项目根目录（.env 在此）
+  ~/discord_bot/.venv                   # Python 3.12
+
+================================================================================
+三、VPS 环境（admin@162.43.76.227）
+================================================================================
+
+- Ubuntu 24.04，约 2GB RAM
+- Python：gsuid_core 用 3.13；discord_bot .venv 用 3.12
+- SSH：ssh admin@162.43.76.227
+- 网页控制台（gshub）：http://162.43.76.227:8765/app
+  - core 需 --host 0.0.0.0；防火墙已放行 8765
+  - 注册码在 ~/gsuid_core/data/config.json 的 REGISTER_CODE
+
+后台常驻（screen，须 Detached）：
+  screen -S gscore   → cd ~/gsuid_core && python3.13 -m uv run core --host 0.0.0.0
+  screen -S discordbot → cd ~/discord_bot && .venv/bin/nb run
+
+检查 gscore 是否在跑（网页控制台重启时可能是 python -m gsuid_core.core，勿只搜 uv run core）：
+  ss -tlnp | grep 8765
+  ps aux | grep gsuid_core | grep -v grep
+
+常用：
+  screen -ls                    # 查看会话（Detached = 可关 SSH）
+  screen -r gscore / discordbot # 进入看日志
+  Ctrl+A 再 D                   # 脱离 screen（不杀进程）
+  Ctrl+C                        # 停掉当前前台进程（在 screen 里会停 bot）
+
+注意：screen 是 Linux 命令，在 Windows 本地 PowerShell 里没有；要在 SSH 会话里执行。
+
+================================================================================
+四、Discord Bot 配置要点
+================================================================================
+
+开发者门户（Discord Developer Portal）— 守岸人：
+  - Message Content Intent：**建议关闭**（仅需私聊 + 频道 @ 触发时不必开）
+  - Bot 权限：View Channels, Send Messages, Read Message History,
+              Attach Files, Embed Links
+
+未开 message_content 时，adapter 仍能在以下场景收到完整消息（见 nonebot-adapter-discord README）：
+  - 私信（DM）
+  - 消息中 @ 了 Bot
+  - 回复了 Bot 的消息
+
+开启 message_content 会监听频道内所有消息，易误响应他人指令（如 @纳西妲 时守岸人也抢答），私域小群不建议。
+
+~/discord_bot/.env 关键项（路径注意：不是 discord_bot/discord_bot/.env）：
+  DRIVER=~httpx+~websockets
+  DISCORD_BOTS=[{
+    "token": "（勿写入本笔记，勿提交 git）",
+    "intent": {
+      "guild_messages": true,
+      "direct_messages": true,
+      "message_content": false
+    },
+    "application_commands": {"*": ["*"]}
+  }]
+  gsuid_core_host=127.0.0.1
+  gsuid_core_port=8765
+  gsuid_core_ws_token=
+
+改 .env 后重启 discordbot；改门户 Intent 后也需重启 discordbot。
+
+================================================================================
+五、插件前缀（与纳西妲对齐）— 已配置
+================================================================================
+
+网页 gshub → WutheringWavesUID 插件服务配置：
+  - 禁用强制前缀  → disable_force_prefix: true
+  - 允许空命令前缀 → allow_empty_prefix: true
+
+已写入服务器文件（已 grep 确认）：
+  ~/gsuid_core/data/plugins_configs/WutheringWavesUID.json
+
+代码默认（未改 fork 源码）：
+  WutheringWavesUID/__init__.py
+  Plugins(name="WutheringWavesUID", force_prefix=["ww"], allow_empty_prefix=False)
+  → 以网页/JSON 配置为准，覆盖代码默认值。
+
+改前缀后必须重启 gsuid_core（不是只重启 discordbot）：
+  - Discord 发：gs重启
+  - 或 SSH：screen -r gscore → Ctrl+C → 重新 uv run core
+
+用法：
+  私聊：帮助、练度统计
+  群里：@守岸人 帮助
+
+易混淆项 —「开启可以艾特查询」(AtCheck)：
+  不是 @机器人 无前缀！是命令里 @别人 时查那个人的数据。
+  代码：WutheringWavesUID/utils/at_help.py → ruser_id()
+
+================================================================================
+六、当前功能状态（截至 2026-07-07）
+================================================================================
+
+已验证可用：
+  - 私聊：帮助、练度统计（无前缀）
+  - 频道：@守岸人 帮助（message_content 关闭时）
+  - ww绑定 UID（示例 701179473）
+  - PCAP 上传 / 刷新面板；昵称等级解析（嵌套 Int32Value 修复）
+  - 网页控制台、gshub 插件配置
+  - OCRspace API（ww分析 / DC 卡片 OCR）
+  - Discord 按钮（patch 后）
+
+待解决 / 留意：
+  1. 纳西妲 bot 频道 @ 不回复（见下文「纳西妲频道排错」）— 与守岸人独立
+  2. 日志偶发 [gsuid] 不支持该 Discord 事件 — 多为 notice 类，可忽略
+  3. 国际服专用 fork：隐藏国服/库街区登录等个性化
+  4. 全服排行 token（WavesToken）— 暂缓
+
+纳西妲频道排错（原神 bot，非本仓库维护）：
+  - 私聊正常、频道 @ 不回：通常不是「官方关掉 @ 功能」；更常见是纳西妲自己的
+    discordbot/gscore 未跑、WS 断连、或该服权限/配置问题
+  - 与守岸人无关；守岸人曾开 message_content 会在频道抢答，易造成「两个 bot 都怪」的错觉
+  - 排查顺序：纳西妲是否在线（成员列表绿点）→ 维护者是否重启过服务 → 频道权限
+    （View Channel / Send Messages / Read History）→ 用 @纳西妲 + 简单指令（如 帮助）测
+  - 踢出再邀请：仅在怀疑「邀请时权限给少了」时值得一试；对进程挂掉、配置错误帮助不大
+  - DM 能回说明 Token/账号基本正常；频道问题优先查该 bot 的 guild 权限与后台进程
+
+================================================================================
+七、插件配置备忘（gshub 功能页）
+================================================================================
+
+- OCRspaceApiKeyList：ww分析 必需；默认语言 cht；非中文卡会提示 Please use chinese card!
+- CardImgCheck（国际服 dc 卡片声骸图标识别）：可选，默认 False
+- 命令前缀历史上为 ww；国际服帮助可看 wwpcap帮助 等
+
+关键代码路径（本地 fork）：
+  wutheringwaves_help/help.json      — 帮助菜单内容
+  wutheringwaves_help/__init__.py    — 帮助与按钮
+  wutheringwaves_analyzecard/        — Discord 卡片 OCR
+  utils/button.py                    — WavesButton（Discord 按钮问题相关）
+  wutheringwaves_config/config_default.py — AtCheck 等默认配置
+
+================================================================================
+八、本地开发（Windows）
+================================================================================
+
+项目：e:\编程\WutheringWavesUID_for_discord
+同步：upstream → MoonShadow1976/WutheringWavesUID；origin → jotenbai/WutheringWavesUID
+
+依赖：
+  py -3.13 -m uv sync   # 勿用 3.14（onnxruntime 等问题）
+  不用裸 pip install requirements.txt（hash 问题）
+
+VPS 插件更新典型流程：
+  cd ~/gsuid_core/gsuid_core/plugins/WutheringWavesUID
+  git pull
+  gs重启（或重启 gscore）
+
+================================================================================
+九、Chrome「编程」收藏夹（常用链接）
+================================================================================
+
+- シンVPS 面板
+- ChatGPT — 鸣潮国际服 discord 机器人开发
+- Data Import — Wuthery
+- 网页控制台 http://162.43.76.227:8765/app
+- https://github.com/Genshin-bots/gsuid_core
+- https://github.com/MoonShadow1976/WutheringWavesUID
+- https://github.com/jotenbai/WutheringWavesUID
+- https://github.com/nonebot/nonebot2
+- https://github.com/Genshin-bots/nonebot-plugin-genshinuid
+- Discord 开发者门户
+- https://github.com/gamer-mitsuha/nahida-examples
+
+文档：
+- 网页控制台：https://docs.sayu-bot.com/Started/WebConsole
+- nonebot-adapter-discord message_content 说明：
+  https://github.com/nonebot/adapter-discord
+
+================================================================================
+十、排错速查
+================================================================================
+
+| 现象                         | 可能原因 / 处理 |
+|------------------------------|-----------------|
+| 频道 @守岸人 不回，私聊正常   | 先 ss -tlnp \| grep 8765 确认 gscore；再重启 discordbot |
+| 误响应频道里别人的指令       | message_content 应为 false（门户 + .env） |
+| address already in use 8765  | 已有 core 在跑，kill 旧 PID 或勿重复启动 |
+| discordbot 有【发送】无【接收】| gscore 未处理 / WS 断连；整包重启 gscore → discordbot |
+| 停 nonebot 要按两次 Ctrl+C   | 第一次优雅退出，第二次强制，正常 |
+| .venv/bin/python3 -m nb run 报错 No module named nb | 用 .venv/bin/nb run |
+| grep message_content         | ~/discord_bot/.env |
+| screen 命令在 Windows 报错   | 在 SSH 里执行，不是本地 PS |
+| gshub 改配置不生效（前缀）   | gs重启 或手动重启 gscore |
+| 按钮「该交互失败」           | apply_discord_button_patch + 重启 discordbot |
+
+================================================================================
+十一、后续计划（README 阶段可参考）
+================================================================================
+
+[ ] 国际服专用：隐藏国服登录、精简 help.json
+[ ] 可选：systemd 替代 screen，开机自启
+[ ] 可选：Cursor Remote-SSH 连 VPS
+[x] README：Discord 部署、message_content、排错（2026-07-07）
+[x] 确认无前缀 + @守岸人 在群里可用（message_content 关闭）
+[x] 修 Discord 按钮 / send_option 交互（patch）
+
+================================================================================
+十二、更新日志（重要进展记在这里）
+================================================================================
+
+2026-06-30 ~ 07-01
+  - VPS 部署 gsuid_core + discordbot，screen 双会话 Detached
+  - 私聊 ww练度统计 成功；绑定 UID
+  - 定位群里不回复：需 message_content intent（门户 + .env）
+  - 对齐纳西妲：disable_force_prefix + allow_empty_prefix 已写入 JSON
+  - message_content:true 已加入 .env
+
+2026-07-05
+  - 创建本 note.txt，加入 .gitignore
+  - 用户周日回归，继续开发
+  - .gitignore 完善：.env / .env.* 忽略，保留 .env.example 可提交
+
+2026-07-07
+  - message_content 改回 false（门户 + ~/discord_bot/.env）；频道仅 @ 触发，私聊正常
+  - 纠正 .env 路径：~/discord_bot/.env（非 discord_bot/discord_bot）
+  - 排错：gscore 占 8765 时勿重复 uv run；查进程用 ss/ps；重启顺序 gscore → discordbot
+  - discordbot 启动：.venv/bin/nb run（勿 python3 -m nb run）
+  - PCAP BasicInfoNotify 嵌套 Int32Value 修复；已 PR upstream
+  - README 增加 Discord 部署备忘
+
+================================================================================
+# 以下由后续会话追加重要内容
+================================================================================
+
+2026-07-05（续）
+  - 从 upstream 同步 MoonShadow 提交 51fae196「encore beta api」
+    （深渊相关 draw 改用 encore beta API，3 个文件）
+  - 本地 .gitignore 改动尚未提交（note.txt + .env 忽略）
+
+.gitignore 环境变量规则：
+  - 忽略 .env、.env.*；不忽略 .env.example
+
+2026-07-05（续2）— 声骸查分 & gscore 重启后无回复
+  - 声骸查分流程：发「绯雪4c」→ bot.receive_resp 等 30 秒 → 用户再发图
+  - 截图现象：30 秒内已发图，仍「等待超时」→ 第二张图未进入 receive_resp 队列
+  - 常见原因：Discord 连接器对「仅图片、无文字」的后续消息转发不完整（已知适配器问题）
+  - 根因：Discord 图片走 content.type==attachment，ocrspace.get_image 未解析（pcap 模块已有范例）
+  - 已修：ocrspace.py / upload_card.py 增加 attachment.url 支持；需 VPS git pull + gs重启
+  - gscore 在网页控制台重启后，discordbot 的 WebSocket 可能断连且不会自动恢复
+  - 恢复：先确认 gscore 在跑，再重启 discordbot（两个 screen 都要 Detached）
+
+VPS 恢复双服务（推荐顺序）：
+  screen -r gscore      # 若无进程：cd ~/gsuid_core && python3.13 -m uv run core --host 0.0.0.0
+  screen -r discordbot  # Ctrl+C 后：cd ~/discord_bot && .venv/bin/nb run
+  两者都 Ctrl+A → D
+
+================================================================================
+十三、常用命令速查（本地 Windows / VPS）
+================================================================================
+
+【提示】
+  - 提示符 PS E:\...>  = 本机 Windows，不要在这里跑 screen
+  - 提示符 admin@x162-43-76-227:~$  = VPS，在这里跑 screen / nb run
+
+--------------------------------------------------------------------------------
+A. 本机 — SSH 连接
+--------------------------------------------------------------------------------
+
+ssh admin@162.43.76.227
+
+# 不登录、只执行一条远程命令（本机 PowerShell 可用）
+ssh admin@162.43.76.227 "screen -ls"
+
+--------------------------------------------------------------------------------
+B. 本机 — Git 日常（在仓库目录）
+--------------------------------------------------------------------------------
+
+cd "e:\编程\WutheringWavesUID_for_discord"
+
+git status
+git diff
+
+# 提交本次修改（示例：Discord 图片 attachment 修复 + gitignore）
+git add .gitignore WutheringWavesUID/wutheringwaves_analyzecard/ocrspace.py WutheringWavesUID/wutheringwaves_charinfo/upload_card.py
+git commit -m "fix: parse Discord attachment URLs for OCR image upload"
+git push origin master
+
+# 注意：note.txt 在 .gitignore 里，不会被提交（故意如此）
+
+--------------------------------------------------------------------------------
+C. 本机 — 同步 MoonShadow 上游
+--------------------------------------------------------------------------------
+
+git fetch upstream
+git log --oneline HEAD..upstream/master    # 看上游多了什么
+git merge upstream/master --ff-only        # 快进合并
+git push origin master                     # 同步到你的 fork
+
+--------------------------------------------------------------------------------
+D. VPS — screen 基础
+--------------------------------------------------------------------------------
+
+screen -ls                    # 列表；Detached = 后台正常，Attached = 正被人连着
+
+screen -r gscore              # 进入 gscore 会话
+screen -r discordbot          # 进入 discordbot 会话
+
+# 在 screen 里：
+#   Ctrl+A 再 D     → 脱离（进程继续跑）★ 关 SSH 前务必做
+#   Ctrl+C          → 停掉当前前台程序（会停 bot！）
+#   Ctrl+A 再 H     → 看底部是否 [screen 0: xxx]，有则在 screen 里
+
+--------------------------------------------------------------------------------
+E. VPS — 启动 / 重启 gsuid_core（gscore）
+--------------------------------------------------------------------------------
+
+screen -r gscore
+# 若 nb/core 在跑：Ctrl+C
+cd ~/gsuid_core
+python3.13 -m uv run core --host 0.0.0.0
+# 看到启动成功 → Ctrl+A → D
+
+# 或在 Discord 私聊 / @守岸人 后发（core 已在线时）：
+gs重启
+
+--------------------------------------------------------------------------------
+F. VPS — 启动 / 重启 discordbot
+--------------------------------------------------------------------------------
+
+screen -r discordbot
+# Ctrl+C 停掉旧的
+cd ~/discord_bot
+.venv/bin/nb run
+# 看到 与[gsuid-core]成功连接 → Ctrl+A → D
+
+# ★ 网页控制台重启 gscore 后，若 bot 完全不回消息，务必重做本节
+
+--------------------------------------------------------------------------------
+G. VPS — 更新插件代码（改完 GitHub 后）
+--------------------------------------------------------------------------------
+
+cd ~/gsuid_core/gsuid_core/plugins/WutheringWavesUID
+git pull
+
+# 然后在 Discord 发：gs重启
+# （或手动重启 gscore，见 E 节）
+
+--------------------------------------------------------------------------------
+H. VPS — 配置检查
+--------------------------------------------------------------------------------
+
+# Discord message_content（守岸人建议 false）
+grep message_content ~/discord_bot/.env
+
+# 鸣潮前缀（无前缀 / 禁用 ww）
+grep -E 'allow_empty_prefix|disable_force_prefix' ~/gsuid_core/data/plugins_configs/WutheringWavesUID.json
+
+# 核心注册码（网页控制台登录用）
+grep REGISTER_CODE ~/gsuid_core/data/config.json
+
+--------------------------------------------------------------------------------
+I. Discord 测试指令（私聊或 @守岸人）
+--------------------------------------------------------------------------------
+
+帮助                    # 基础连通
+gs重启                  # 重启 core
+绯雪4c                  # 声骸查分（先文字，再按提示发图；或一条消息文字+附图）
+练度统计
+
+# 声骸查分：消息框里必须有文字（如 绯雪4c），不能只发图
+
+--------------------------------------------------------------------------------
+J. 当前待部署的一次性流程（声骸查分 attachment 修复）
+--------------------------------------------------------------------------------
+
+# 1) 本机提交推送（见 B 节 git add / commit / push）
+# 2) VPS：
+ssh admin@162.43.76.227
+cd ~/gsuid_core/gsuid_core/plugins/WutheringWavesUID
+git pull
+# 3) Discord 发：gs重启
+# 4) 测试：一条消息发「绯雪4c」+ 声骸截图
+
+--------------------------------------------------------------------------------
+L. 日志判读 — 声骸查分成功/失败
+--------------------------------------------------------------------------------
+
+discordbot 出现 attachment + url + text → 连接器正常
+gscore 出现「卡片分析上传链接」「图片获取完成」→ attachment 修复生效
+gscore 出现「OCRspace 识别成功」→ OCR 正常
+gscore 出现「丢弃不完整声骸 … cost=None」→ 图被识别但词条数量对不上（换更清晰、带 COST 字样的声骸详情截图）
+gscore 出现「[发送消息to] discord」→ core 已回复（Discord 可能显示「未识别到有效信息」）
+
+推荐截图：游戏内声骸详情页（能看到 COST 1/3/4 和各副词条），不要用仅含「xx分」的小卡片。
+
+--------------------------------------------------------------------------------
+M. discordbot 日志 — Snowflake 编码错误（带图指令失败）
+--------------------------------------------------------------------------------
+
+现象（discordbot 日志）：
+  TypeError: Encoding objects of type Snowflake is unsupported
+  File .../GenshinUID/client.py ... msgjson.encode(msg)
+
+原因：带图片消息里 attachment.id 是 Discord Snowflake 对象，转发给 core 时序列化失败。
+纯文字「帮助」可以；「卡提4c」+ 附图会炸。
+
+处理（在 VPS，先停 discordbot 再操作）：
+  cd ~/discord_bot/discord_bot
+  source .venv/bin/activate
+  pip show nonebot-plugin-genshinuid nonebot-adapter-discord
+  pip install -U nonebot-plugin-genshinuid nonebot-adapter-discord
+  deactivate
+  # screen -r discordbot → Ctrl+C → nb run → Ctrl+A D
+
+若升级后仍报错（5.0.0 仍会炸）→ 手动补丁 __init__.py：
+
+  # 停 discordbot：screen -r discordbot → Ctrl+C
+  cd ~/discord_bot/discord_bot
+  source .venv/bin/activate
+  FILE=.venv/lib/python3.12/site-packages/GenshinUID/__init__.py
+  nano $FILE
+  # 搜索「处理 Discord 消息中的附件」或 model_dump(dc_attachment
+  # 把 message.extend(Message(..., model_dump(...)), for ...) 整段
+  # 换成下面 for 循环（核心是 att_data["id"] = int(att_data["id"])）：
+
+  for dc_attachment in ev.attachments:
+      att_data = model_dump(dc_attachment, exclude_unset=True)
+      if "id" in att_data:
+          att_data["id"] = int(att_data["id"])
+      message.append(
+          Message(
+              (
+                  "image"
+                  if (content_type := dc_attachment.content_type) is not UNSET and "image" in content_type
+                  else "attachment"
+              ),
+              att_data,
+          )
+      )
+
+  deactivate
+  nb run → Ctrl+A D → 再测「图 + 卡提4c」
+
+判读：create_message = 纯文字成功；Snowflake = 带图失败（补丁前）。
+
+--------------------------------------------------------------------------------
+K. 网页控制台
+--------------------------------------------------------------------------------
+
+地址：http://162.43.76.227:8765/app
+改插件前缀 / 功能配置 → 保存后多数要 gs重启
+gshub 一般不能一键重启进程 → 用 gs重启 或 screen
+
+================================================================================
+# 以下由后续会话追加重要内容
+================================================================================
