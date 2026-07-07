@@ -4,6 +4,8 @@
 
 私聊或 `@机器人` 发送「帮助」「练度统计」等指令，体验可参考 [nahida-examples](https://github.com/gamer-mitsuha/nahida-examples) 一类无前缀用法。
 
+本仓库 fork 自 [echo/WutheringWavesUID](https://github.com/tyql688/WutheringWavesUID)，当前主要 upstream 为 [MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID)。
+
 ## 架构
 
 ```text
@@ -14,11 +16,11 @@ Discord
   → WutheringWavesUID（本仓库插件）
 ```
 
-| 组件                                                     | 说明                                        |
-| -------------------------------------------------------- | ------------------------------------------- |
-| [gsuid_core](https://github.com/Genshin-bots/gsuid_core) | 核心，负责加载插件与 Web 控制台             |
-| `WutheringWavesUID/`                                     | 鸣潮业务逻辑（角色面板、练度、OCR 等）      |
-| `discord_bot/`                                           | NoneBot2 桥接层，连接 Discord 与 gsuid_core |
+| 组件 | 说明 |
+|------|------|
+| [gsuid_core](https://github.com/Genshin-bots/gsuid_core) | 核心，负责加载插件与 Web 控制台 |
+| `WutheringWavesUID/` | 鸣潮业务逻辑（角色面板、练度、OCR 等） |
+| `discord_bot/` | NoneBot2 桥接层，连接 Discord 与 gsuid_core |
 
 ## 前置要求
 
@@ -51,7 +53,7 @@ python3.13 -m uv run core --host 0.0.0.0
 
 - **禁用强制前缀** → `disable_force_prefix: true`
 - **允许空命令前缀** → `allow_empty_prefix: true`
-- **OCRspace API Key**（国际服 `分析` / DC 卡片识别需要）
+- **OCRspace API Key**（国际服 `分析` / DC 卡片识别需要，见下文）
 
 修改插件配置后需 **重启 gsuid_core**（Discord 发 `gs重启`，或重启 core 进程）。
 
@@ -67,15 +69,15 @@ git pull
 
 ## 二、Discord 部署（`discord_bot/`）
 
-VPS 推荐目录：`~/discord_bot`（单层目录，在此目录执行 `nb run`）。
+VPS 推荐目录：`~/discord_bot`（**单层目录**，不要套 `discord_bot/discord_bot`）。
 
 ### 2.1 Discord Developer Portal
 
 在 [Discord 开发者门户](https://discord.com/developers/applications) 创建应用并添加 Bot：
 
-- 开启 **Message Content Intent**（否则频道内普通消息收不到）
+- **Message Content Intent 建议关闭**（私聊、@ 机器人、回复机器人消息仍可收到内容；开启后会监听频道全部消息，私域小群易误触发）
 - 建议权限：View Channels、Send Messages、Read Message History、Attach Files、Embed Links
-- 用 OAuth2 URL Generator 生成邀请链接；**服主或有「管理服务器」权限的人**可用该链接把 Bot 安装到任意服务器（不限于你自己创建的服）
+- 用 OAuth2 URL Generator 生成邀请链接
 
 ### 2.2 环境变量
 
@@ -96,7 +98,7 @@ cp .env.example .env
       "intent": {
         "guild_messages": true,
         "direct_messages": true,
-        "message_content": true
+        "message_content": false
       }
     }
   ],
@@ -106,34 +108,54 @@ cp .env.example .env
 }
 ```
 
-门户里开了 Message Content Intent 后，`.env` 里也必须写 `message_content: true`。
+门户与 `.env` 中 `message_content` 设置须一致。
 
 ### 2.3 安装与启动
 
 ```bash
 cd ~/discord_bot
-uv sync
-# 若无 uv：python3.12 -m venv .venv && .venv/bin/pip install -e .
+python3.12 -m venv .venv
+~/discord_bot/.venv/bin/pip install -U pip
+~/discord_bot/.venv/bin/pip install "nonebot2[fastapi]" nb-cli nonebot-adapter-discord \
+  nonebot-plugin-genshinuid nonebot-plugin-apscheduler httpx websockets
 
-# 必需补丁（升级 genshinuid 后需重跑）
-.venv/bin/python3 patches/apply_snowflake_patch.py
-.venv/bin/python3 patches/apply_discord_button_patch.py
+# 必需补丁（重建 .venv 或升级 genshinuid 后需重跑）
+~/discord_bot/.venv/bin/python patches/apply_snowflake_patch.py
+~/discord_bot/.venv/bin/python patches/apply_discord_button_patch.py
+~/discord_bot/.venv/bin/python patches/apply_discord_reply_patch.py
 
-.venv/bin/python3 -m nb run
+~/discord_bot/.venv/bin/nb run
+# 或：~/discord_bot/.venv/bin/python bot.py
 ```
 
-若 `source .venv/bin/activate` 报错，全程用 `.venv/bin/python3` 即可。
+若 `source .venv/bin/activate` 报错，全程用 `~/discord_bot/.venv/bin/python` / `.venv/bin/nb` 即可。
 
 ### 2.4 补丁说明
 
-当前 `nonebot-plugin-genshinuid` 在 Discord 上有两处已知问题，本仓库提供脚本修补 **venv 内已安装的 GenshinUID**：
+`nonebot-plugin-genshinuid` 对 Discord 有几处已知问题，补丁脚本会修改 **venv 内已安装的 GenshinUID**：
 
-| 脚本                                    | 修复内容                               |
-| --------------------------------------- | -------------------------------------- |
-| `patches/apply_snowflake_patch.py`      | 发带附件/图片消息时 Snowflake 编码错误 |
-| `patches/apply_discord_button_patch.py` | 帮助页等按钮点击「该交互失败」         |
+| 脚本 | 作用 | 典型现象（未打补丁时） |
+|------|------|------------------------|
+| [`apply_snowflake_patch.py`](discord_bot/patches/apply_snowflake_patch.py) | 修复附件 Snowflake 序列化 | `Encoding objects of type Snowflake is unsupported` |
+| [`apply_discord_button_patch.py`](discord_bot/patches/apply_discord_button_patch.py) | 修复帮助页按钮 ACK | 点按钮「该交互失败」 |
+| [`apply_discord_reply_patch.py`](discord_bot/patches/apply_discord_reply_patch.py) | 回复引用原指令，不 @ 用户 | 无灰色引用条；多人同时发指令难区分 |
 
-### 2.5 后台常驻（screen 示例）
+打完补丁需 **重启 discordbot**。
+
+### 2.5 OCR.space（国际服 Discord 卡片识别）
+
+国际服缺少库街区，**角色面板截图识别**（如 `分析` / `ww分析`）依赖 [OCR.space](https://ocr.space/OCRAPI) API。
+
+**配置：** gsuid_core 网页控制台 → WutheringWavesUID → `OCRspaceApiKeyList`，填入 API Key（可多个，插件轮询）。
+
+**注意：**
+
+- VPS 需能访问 `api.ocr.space`
+- 游戏内卡片须为**中文界面**（默认 `cht`）；英文卡会提示 `Please use chinese card!`
+- 可选 `CardImgCheck`：声骸图标额外校验（默认 `False`）
+- 私聊或频道 @ 机器人后，发角色详情截图 + 指令
+
+### 2.6 后台常驻（screen 示例）
 
 ```bash
 screen -S gscore
@@ -141,7 +163,7 @@ cd ~/gsuid_core && python3.13 -m uv run core --host 0.0.0.0
 # Ctrl+A 再 D 脱离
 
 screen -S discordbot
-cd ~/discord_bot && .venv/bin/python3 -m nb run
+cd ~/discord_bot && .venv/bin/nb run
 # Ctrl+A 再 D 脱离
 ```
 
@@ -151,27 +173,26 @@ cd ~/discord_bot && .venv/bin/python3 -m nb run
 
 ## 使用
 
-| 场景       | 示例                                              |
-| ---------- | ------------------------------------------------- |
-| 私聊       | `帮助`、`练度统计`、`绑定<特征码>`                |
-| 服务器频道 | `@机器人 帮助`                                    |
+| 场景 | 示例 |
+|------|------|
+| 私聊 | `帮助`、`练度统计`、`绑定<特征码>` |
+| 服务器频道 | `@机器人 帮助` |
 | 国际服数据 | 绑定 UID → 发送官方 DC 卡片图 `分析` → `角色面板` |
 
 指令详情见插件内 `帮助` 图，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
-
-**邀请他人使用**：OAuth2 邀请链接加服务器；同服成员可在成员列表对 Bot 点「发消息」私聊。未验证 Bot 不会出现在应用商店，但邀请链接仍可用（未验证约 100 服上限）。
 
 ---
 
 ## 常见问题
 
-| 现象                        | 处理                                                     |
-| --------------------------- | -------------------------------------------------------- |
-| 群里不回复，私聊正常        | `.env` 缺 `message_content: true`；或改前缀后未重启 core |
-| 发图报错 Snowflake          | 运行 `apply_snowflake_patch.py`，重启 discordbot         |
-| 按钮「该交互失败」          | 运行 `apply_discord_button_patch.py`，重启 discordbot    |
-| 重启 core 后 Discord 无响应 | 同时重启 discordbot                                      |
-| `pip install -U` 后问题复发 | 重新运行两个补丁脚本                                     |
+| 现象 | 处理 |
+|------|------|
+| 私聊/频道无回复，discordbot 有 `【发送】` 但无 `【接收】` | 确认 gscore 在监听 8765；**重启 discordbot** |
+| 发图报错 Snowflake | 运行 `apply_snowflake_patch.py`，重启 discordbot |
+| 按钮「该交互失败」 | 运行 `apply_discord_button_patch.py`，重启 discordbot |
+| 重启 core 后 Discord 无响应 | 同时重启 discordbot |
+| `pip install -U` 或重建 venv 后问题复发 | 重新运行三个补丁脚本 |
+| `nb` 找不到 | 安装 `nb-cli`；或用 `python bot.py` 启动 |
 
 ---
 
