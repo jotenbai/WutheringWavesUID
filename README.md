@@ -7,7 +7,7 @@
 本仓库 fork 自 [echo/WutheringWavesUID](https://github.com/tyql688/WutheringWavesUID)，当前主要 upstream 为 [MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID)。
 
 自用小服：试用机器人或联系维护者可加入 [Discord](https://discord.com/invite/eWnWyGqEXM)。  
-[服务条款](docs/terms-of-service.md) · [隐私政策](docs/privacy-policy.md)
+[服务条款](discord_bot/docs/terms-of-service.md) · [隐私政策](discord_bot/docs/privacy-policy.md)
 
 ## 架构
 
@@ -23,7 +23,7 @@ Discord
 |------|------|
 | [gsuid_core](https://github.com/Genshin-bots/gsuid_core) | 核心，负责加载插件与 Web 控制台 |
 | `WutheringWavesUID/` | 鸣潮业务逻辑（角色面板、练度、OCR 等） |
-| `discord_bot/` | NoneBot2 桥接层，连接 Discord 与 gsuid_core |
+| `discord_bot/` | Discord 桥接、补丁、systemd 模板与法务文档（本 fork 相对上游的额外内容） |
 
 ## 前置要求
 
@@ -190,13 +190,13 @@ python3.12 -m venv .venv
 
 ### 2.6 后台常驻（systemd，推荐）
 
-`screen` 在 VPS **内核更新重启后不会自动恢复**，长期运行请用 systemd。本仓库提供用户级 unit 模板：[`deploy/systemd/`](deploy/systemd/)。
+`screen` 在 VPS **内核更新重启后不会自动恢复**，长期运行请用 systemd。本仓库提供用户级 unit 模板：[`discord_bot/deploy/systemd/`](discord_bot/deploy/systemd/)。
 
 **一次性安装（VPS 上，路径按你的用户目录调整）：**
 
 ```bash
 mkdir -p ~/.config/systemd/user
-cp /path/to/WutheringWavesUID/deploy/systemd/*.service ~/.config/systemd/user/
+cp /path/to/WutheringWavesUID/discord_bot/deploy/systemd/*.service ~/.config/systemd/user/
 # 若 WorkingDirectory / ExecStart 与你的路径不同，先编辑这两个 .service
 
 systemctl --user daemon-reload
