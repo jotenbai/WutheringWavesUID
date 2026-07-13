@@ -462,9 +462,9 @@
     <div class="modal-content">
       <span class="close">&times;</span>
       <h2>🎉 登录成功</h2>
-      <p>欢迎回来！</p>
-      <p class="countdown">5秒后自动跳转到首页</p>
-      <button class="redirect-button">立即跳转</button>
+      <p>欢迎回来！请回到 Discord 继续使用机器人。</p>
+      <p class="countdown">可以关闭本页面</p>
+      <button class="redirect-button">关闭</button>
     </div>
   </div>
 
@@ -790,14 +790,8 @@
 
 
     function showSuccessModal() {
-      const homeHref = 'https://github.com/MoonShadow1976/WutheringWavesUID'
       const modal = document.getElementById('successModal');
-      const countdownElement = modal.querySelector('.countdown');
       const redirectButton = modal.querySelector('.redirect-button');
-      const successCharacterInfo = document.getElementById('successCharacterInfo');
-      const successCharacterName = document.getElementById('successCharacterName');
-      const successServerName = document.getElementById('successServerName');
-      let countdown = 5;
 
       modal.classList.add('show');
       setTimeout(() => {
@@ -805,26 +799,14 @@
         modal.querySelector('.modal-content').style.opacity = '1';
       }, 10);
 
-      function updateCountdown() {
-        countdownElement.textContent = `${countdown}秒后自动跳转到首页`;
-        if (countdown <= 0) {
-          clearInterval(timer);
-          window.location.href = homeHref;
-        }
-        countdown--;
-      }
+      const dismiss = () => {
+        modal.querySelector('.modal-content').style.transform = 'scale(0.7)';
+        modal.querySelector('.modal-content').style.opacity = '0';
+        setTimeout(() => modal.classList.remove('show'), 300);
+      };
 
-      const timer = setInterval(updateCountdown, 1000);
-
-      redirectButton.addEventListener('click', () => {
-        clearInterval(timer);
-        window.location.href = homeHref;
-      });
-
-      modal.querySelector('.close').addEventListener('click', () => {
-        clearInterval(timer);
-        window.location.href = homeHref;
-      });
+      redirectButton.addEventListener('click', dismiss);
+      modal.querySelector('.close').addEventListener('click', dismiss);
     }
 
     closeBtn.addEventListener('click', closeModal);

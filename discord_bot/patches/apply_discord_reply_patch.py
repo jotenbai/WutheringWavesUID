@@ -1,18 +1,11 @@
 #!/usr/bin/env python3
 """Patch GenshinUID Discord send: reply-only (no @ mention).
 
-效果：bot 回复时引用用户原消息（右键「回复」同款 UI），显示用户发的指令；
-不插入 @ 提及——Discord 回复本身会提醒对方，且多人同时发指令时便于区分。
-
-gsuid_core 已下发 msg_id，但 GenshinUID discord_send 未使用。
-
-本补丁：
 1. client.py：向 discord_send 传入 msg.msg_id
-2. send_utils.py：有 msg_id 时附加 message_reference，并屏蔽 at_list / replied_user
+2. send_utils.py：message_reference + 发送失败时去掉引用重试（带图指令）
 
-在 discord_bot venv 内执行：
-  cd ~/discord_bot && source .venv/bin/activate
-  python patches/apply_discord_reply_patch.py
+Run on VPS:
+  cd ~/discord_bot && .venv/bin/python patches/apply_discord_reply_patch.py
 """
 
 from __future__ import annotations
@@ -70,7 +63,6 @@ IMPORT_OLD = """    from nonebot.adapters.discord import Bot, Message, MessageSe
 IMPORT_NEW = """    from nonebot.adapters.discord import Bot, Message, MessageSegment
     from nonebot.adapters.discord.api import ActionRow, AllowedMention, MessageReference"""
 
-# 未打补丁的原始代码
 AT_AND_SEND_OLD = """            if at_list and target_type == "group":
                 for at in at_list:
                     message.append(MessageSegment.mention_user(int(at)))
@@ -99,7 +91,6 @@ AT_AND_SEND_OLD = """            if at_list and target_type == "group":
                 message=message,
             )"""
 
-# 旧版补丁（带 @ / replied_user=True），可原地升级
 AT_AND_SEND_V1 = """            allowed_mentions = None
             if target_type == "group":
                 if at_list:
@@ -148,11 +139,44 @@ AT_AND_SEND_V1 = """            allowed_mentions = None
                 allowed_mentions=allowed_mentions,
             )"""
 
-AT_AND_SEND_FINAL = """            # reply-only: 引用原指令，不 @（频道/私聊均适用）
+SEND_PLAIN_OLD = """            await bot.call_api("trigger_typing_indicator", channel_id=group_id)
+            ret = await bot.send_to(
+                channel_id=int(group_id),
+                message=message,
+                allowed_mentions=allowed_mentions,
+            )"""
+
+SEND_WITH_FALLBACK = """            # reply send fallback: 引用失败时仍发出图片/文字
+            await bot.call_api("trigger_typing_indicator", channel_id=group_id)
+            try:
+                ret = await bot.send_to(
+                    channel_id=int(group_id),
+                    message=message,
+                    allowed_mentions=allowed_mentions,
+                )
+            except Exception as _send_err:
+                from nonebot.adapters.discord.exception import ActionFailed
+
+                if isinstance(_send_err, ActionFailed) and msg_id:
+                    _fallback = Message()
+                    for _seg in message:
+                        if _seg.type != "reference":
+                            _fallback.append(_seg)
+                    ret = await bot.send_to(
+                        channel_id=int(group_id),
+                        message=_fallback,
+                    )
+                else:
+                    raise"""
+
+AT_AND_SEND_FINAL = f"""            # reply-only: 引用原指令，不 @（频道/私聊均适用）
             allowed_mentions = None
             if msg_id:
+                _ref = {{"message_id": int(msg_id), "fail_if_not_exists": False}}
+                if group_id:
+                    _ref["channel_id"] = int(group_id)
                 message.append(
-                    MessageSegment.reference(MessageReference(message_id=int(msg_id)))
+                    MessageSegment.reference(MessageReference(**_ref))
                 )
                 allowed_mentions = AllowedMention(
                     parse=[],
@@ -179,12 +203,7 @@ AT_AND_SEND_FINAL = """            # reply-only: 引用原指令，不 @（频�
                             message.append(MessageSegment.component(ActionRow(components=_t)))
                             _t = []
 
-            await bot.call_api("trigger_typing_indicator", channel_id=group_id)
-            ret = await bot.send_to(
-                channel_id=int(group_id),
-                message=message,
-                allowed_mentions=allowed_mentions,
-            )"""
+{SEND_WITH_FALLBACK}"""
 
 
 def find_genshinuid_dir() -> Path:
@@ -223,21 +242,47 @@ def patch_client(client_py: Path) -> None:
 
 def patch_send_utils(send_utils_py: Path) -> None:
     text = send_utils_py.read_text(encoding="utf-8")
+    changed = False
 
-    if PATCH_MARKER in text or "reply-only: 引用原指令" in text:
-        print("[skip] send_utils.py 已是 reply-only 补丁")
+    if "reply send fallback" not in text and SEND_PLAIN_OLD in text:
+        text = text.replace(SEND_PLAIN_OLD, SEND_WITH_FALLBACK, 1)
+        changed = True
+        print("[ok] send_utils.py (send fallback 升级)")
+
+    _old_ref = """                message.append(
+                    MessageSegment.reference(MessageReference(message_id=int(msg_id)))
+                )"""
+    _new_ref = """                _ref = {"message_id": int(msg_id), "fail_if_not_exists": False}
+                if group_id:
+                    _ref["channel_id"] = int(group_id)
+                message.append(
+                    MessageSegment.reference(MessageReference(**_ref))
+                )"""
+    if _old_ref in text:
+        text = text.replace(_old_ref, _new_ref, 1)
+        changed = True
+        print("[ok] send_utils.py (fail_if_not_exists 升级)")
+
+    if "reply-only: 引用原指令" in text and "reply send fallback" in text:
+        if PATCH_MARKER not in text:
+            text = text.rstrip() + f"\n{PATCH_MARKER}\n"
+            changed = True
+        send_utils_py.write_text(text, encoding="utf-8")
+        print("[skip] send_utils.py 已是完整 reply-only 补丁" if not changed else "[ok] send_utils.py")
         return
 
     if "msg_id: Optional[str] = None" not in text:
         if SIGNATURE_OLD not in text:
             raise RuntimeError("send_utils.py 签名不匹配，可能 GenshinUID 版本不兼容")
         text = text.replace(SIGNATURE_OLD, SIGNATURE_NEW, 1)
+        changed = True
         print("[ok] send_utils.py (signature)")
 
     if "AllowedMention, MessageReference" not in text:
         if IMPORT_OLD not in text:
             raise RuntimeError("send_utils.py import 不匹配")
         text = text.replace(IMPORT_OLD, IMPORT_NEW, 1)
+        changed = True
         print("[ok] send_utils.py (import)")
 
     send_utils_py.write_text(text, encoding="utf-8")
@@ -246,12 +291,12 @@ def patch_send_utils(send_utils_py: Path) -> None:
         pass
     elif replace_once(send_utils_py, AT_AND_SEND_OLD, AT_AND_SEND_FINAL, "send_utils.py (discord_send)"):
         pass
-    else:
+    elif not changed:
         raise RuntimeError("send_utils.py 中未找到可替换的 discord_send 代码块")
 
     text = send_utils_py.read_text(encoding="utf-8")
     if PATCH_MARKER not in text:
-        send_utils_py.write_text(text + f"\n{PATCH_MARKER}\n", encoding="utf-8")
+        send_utils_py.write_text(text.rstrip() + f"\n{PATCH_MARKER}\n", encoding="utf-8")
 
 
 def main() -> None:

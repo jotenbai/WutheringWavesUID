@@ -6,6 +6,9 @@
 
 本仓库 fork 自 [echo/WutheringWavesUID](https://github.com/tyql688/WutheringWavesUID)，当前主要 upstream 为 [MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID)。
 
+自用小服：试用机器人或联系维护者可加入 [Discord](https://discord.com/invite/eWnWyGqEXM)。  
+[服务条款](docs/terms-of-service.md) · [隐私政策](docs/privacy-policy.md)
+
 ## 架构
 
 ```text
@@ -57,7 +60,37 @@ python3.13 -m uv run core --host 0.0.0.0
 
 修改插件配置后需 **重启 gsuid_core**（Discord 发 `gs重启`，或重启 core 进程）。
 
+### 1.1 插件 Python 依赖（重要）
+
+gsuid_core 启动时会尝试安装插件 `requirements.txt` 中的依赖，但在部分环境（如 Python 3.13 + 仅 `uv` 管理 core）下，**个别包可能未装进 core 的 venv**，导致部分子模块导入失败、对应指令静默无回复。
+
+插件根目录 [`requirements.txt`](requirements.txt) 当前包含：
+
+| 包名 | 用途 | 未安装时的典型现象 |
+|------|------|-------------------|
+| `opencc` | OCR 简繁转换（`wutheringwaves_analyzecard`） | `尤诺面板`、`练度统计` 等 regex 指令无 `[命令触发]` |
+| `kuro-py` | 国际服登录与体力等 API（`kuro` 模块） | 网页登录「登入失敗」；`体力` / `mr` 无数据或报错 |
+
+在 VPS 上进入 **gsuid_core 的 venv** 手动安装（路径以你的部署为准）：
+
+```bash
+cd ~/gsuid_core
+.venv/bin/python -m pip install -r gsuid_core/plugins/WutheringWavesUID/requirements.txt
+# 或单独安装：
+# .venv/bin/python -m pip install "opencc>=1.1.9" "kuro-py>=0.7.1"
+```
+
+安装后必须 **重启 gsuid_core**（Discord 发 `gs重启`）。仅重启 discordbot 不够。
+
+验证（可选）：
+
+```bash
+cd ~/gsuid_core
+.venv/bin/python -c "import opencc, kuro; print('ok')"
+```
+
 更新插件：
+
 
 ```bash
 cd ~/gsuid_core/gsuid_core/plugins/WutheringWavesUID
@@ -155,19 +188,39 @@ python3.12 -m venv .venv
 - 可选 `CardImgCheck`：声骸图标额外校验（默认 `False`）
 - 私聊或频道 @ 机器人后，发角色详情截图 + 指令
 
-### 2.6 后台常驻（screen 示例）
+### 2.6 后台常驻（systemd，推荐）
+
+`screen` 在 VPS **内核更新重启后不会自动恢复**，长期运行请用 systemd。本仓库提供用户级 unit 模板：[`deploy/systemd/`](deploy/systemd/)。
+
+**一次性安装（VPS 上，路径按你的用户目录调整）：**
 
 ```bash
-screen -S gscore
-cd ~/gsuid_core && python3.13 -m uv run core --host 0.0.0.0
-# Ctrl+A 再 D 脱离
+mkdir -p ~/.config/systemd/user
+cp /path/to/WutheringWavesUID/deploy/systemd/*.service ~/.config/systemd/user/
+# 若 WorkingDirectory / ExecStart 与你的路径不同，先编辑这两个 .service
 
-screen -S discordbot
-cd ~/discord_bot && .venv/bin/nb run
-# Ctrl+A 再 D 脱离
+systemctl --user daemon-reload
+systemctl --user enable --now gscore.service
+systemctl --user enable --now discordbot.service
+
+# 开机即使用户未 SSH 登录也启动（需要 sudo，只做一次）
+sudo loginctl enable-linger $USER
 ```
 
-**重启 gsuid_core 后，请同时重启 discordbot**，否则 WebSocket 会断连无响应。
+**日常运维：**
+
+```bash
+systemctl --user status gscore discordbot
+systemctl --user restart gscore          # 改插件 / 装依赖后
+systemctl --user restart discordbot      # 打补丁后；重启 core 后也建议重启
+journalctl --user -u gscore -f           # 跟日志
+journalctl --user -u discordbot -f
+```
+
+Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会由 `Restart=always` 自动拉起。  
+**重启 gscore 后建议再 `systemctl --user restart discordbot`**，避免 WebSocket 断连无响应。
+
+> 不推荐再用 `screen` 长期挂进程；与 systemd 同时跑同一端口会冲突。
 
 ---
 
@@ -178,8 +231,12 @@ cd ~/discord_bot && .venv/bin/nb run
 | 私聊 | `帮助`、`练度统计`、`绑定<特征码>` |
 | 服务器频道 | `@机器人 帮助` |
 | 国际服数据 | 绑定 UID → 发送官方 DC 卡片图 `分析` → `角色面板` |
+| 国际服登录 | `登录` → 浏览器 OS 國際服 → 邮箱密码（可能需 Geetest） |
+| 国际服体力 | 登录成功后发 `体力` 或 `mr`（走 `kuro-py`，非国服库街区 API） |
 
 指令详情见插件内 `帮助` 图，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
+
+**国际服说明：** 体力、先约电台、结晶波片等数据由 `kuro-py` 从 Kuro 国际服接口拉取，**并非**国服「库街区便笺」同一套 API。登录成功后应能出图；若只绑定 UID、未 `登录`，或 token 过期，会提示重新登录。周度游历等国际服暂无的字段会显示「国际服暂无数据」。
 
 ---
 
@@ -187,12 +244,15 @@ cd ~/discord_bot && .venv/bin/nb run
 
 | 现象 | 处理 |
 |------|------|
+| `尤诺面板` / `练度统计` 无回复，gscore 只有 `[Receive]` | 安装 `opencc`（见 [§1.1](#11-插件-python-依赖重要)），`gs重启` |
+| 国际服网页登录「登入失敗」 | 安装 `kuro-py`（见 §1.1），`gs重启`；账号需 Geetest 时在页面上完成验证 |
+| `体力` / `mr` 无回复或提示 token 失效 | 确认已 `登录` 国际服账号；安装 `kuro-py` 并 `gs重启` |
 | 私聊/频道无回复，discordbot 有 `【发送】` 但无 `【接收】` | 确认 gscore 在监听 8765；**重启 discordbot** |
 | 发图报错 Snowflake | 运行 `apply_snowflake_patch.py`，重启 discordbot |
 | 按钮「该交互失败」 | 运行 `apply_discord_button_patch.py`，重启 discordbot |
-| 重启 core 后 Discord 无响应 | 同时重启 discordbot |
+| 重启 core 后 Discord 无响应 | `systemctl --user restart discordbot` |
+| VPS 重启后 bot 全挂、网页打不开 | 确认已 `sudo loginctl enable-linger $USER`；`systemctl --user status gscore discordbot` |
 | `pip install -U` 或重建 venv 后问题复发 | 重新运行三个补丁脚本 |
-| `nb` 找不到 | 安装 `nb-cli`；或用 `python bot.py` 启动 |
 
 ---
 
@@ -201,7 +261,7 @@ cd ~/discord_bot && .venv/bin/nb run
 本仓库业务功能建立在社区长期维护的鸣潮插件之上，特别感谢：
 
 - **[CM-Edelweiss/WutheringWavesUID](https://github.com/CM-Edelweiss/WutheringWavesUID)** — 早期插件基础
-- **[MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID)** — 当前主要 upstream 维护
+- **[MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID)** — 当前主要 upstream 维护（本仓库 fork 来源）
 - **[gsuid_core](https://github.com/Genshin-bots/gsuid_core)** 与 **[nonebot-plugin-genshinuid](https://github.com/Genshin-bots/nonebot-plugin-genshinuid)** — 核心与多平台连接器
 - 以及各攻略作者、数据与 OCR 相关开源项目（详见 upstream 历史贡献）
 

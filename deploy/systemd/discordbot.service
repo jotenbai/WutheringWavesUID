@@ -1,0 +1,21 @@
+[Unit]
+Description=Discord bot bridge (nonebot2 + GenshinUID)
+After=network-online.target gscore.service
+Wants=network-online.target
+Requires=gscore.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/admin/discord_bot
+Environment=HOME=/home/admin
+Environment=PATH=/home/admin/discord_bot/.venv/bin:/usr/local/bin:/usr/bin
+# Wait for gscore HTTP/WS to listen before connecting
+ExecStartPre=/bin/sleep 8
+ExecStart=/home/admin/discord_bot/.venv/bin/nb run
+Restart=always
+RestartSec=15
+KillMode=mixed
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

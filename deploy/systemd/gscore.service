@@ -1,0 +1,18 @@
+[Unit]
+Description=gsuid_core (WutheringWavesUID)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/admin/gsuid_core
+Environment=HOME=/home/admin
+Environment=PATH=/home/admin/gsuid_core/.venv/bin:/home/admin/.local/bin:/usr/local/bin:/usr/bin
+ExecStart=/home/admin/gsuid_core/.venv/bin/core --host 0.0.0.0
+Restart=always
+RestartSec=10
+KillMode=mixed
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target
