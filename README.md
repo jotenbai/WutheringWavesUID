@@ -1,12 +1,10 @@
 # WutheringWavesUID for Discord
 
-基于 [gsuid_core](https://github.com/Genshin-bots/gsuid_core) 的鸣潮 Bot 插件，本仓库在 upstream 基础上**侧重国际服 + Discord 桥接部署**（`discord_bot/` 目录）。
+本仓库在 [MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID) 基础上**侧重国际服 + Discord 桥接部署**（`discord_bot/` 目录）。
 
 私聊或 `@机器人` 发送「帮助」「练度统计」等指令，体验可参考 [nahida-examples](https://github.com/gamer-mitsuha/nahida-examples) 一类无前缀用法。
 
-本仓库 fork 自 [echo/WutheringWavesUID](https://github.com/tyql688/WutheringWavesUID)，当前主要 upstream 为 [MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID)。
-
-自用小服：试用机器人或联系维护者可加入 [Discord](https://discord.com/invite/eWnWyGqEXM)。  
+自用小服：试用机器人或联系维护者可加入 [Discord](https://discord.com/invite/eWnWyGqEXM)。Bot 已关闭 Public，不能自行邀请至其他服务器；纯属个人兴趣，仅供小范围使用。
 [服务条款](discord_bot/docs/terms-of-service.md) · [隐私政策](discord_bot/docs/privacy-policy.md)
 
 ## 架构
@@ -19,11 +17,11 @@ Discord
   → WutheringWavesUID（本仓库插件）
 ```
 
-| 组件 | 说明 |
-|------|------|
-| [gsuid_core](https://github.com/Genshin-bots/gsuid_core) | 核心，负责加载插件与 Web 控制台 |
-| `WutheringWavesUID/` | 鸣潮业务逻辑（角色面板、练度、OCR 等） |
-| `discord_bot/` | Discord 桥接、补丁、systemd 模板与法务文档（本 fork 相对上游的额外内容） |
+| 组件                                                     | 说明                                                                     |
+| -------------------------------------------------------- | ------------------------------------------------------------------------ |
+| [gsuid_core](https://github.com/Genshin-bots/gsuid_core) | 核心，负责加载插件与 Web 控制台                                          |
+| `WutheringWavesUID/`                                     | 鸣潮业务逻辑（角色面板、练度、OCR 等）                                   |
+| `discord_bot/`                                           | Discord 桥接、补丁、systemd 模板与法务文档（本 fork 相对上游的额外内容） |
 
 ## 前置要求
 
@@ -66,10 +64,10 @@ gsuid_core 启动时会尝试安装插件 `requirements.txt` 中的依赖，但�
 
 插件根目录 [`requirements.txt`](requirements.txt) 当前包含：
 
-| 包名 | 用途 | 未安装时的典型现象 |
-|------|------|-------------------|
-| `opencc` | OCR 简繁转换（`wutheringwaves_analyzecard`） | `尤诺面板`、`练度统计` 等 regex 指令无 `[命令触发]` |
-| `kuro-py` | 国际服登录与体力等 API（`kuro` 模块） | 网页登录「登入失敗」；`体力` / `mr` 无数据或报错 |
+| 包名      | 用途                                         | 未安装时的典型现象                                  |
+| --------- | -------------------------------------------- | --------------------------------------------------- |
+| `opencc`  | OCR 简繁转换（`wutheringwaves_analyzecard`） | `尤诺面板`、`练度统计` 等 regex 指令无 `[命令触发]` |
+| `kuro-py` | 国际服登录与体力等 API（`kuro` 模块）        | 网页登录「登入失敗」；`体力` / `mr` 无数据或报错    |
 
 在 VPS 上进入 **gsuid_core 的 venv** 手动安装（路径以你的部署为准）：
 
@@ -91,7 +89,6 @@ cd ~/gsuid_core
 
 更新插件：
 
-
 ```bash
 cd ~/gsuid_core/gsuid_core/plugins/WutheringWavesUID
 git pull
@@ -102,7 +99,7 @@ git pull
 
 ## 二、Discord 部署（`discord_bot/`）
 
-VPS 推荐目录：`~/discord_bot`（**单层目录**，不要套 `discord_bot/discord_bot`）。
+VPS 推荐目录：`~/discord_bot`
 
 ### 2.1 Discord Developer Portal
 
@@ -167,11 +164,11 @@ python3.12 -m venv .venv
 
 `nonebot-plugin-genshinuid` 对 Discord 有几处已知问题，补丁脚本会修改 **venv 内已安装的 GenshinUID**：
 
-| 脚本 | 作用 | 典型现象（未打补丁时） |
-|------|------|------------------------|
-| [`apply_snowflake_patch.py`](discord_bot/patches/apply_snowflake_patch.py) | 修复附件 Snowflake 序列化 | `Encoding objects of type Snowflake is unsupported` |
-| [`apply_discord_button_patch.py`](discord_bot/patches/apply_discord_button_patch.py) | 修复帮助页按钮 ACK | 点按钮「该交互失败」 |
-| [`apply_discord_reply_patch.py`](discord_bot/patches/apply_discord_reply_patch.py) | 回复引用原指令，不 @ 用户 | 无灰色引用条；多人同时发指令难区分 |
+| 脚本                                                                                 | 作用                      | 典型现象（未打补丁时）                              |
+| ------------------------------------------------------------------------------------ | ------------------------- | --------------------------------------------------- |
+| [`apply_snowflake_patch.py`](discord_bot/patches/apply_snowflake_patch.py)           | 修复附件 Snowflake 序列化 | `Encoding objects of type Snowflake is unsupported` |
+| [`apply_discord_button_patch.py`](discord_bot/patches/apply_discord_button_patch.py) | 修复帮助页按钮 ACK        | 点按钮「该交互失败」                                |
+| [`apply_discord_reply_patch.py`](discord_bot/patches/apply_discord_reply_patch.py)   | 回复引用原指令，不 @ 用户 | 无灰色引用条；多人同时发指令难区分                  |
 
 打完补丁需 **重启 discordbot**。
 
@@ -226,12 +223,12 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 
 ## 使用
 
-| 场景 | 示例 |
-|------|------|
-| 私聊 | `帮助`、`练度统计`、`绑定<特征码>` |
-| 服务器频道 | `@机器人 帮助` |
-| 国际服数据 | 绑定 UID → 发送官方 DC 卡片图 `分析` → `角色面板` |
-| 国际服登录 | `登录` → 浏览器 OS 國際服 → 邮箱密码（可能需 Geetest） |
+| 场景       | 示例                                                          |
+| ---------- | ------------------------------------------------------------- |
+| 私聊       | `帮助`、`练度统计`、`绑定<特征码>`                            |
+| 服务器频道 | `@机器人 帮助`                                                |
+| 国际服数据 | 绑定 UID → 发送官方 DC 卡片图 `分析` → `角色面板`             |
+| 国际服登录 | `登录` → 浏览器 OS 國際服 → 邮箱密码（可能需 Geetest）        |
 | 国际服体力 | 登录成功后发 `体力` 或 `mr`（走 `kuro-py`，非国服库街区 API） |
 
 指令详情见插件内 `帮助` 图，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
@@ -242,17 +239,17 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 
 ## 常见问题
 
-| 现象 | 处理 |
-|------|------|
-| `尤诺面板` / `练度统计` 无回复，gscore 只有 `[Receive]` | 安装 `opencc`（见 [§1.1](#11-插件-python-依赖重要)），`gs重启` |
-| 国际服网页登录「登入失敗」 | 安装 `kuro-py`（见 §1.1），`gs重启`；账号需 Geetest 时在页面上完成验证 |
-| `体力` / `mr` 无回复或提示 token 失效 | 确认已 `登录` 国际服账号；安装 `kuro-py` 并 `gs重启` |
-| 私聊/频道无回复，discordbot 有 `【发送】` 但无 `【接收】` | 确认 gscore 在监听 8765；**重启 discordbot** |
-| 发图报错 Snowflake | 运行 `apply_snowflake_patch.py`，重启 discordbot |
-| 按钮「该交互失败」 | 运行 `apply_discord_button_patch.py`，重启 discordbot |
-| 重启 core 后 Discord 无响应 | `systemctl --user restart discordbot` |
-| VPS 重启后 bot 全挂、网页打不开 | 确认已 `sudo loginctl enable-linger $USER`；`systemctl --user status gscore discordbot` |
-| `pip install -U` 或重建 venv 后问题复发 | 重新运行三个补丁脚本 |
+| 现象                                                      | 处理                                                                                    |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `尤诺面板` / `练度统计` 无回复，gscore 只有 `[Receive]`   | 安装 `opencc`（见 [§1.1](#11-插件-python-依赖重要)），`gs重启`                          |
+| 国际服网页登录「登入失敗」                                | 安装 `kuro-py`（见 §1.1），`gs重启`；账号需 Geetest 时在页面上完成验证                  |
+| `体力` / `mr` 无回复或提示 token 失效                     | 确认已 `登录` 国际服账号；安装 `kuro-py` 并 `gs重启`                                    |
+| 私聊/频道无回复，discordbot 有 `【发送】` 但无 `【接收】` | 确认 gscore 在监听 8765；**重启 discordbot**                                            |
+| 发图报错 Snowflake                                        | 运行 `apply_snowflake_patch.py`，重启 discordbot                                        |
+| 按钮「该交互失败」                                        | 运行 `apply_discord_button_patch.py`，重启 discordbot                                   |
+| 重启 core 后 Discord 无响应                               | `systemctl --user restart discordbot`                                                   |
+| VPS 重启后 bot 全挂、网页打不开                           | 确认已 `sudo loginctl enable-linger $USER`；`systemctl --user status gscore discordbot` |
+| `pip install -U` 或重建 venv 后问题复发                   | 重新运行三个补丁脚本                                                                    |
 
 ---
 
@@ -260,8 +257,7 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 
 本仓库业务功能建立在社区长期维护的鸣潮插件之上，特别感谢：
 
-- **[CM-Edelweiss/WutheringWavesUID](https://github.com/CM-Edelweiss/WutheringWavesUID)** — 早期插件基础
-- **[MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID)** — 当前主要 upstream 维护（本仓库 fork 来源）
+- **[MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID)** — 唯一 upstream（业务插件主体）
 - **[gsuid_core](https://github.com/Genshin-bots/gsuid_core)** 与 **[nonebot-plugin-genshinuid](https://github.com/Genshin-bots/nonebot-plugin-genshinuid)** — 核心与多平台连接器
 - 以及各攻略作者、数据与 OCR 相关开源项目（详见 upstream 历史贡献）
 
