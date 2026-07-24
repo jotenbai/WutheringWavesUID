@@ -54,7 +54,7 @@
    官方图一般是可直链的 URL（形如 `https://wutheringwaves-dc.kurogames-global.com/back/.../*.jpeg`）。对本机器人发送：
 
    ```text
-   分析 https://wutheringwaves-dc.kurogames-global.com/back/51/51598b195960a7973f77e1fea5527879ae52f1f3.jpeg
+   分析 https://wutheringwaves-dc.kurogames-global.com/back/.../*.jpeg
    ```
 
    即：`分析` + 图片链接。也可以先只发 `分析`，再在提示后的 **30 秒内**补发链接或图片；**在频道里补发时同样需要 @ 机器人**。
@@ -143,7 +143,7 @@
 
 ## 相关链接
 
-- 本仓库：[WutheringWavesUID_for_discord](https://github.com/jotenbai/WutheringWavesUID_for_discord)
+- 本仓库：[WutheringWavesUID_for_discord](https://github.com/jotenbai/WutheringWavesUID)
 - Upstream：[MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID)
 - pcap 教程：[Wuthery Guides](https://wuthery.com/guides)
 - 官方 DC 出卡教程（巴哈）：[DC機器人製作個人角色卡](https://forum.gamer.com.tw/C.php?bsn=74934&snA=8077)

@@ -15,8 +15,8 @@ sv_waves_help = SV("waves帮助")
 sv_waves_change_help = SV("waves替换帮助")
 
 # 国际服新手说明（本 fork 维护，帮助图后附链接）
-GUIDANCE_URL = (
-    "https://github.com/jotenbai/WutheringWavesUID/tree/master/discord_bot/command-guide"
+MANUAL_URL = (
+    "https://github.com/jotenbai/WutheringWavesUID/blob/master/discord_bot/command-guide/manual.md"
 )
 
 
@@ -31,7 +31,7 @@ async def send_help_img(bot: Bot, ev: Event):
         WavesButton("练度统计", "练度统计"),
     ]
     await bot.send_option(await get_help(ev.user_pm), buttons)
-    await bot.send(f"国际服新手说明（指令示例与配图）：\n{GUIDANCE_URL}")
+    await bot.send(f"国际服新手说明（指令示例与配图）：\n{MANUAL_URL}")
 
 
 @sv_waves_change_help.on_fullmatch(("替换帮助", "面板替换帮助"))

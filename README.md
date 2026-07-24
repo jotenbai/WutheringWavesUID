@@ -2,7 +2,7 @@
 
 本仓库在 [MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID) 基础上**侧重国际服 + Discord 桥接部署**（`discord_bot/` 目录）。
 
-**主要目的：** 帮助玩家把握角色培养进度（面板、练度、声骸评分等）。国际服新手可先看 [指令使用说明与示例](discord_bot/command-guide/guidance.md)。
+**主要目的：** 帮助玩家把握角色培养进度（面板、练度、声骸评分等）。国际服新手可先看 [指令使用说明与示例](discord_bot/command-guide/manual.md)。
 
 私聊或 `@机器人` 发送「帮助」「练度统计」等指令，体验可参考 [nahida-examples](https://github.com/gamer-mitsuha/nahida-examples) 一类无前缀用法。
 
@@ -240,7 +240,7 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 | 国际服登录 | `登录` → 浏览器 OS 國際服 → 邮箱密码（可能需 Geetest）        |
 | 国际服体力 | 登录成功后发 `体力` 或 `mr`（走 `kuro-py`，非国服库街区 API） |
 
-指令详情见插件内 `帮助` 图、本仓库 [国际服指令使用说明](discord_bot/command-guide/guidance.md)，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
+指令详情见插件内 `帮助` 图、本仓库 [国际服指令使用说明](discord_bot/command-guide/manual.md)，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
 
 **国际服说明：** 体力、先约电台、结晶波片等数据由 `kuro-py` 从 Kuro 国际服接口拉取，**并非**国服「库街区便笺」同一套 API。登录成功后应能出图；若只绑定 UID、未 `登录`，或 token 过期，会提示重新登录。周度游历等国际服暂无的字段会显示「国际服暂无数据」。
 
