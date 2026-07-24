@@ -2,6 +2,8 @@
 
 本仓库在 [MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID) 基础上**侧重国际服 + Discord 桥接部署**（`discord_bot/` 目录）。
 
+**主要目的：** 帮助玩家把握角色培养进度（面板、练度、声骸评分等）。国际服新手可先看 [指令使用说明与示例](discord_bot/command-guide/guidance.md)。
+
 私聊或 `@机器人` 发送「帮助」「练度统计」等指令，体验可参考 [nahida-examples](https://github.com/gamer-mitsuha/nahida-examples) 一类无前缀用法。
 
 自用小服：试用机器人或联系维护者可加入 [Discord](https://discord.com/invite/eWnWyGqEXM)。Bot 已关闭 Public，不能自行邀请至其他服务器；纯属个人兴趣，仅供小范围使用。
@@ -57,6 +59,13 @@ python3.13 -m uv run core --host 0.0.0.0
 - **OCRspace API Key**（国际服 `分析` / DC 卡片识别需要，见下文）
 
 修改插件配置后需 **重启 gsuid_core**（Discord 发 `gs重启`，或重启 core 进程）。
+
+### 网页控制台小建议（可选）
+
+路径：**管理核心** → **框架配置** → **自动更新**。
+
+- 若已开启「自动更新 Core / 插件」，建议同时开启 **「自动重启 Core」**（默认约 4:40）。前两项只拉代码、不重启进程，不重启则更新不会真正生效。
+- **「自动更新 Core/插件时将内容通知主人」** 可关闭，避免凌晨更新后向主人 Discord 私聊推送日志。
 
 ### 1.1 插件 Python 依赖（重要）
 
@@ -231,9 +240,11 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 | 国际服登录 | `登录` → 浏览器 OS 國際服 → 邮箱密码（可能需 Geetest）        |
 | 国际服体力 | 登录成功后发 `体力` 或 `mr`（走 `kuro-py`，非国服库街区 API） |
 
-指令详情见插件内 `帮助` 图，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
+指令详情见插件内 `帮助` 图、本仓库 [国际服指令使用说明](discord_bot/command-guide/guidance.md)，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
 
 **国际服说明：** 体力、先约电台、结晶波片等数据由 `kuro-py` 从 Kuro 国际服接口拉取，**并非**国服「库街区便笺」同一套 API。登录成功后应能出图；若只绑定 UID、未 `登录`，或 token 过期，会提示重新登录。周度游历等国际服暂无的字段会显示「国际服暂无数据」。
+
+**总排行：** 接入全服总排行所需的 token / URL 为防止滥用**并未公开**，详情请咨询 [MoonShadow1976](https://github.com/MoonShadow1976)。
 
 ---
 
@@ -258,6 +269,7 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 本仓库业务功能建立在社区长期维护的鸣潮插件之上，特别感谢：
 
 - **[MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID)** — 唯一 upstream（业务插件主体）
+- **[Wuthery](https://github.com/Wuthery)**（[spectro-pcap-server](https://github.com/Wuthery/spectro-pcap-server)、[kuro.py](https://github.com/Wuthery/kuro.py)）— 国际服 pcap 解析与登录 API
 - **[gsuid_core](https://github.com/Genshin-bots/gsuid_core)** 与 **[nonebot-plugin-genshinuid](https://github.com/Genshin-bots/nonebot-plugin-genshinuid)** — 核心与多平台连接器
 - 以及各攻略作者、数据与 OCR 相关开源项目（详见 upstream 历史贡献）
 

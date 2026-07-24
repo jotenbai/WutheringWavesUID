@@ -240,6 +240,32 @@ def get_crop_waves_bg(w: int, h: int, bg: str = "bg") -> Image.Image:
     return crop_center_img(cropped_image, w, h)
 
 
+def _normalize_discord_avatar_hash(raw: str) -> str:
+    """去掉 CDN 路径里可能带上的 .png / ?size= 等后缀。"""
+    h = raw.split("?")[0].strip()
+    for ext in (".png", ".jpg", ".jpeg", ".webp", ".gif"):
+        if h.lower().endswith(ext):
+            h = h[: -len(ext)]
+            break
+    return h
+
+
+def _parse_discord_rank_user_id(qid: str) -> tuple[str, str] | None:
+    """排行库中的 Discord user_id 形如 `雪花ID/头像hash`（hash 为十六进制，非纯数字）。"""
+    if "/" not in qid:
+        return None
+    left, right = qid.split("/", 1)
+    right = _normalize_discord_avatar_hash(right)
+    if not left.isdigit() or not right:
+        return None
+    # QQ 官方多为 appid/openid（后段常为纯数字）；Discord hash 含 a-f
+    if right.isdigit():
+        return None
+    if all(c in "0123456789abcdefABCDEF" for c in right):
+        return left, right
+    return None
+
+
 async def sync_non_onebot_user_avatar(ev: Event):
     """从事件中提取头像 avatar_hash 并自动更新数据库中的 hash 映射"""
     avatar_hash = "error"
@@ -250,7 +276,7 @@ async def sync_non_onebot_user_avatar(ev: Event):
             return
         parts = avatar_url.split("/")
         index = parts.index(str(ev.user_id))
-        avatar_hash = parts[index + 1]
+        avatar_hash = _normalize_discord_avatar_hash(parts[index + 1])
     elif ev.bot_id in ["qqgroup", "qq_official"]:
         avatar_hash = ev.bot_self_id
 
@@ -269,24 +295,30 @@ async def get_user_avatar(
     qid = str(qid)
     logger.debug(f"[鸣潮] 获取头像: {qid} {avatar_url} {size}")
     if qid:
-        data = await WavesUserAvatar.select_data(qid)
+        discord_rank = _parse_discord_rank_user_id(qid)
+        lookup_id = discord_rank[0] if discord_rank else qid
+
+        data = await WavesUserAvatar.select_data(lookup_id)
         if data:  # 说明本地有个人数据，没有是排行数据
             if data.bot_id in ["qqgroup", "qq_official"]:
                 appid = data.avatar_hash
-                avatar_url = f"http://q.qlogo.cn/qqapp/{appid}/{qid}/{size}"
+                avatar_url = f"http://q.qlogo.cn/qqapp/{appid}/{lookup_id}/{size}"
             elif data.bot_id in ["discord"]:
-                avatar_hash = data.avatar_hash
-                avatar_url = f"https://cdn.discordapp.com/avatars/{qid}/{avatar_hash}.png?size={size}"
-                # else:
-                #     avatar_url = f"https://cdn.discordapp.com/embed/avatars/0.png?size={size}"
+                avatar_hash = _normalize_discord_avatar_hash(data.avatar_hash or "")
+                if avatar_hash and avatar_hash not in {"", "None", "error"}:
+                    avatar_url = (
+                        f"https://cdn.discordapp.com/avatars/{lookup_id}/{avatar_hash}.png?size={size}"
+                    )
 
         if not avatar_url:  # 尝试获取排行用户数据或非官方bot的qq用户数据
-            if qid.isdigit():
+            if discord_rank:
+                # 必须优先于 QQ qqapp：否则 `雪花/hash` 会被误判成 QQ 官方格式 → 企鹅默认头
+                did, dhash = discord_rank
+                avatar_url = f"https://cdn.discordapp.com/avatars/{did}/{dhash}.png?size={size}"
+            elif qid.isdigit():
                 avatar_url = f"http://q1.qlogo.cn/g?b=qq&nk={qid}&s={size}"
-            elif "/" in qid and qid.split("/")[0].isdigit():  # qq官方bot
+            elif "/" in qid and qid.split("/")[0].isdigit():  # qq官方bot appid/openid
                 avatar_url = f"http://q.qlogo.cn/qqapp/{qid}/{size}"
-            elif "/" in qid and qid.split("/")[1].isdigit():
-                avatar_url = f"https://cdn.discordapp.com/avatars/{qid}.png?size={size}"
 
     if not avatar_url:
         raise ValueError("无法获取用户头像")

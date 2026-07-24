@@ -228,10 +228,10 @@ async def pcap_help(bot: Bot, ev: Event):
     upload_note = "\n".join(
         [
             "【上传方法】:",
-            f"使用命令[{PREFIX}上传pcap]访问网页上传 .pcap 文件  --推荐",
-            "• qq用户请直接发送 .pcap 文件到本群或私聊机器人(qq官方bot暂不支持)",
-            f"• discord用户请使用命令[{PREFIX}解析pcap]并上传 .pcap 文件为附件",
-            "• 其他平台暂未测试",
+            f"• [{PREFIX}上传pcap]：打开网页上传 .pcap（推荐，各平台通用）",
+            f"• [{PREFIX}解析pcap] + 附件：Discord 私聊/频道里把 .pcap 作为消息附件一并发送（不是查询上传状态）",
+            "• qq用户也可直接发送 .pcap 文件到本群或私聊机器人(qq官方bot暂未支持)",
+            f"• 无附件时发[{PREFIX}解析pcap]：仅查看当前 UID 是否已有解析结果",
             "\n",
         ]
     )
