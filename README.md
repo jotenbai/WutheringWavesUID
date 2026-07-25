@@ -52,13 +52,14 @@ cd ~/gsuid_core
 python3.13 -m uv run core --host 0.0.0.0
 ```
 
-在 Web 控制台（默认 `http://<你的主机>:8765/app`）中配置 **WutheringWavesUID**：
+在 Web 控制台（默认 `http://<你的主机>:8765/app`，若已用域名反代则为 `https://core.你的域名/app/`）中配置 **WutheringWavesUID**：
 
 - **禁用强制前缀** → `disable_force_prefix: true`
 - **允许空命令前缀** → `allow_empty_prefix: true`
 - **OCRspace API Key**（国际服 `分析` / DC 卡片识别需要，见下文）
+- **鸣潮登录 url（`WavesLoginUrl`）**（可选）：填公网可访问的站点根，如 `https://core.jotenbai.moe`（不要带末尾 `/`）。留空则机器人会拼 `http://公网IP:8765`，易暴露 IP。配置后 `登录` / `上传pcap` 等链接会使用该域名。
 
-修改插件配置后需 **重启 gsuid_core**（Discord 发 `gs重启`，或重启 core 进程）。
+修改插件配置后需 **重启 gsuid_core**（Discord 发 `core重启`，或 `systemctl --user restart gscore`）。
 
 ### 网页控制台小建议（可选）
 

@@ -3,9 +3,9 @@ from typing import Any
 from gsuid_core.bot import Bot
 from gsuid_core.models import Event
 
-from ..utils.api.requests import waves_api
 from ..utils.button import WavesButton
 from ..utils.database.models import WavesUser
+from ..utils.waves_api import waves_api
 from ..wutheringwaves_config import PREFIX
 
 login_fail_cn = "[鸣潮] 特征码[{}]已登录，但刷新面板失败，请使用【{}每日】检查是否成功登录\n"
