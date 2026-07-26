@@ -696,5 +696,5 @@ discord_bot/data/
 discord_bot/.nb-cli/
 discord_bot/store/
 
-### Local dev notes (never commit)
-note.txt
+### Cursor private (never commit)
+.cursor/
