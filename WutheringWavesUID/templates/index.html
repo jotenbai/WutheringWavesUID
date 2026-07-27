@@ -1,848 +1,976 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WutheringWavesUID 登录</title>
+    <link
+      rel="icon"
+      href="https://web-static.kurobbs.com/resource/prod/icon.ico"
+      type="image/x-icon"
+    />
+    <script src="https://static.geetest.com/v4/gt4.js"></script>
+    <script src="https://apps.bdimg.com/libs/jquery/1.6.4/jquery.min.js"></script>
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: "Microsoft YaHei", sans-serif;
+      }
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WutheringWavesUID 登录</title>
-  <link rel="icon" href="https://web-static.kurobbs.com/resource/prod/icon.ico" type="image/x-icon">
-  <script src="https://static.geetest.com/v4/gt4.js"></script>
-  <script src="https://apps.bdimg.com/libs/jquery/1.6.4/jquery.min.js"></script>
-  <style>
-    body,
-    html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: 'Microsoft YaHei', sans-serif;
-    }
+      body {
+        background-image: url("https://prod-alicdn-community.kurobbs.com/forum/465dcb694966492aba4d4982c47f0e8520240914.jpg");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
 
-    body {
-      background-image: url('https://prod-alicdn-community.kurobbs.com/forum/465dcb694966492aba4d4982c47f0e8520240914.jpg');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image: inherit;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      filter: blur(8px);
-      z-index: -1;
-    }
-
-    .login-container {
-      background-color: rgba(255, 255, 255, 0.2);
-      padding: 2rem;
-      border-radius: 16px;
-      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      width: 320px;
-      transition: all 0.3s ease;
-    }
-
-    .login-container:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.45);
-    }
-
-    .login-header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 2rem;
-      justify-content: space-between;
-    }
-
-    .banner {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      overflow: hidden;
-      border: 3px solid rgba(255, 255, 255, 0.5);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      margin-right: 0.5rem;
-    }
-
-    .banner img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .banner-text {
-      flex: 1;
-      padding-right: 1rem;
-      margin-left: 0.5rem;
-    }
-
-    .welcome-text {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 0.25rem;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-      background: linear-gradient(45deg, #667eea, #764ba2);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .logo-text {
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 0.25rem;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-    }
-
-    .kurobbs-text {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #e6e6e6;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-    }
-
-    .input-group {
-      margin-bottom: 1.5rem;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      color: #fff;
-      font-weight: 500;
-    }
-
-    input[type="tel"],
-    input[type="text"],
-    input[type="email"],
-    input[type="password"] {
-      width: 100%;
-      padding: 0.75rem;
-      border: none;
-      border-radius: 8px;
-      box-sizing: border-box;
-      font-size: 16px;
-      background-color: rgba(255, 255, 255, 0.9);
-      transition: all 0.3s ease;
-    }
-
-    input[type="tel"]:focus,
-    input[type="text"]:focus,
-    input[type="email"]:focus,
-    input[type="password"]:focus {
-      outline: none;
-      box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.6);
-    }
-
-    .verification-group {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .verification-group input {
-      flex-grow: 1;
-    }
-
-    button {
-      width: 100%;
-      padding: 0.75rem;
-      background-color: #4a90e2;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    button:hover {
-      background-color: #357abd;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    button:disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    #getCodeBtn {
-      width: auto;
-      white-space: nowrap;
-      padding: 0.75rem 1rem;
-      display: inline-block;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .modal-content {
-      background-color: #fefefe;
-      margin: 15% auto;
-      padding: 20px;
-      border: 1px solid #888;
-      width: 300px;
-      border-radius: 10px;
-      text-align: center;
-      transform: scale(0.7);
-      transition: transform 0.3s ease;
-    }
-
-    .modal.show {
-      display: block;
-      opacity: 1;
-    }
-
-    .modal.show .modal-content {
-      transform: scale(1);
-    }
-
-    .close {
-      color: #aaa;
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .close:hover,
-    .close:focus {
-      color: #000;
-      text-decoration: none;
-      cursor: pointer;
-    }
-
-    .user-id-display {
-      text-align: right;
-      color: rgba(255, 255, 255, 0.6);
-      font-size: 0.8em;
-      margin-bottom: 10px;
-      transition: opacity 0.3s ease;
-    }
-
-    .user-id-display:hover {
-      opacity: 1;
-    }
-
-    .geetest-container {
-      margin: 15px 0;
-      padding: 15px;
-      background-color: rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .geetest-title {
-      color: white;
-      font-size: 14px;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-
-    #geetestWidget {
-      display: flex;
-      justify-content: center;
-    }
-
-    .modal-content {
-      background-color: #fefefe;
-      margin: 15% auto;
-      padding: 20px;
-      border: 1px solid #888;
-      width: 300px;
-      border-radius: 10px;
-      text-align: center;
-      transform: scale(0.7);
-      transition: transform 0.3s ease, opacity 0.3s ease;
-    }
-
-    .modal.show .modal-content {
-      transform: scale(1);
-      opacity: 1;
-    }
-
-    .countdown {
-      font-size: 0.9em;
-      color: #666;
-      margin-top: 10px;
-    }
-
-    .redirect-button {
-      margin-top: 15px;
-      padding: 10px 20px;
-      background-color: #4a90e2;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .redirect-button:hover {
-      background-color: #357abd;
-    }
-
-    /* 服務器選擇器樣式 */
-    .server-selector {
-      margin-bottom: 1.5rem;
-    }
-
-    .server-tabs {
-      display: flex;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 4px;
-      gap: 4px;
-    }
-
-    .server-tab {
-      flex: 1;
-      padding: 12px 16px;
-      border: none;
-      border-radius: 8px;
-      background: transparent;
-      color: rgba(255, 255, 255, 0.7);
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 14px;
-    }
-
-    .server-tab.active {
-      background: rgba(255, 255, 255, 0.2);
-      color: #fff;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .server-tab:hover:not(.active) {
-      background: rgba(255, 255, 255, 0.1);
-      color: #fff;
-    }
-
-    /* 表單樣式 */
-    .login-form {
-      display: none;
-    }
-
-    .login-form.active {
-      display: block;
-    }
-
-    .form-title {
-      text-align: center;
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 1.5rem;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-    }
-
-
-    /* 國服登入按鈕樣式 */
-    #cnLoginBtn {
-      background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-    }
-
-    /* 國際服登入按鈕樣式 */
-    #globalLoginBtn {
-      background: linear-gradient(45deg, #667eea, #764ba2);
-    }
-
-    #cnLoginBtn:hover {
-      box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
-    }
-
-    #globalLoginBtn:hover {
-      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-    }
-
-    /* 響應式設計 */
-    @media (max-width: 480px) {
-
-      .server-tab,
-      .method-tab {
-        font-size: 11px;
-        padding: 8px 6px;
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: inherit;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        filter: blur(8px);
+        z-index: -1;
       }
 
       .login-container {
-        width: 90%;
-        padding: 1.5rem;
+        background-color: rgba(255, 255, 255, 0.2);
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        width: 320px;
+        transition: all 0.3s ease;
       }
-    }
-  </style>
-</head>
 
-<body>
-  <div class="login-container">
-    <div class="login-header">
-      <div class="banner-text">
-        <div class="welcome-text">欢迎登录</div>
-        <div class="logo-text">WutheringWavesUID</div>
-        <div class="kurobbs-text">鸣潮UID</div>
-      </div>
-      <div class="banner">
-        <img src="https://web-static.kurobbs.com/adminConfig/27/role_icon/1727419309663.png" alt="Banner">
-      </div>
-    </div>
+      .login-container:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.45);
+      }
 
-    <!-- 服務器選擇 -->
-    <div class="server-selector">
-      <div class="server-tabs">
-        <button class="server-tab active" data-server="cn">🇨🇳 國服</button>
-        <button class="server-tab" data-server="global">🌍 國際服</button>
-      </div>
-    </div>
-    <!-- 國服登入表單 -->
-    <form id="cnLoginForm" class="login-form active">
-      <div class="form-title">cn 國服登入</div>
-      <div class="input-group">
-        <input type="tel" id="phone" name="phone" required pattern="[0-9]{11}" placeholder="请输入11位手机号">
-      </div>
-      <div class="input-group">
-        <div class="verification-group">
-          <input type="text" id="verificationCode" name="verificationCode" required placeholder="请输入验证码">
-          <button type="button" id="getCodeBtn" disabled>获取验证码</button>
+      .login-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+        justify-content: space-between;
+      }
+
+      .banner {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 3px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin-right: 0.5rem;
+      }
+
+      .banner img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .banner-text {
+        flex: 1;
+        padding-right: 1rem;
+        margin-left: 0.5rem;
+      }
+
+      .welcome-text {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 0.25rem;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .logo-text {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 0.25rem;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+      }
+
+      .kurobbs-text {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #e6e6e6;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+      }
+
+      .input-group {
+        margin-bottom: 1.5rem;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #fff;
+        font-weight: 500;
+      }
+
+      input[type="tel"],
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
+        width: 100%;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 8px;
+        box-sizing: border-box;
+        font-size: 16px;
+        background-color: rgba(255, 255, 255, 0.9);
+        transition: all 0.3s ease;
+      }
+
+      input[type="tel"]:focus,
+      input[type="text"]:focus,
+      input[type="email"]:focus,
+      input[type="password"]:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.6);
+      }
+
+      .verification-group {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .verification-group input {
+        flex-grow: 1;
+      }
+
+      button {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      button:hover {
+        background-color: #357abd;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      #getCodeBtn {
+        width: auto;
+        white-space: nowrap;
+        padding: 0.75rem 1rem;
+        display: inline-block;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 300px;
+        border-radius: 10px;
+        text-align: center;
+        transform: scale(0.7);
+        transition: transform 0.3s ease;
+      }
+
+      .modal.show {
+        display: block;
+        opacity: 1;
+      }
+
+      .modal.show .modal-content {
+        transform: scale(1);
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .close:hover,
+      .close:focus {
+        color: #000;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .user-id-display {
+        text-align: right;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.8em;
+        margin-bottom: 10px;
+        transition: opacity 0.3s ease;
+      }
+
+      .user-id-display:hover {
+        opacity: 1;
+      }
+
+      .geetest-container {
+        margin: 15px 0;
+        padding: 15px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .geetest-title {
+        color: white;
+        font-size: 14px;
+        margin-bottom: 10px;
+        text-align: center;
+      }
+
+      #geetestWidget {
+        display: flex;
+        justify-content: center;
+      }
+
+      .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 300px;
+        border-radius: 10px;
+        text-align: center;
+        transform: scale(0.7);
+        transition:
+          transform 0.3s ease,
+          opacity 0.3s ease;
+      }
+
+      .modal.show .modal-content {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      .countdown {
+        font-size: 0.9em;
+        color: #666;
+        margin-top: 10px;
+      }
+
+      .redirect-button {
+        margin-top: 15px;
+        padding: 10px 20px;
+        background-color: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .redirect-button:hover {
+        background-color: #357abd;
+      }
+
+      /* 服务器选择器样式 */
+      .server-selector {
+        margin-bottom: 1.5rem;
+      }
+
+      .server-tabs {
+        display: flex;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 4px;
+        gap: 4px;
+      }
+
+      .server-tab {
+        flex: 1;
+        padding: 12px 16px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 14px;
+      }
+
+      .server-tab.active {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .server-tab:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+      }
+
+      .server-desc {
+        display: none;
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.15);
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 12px;
+        line-height: 1.55;
+        text-align: left;
+      }
+
+      .server-desc.active {
+        display: block;
+      }
+
+      .server-desc-title {
+        margin: 0;
+        font-weight: 600;
+        color: #fff;
+      }
+
+      /* 表单样式 */
+      .login-form {
+        display: none;
+      }
+
+      .login-form.active {
+        display: block;
+      }
+
+      .form-title {
+        text-align: center;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 1.5rem;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+      }
+
+      /* 国服登录按钮样式 */
+      #cnLoginBtn {
+        background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+      }
+
+      /* 国际服登录按钮样式 */
+      #globalLoginBtn {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+      }
+
+      #cnLoginBtn:hover {
+        box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+      }
+
+      #globalLoginBtn:hover {
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+      }
+
+      /* 响应式设计 */
+      @media (max-width: 480px) {
+        .server-tab,
+        .method-tab {
+          font-size: 11px;
+          padding: 8px 6px;
+        }
+
+        .login-container {
+          width: 90%;
+          padding: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="login-container">
+      <div class="login-header">
+        <div class="banner-text">
+          <div class="welcome-text">欢迎登录</div>
+          <div class="logo-text">WutheringWavesUID</div>
+          <div class="kurobbs-text">鸣潮UID</div>
+        </div>
+        <div class="banner">
+          <img
+            src="https://web-static.kurobbs.com/adminConfig/27/role_icon/1727419309663.png"
+            alt="Banner"
+          />
         </div>
       </div>
-      <div id="userIdDisplay" class="user-id-display">当前识别码: {{ userId }}</div>
-      <button type="submit" id="cnLoginBtn">🇨🇳 國服登入</button>
-    </form>
 
-    <!-- 國際服登入表單 -->
-    <form id="globalLoginForm" class="login-form">
-      <div class="form-title">os 國際服登入</div>
-
-      <div class="input-group">
-        <input type="email" id="globalEmail" name="email" required placeholder="请输入邮箱地址">
+      <!-- 服务器选择 -->
+      <div class="server-selector">
+        <div class="server-tabs">
+          <button class="server-tab" data-server="cn">🇨🇳 国服</button>
+          <button class="server-tab active" data-server="global">
+            🌍 国际服
+          </button>
+        </div>
+        <div id="cnServerDesc" class="server-desc">
+          <p class="server-desc-title">国服（指中国大陆，包含官服和渠道服）</p>
+        </div>
+        <div id="globalServerDesc" class="server-desc active">
+          <p class="server-desc-title">
+            国际服（指中国大陆以外的区域，包含美服、亚服、欧服、港澳台服、东南亚服）
+          </p>
+        </div>
       </div>
-      <div class="input-group">
-        <input type="password" id="globalPassword" name="password" required placeholder="请输入密码">
-      </div>
+      <!-- 国服登录表单 -->
+      <form id="cnLoginForm" class="login-form">
+        <div class="form-title">国服登录</div>
+        <div class="input-group">
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            required
+            pattern="[0-9]{11}"
+            placeholder="请输入11位手机号"
+          />
+        </div>
+        <div class="input-group">
+          <div class="verification-group">
+            <input
+              type="text"
+              id="verificationCode"
+              name="verificationCode"
+              required
+              placeholder="请输入验证码"
+            />
+            <button type="button" id="getCodeBtn" disabled>获取验证码</button>
+          </div>
+        </div>
+        <div id="userIdDisplay" class="user-id-display">
+          当前识别码: {{ userId }}
+        </div>
+        <button type="submit" id="cnLoginBtn">国服登录</button>
+      </form>
 
-      <!-- Geetest 驗證區域 -->
-      <div id="geetestContainer" class="geetest-container" style="display: none;">
-        <div class="geetest-title">請完成安全驗證</div>
-        <div id="geetestWidget"></div>
-      </div>
+      <!-- 国际服登录表单 -->
+      <form id="globalLoginForm" class="login-form active">
+        <div class="form-title">国际服登录</div>
 
-      <div id="userIdDisplay" class="user-id-display">当前识别码: {{ userId }}</div>
-      <button type="submit" id="globalLoginBtn">os 國際服登入</button>
-    </form>
-  </div>
+        <div class="input-group">
+          <input
+            type="email"
+            id="globalEmail"
+            name="email"
+            required
+            placeholder="请输入邮箱地址"
+          />
+        </div>
+        <div class="input-group">
+          <input
+            type="password"
+            id="globalPassword"
+            name="password"
+            required
+            placeholder="请输入密码"
+          />
+        </div>
 
-  <div id="successModal" class="modal">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <h2>🎉 登录成功</h2>
-      <p>欢迎回来！请回到 Discord 继续使用机器人。</p>
-      <p class="countdown">可以关闭本页面</p>
-      <button class="redirect-button">关闭</button>
+        <!-- Geetest 验证区域 -->
+        <div
+          id="geetestContainer"
+          class="geetest-container"
+          style="display: none"
+        >
+          <div class="geetest-title">请完成安全验证</div>
+          <div id="geetestWidget"></div>
+        </div>
+
+        <div id="userIdDisplay" class="user-id-display">
+          当前识别码: {{ userId }}
+        </div>
+        <button type="submit" id="globalLoginBtn">国际服登录</button>
+      </form>
     </div>
-  </div>
 
-  <script>
-    // 國服元素
-    const phoneInput = document.getElementById('phone');
-    const verificationCodeInput = document.getElementById('verificationCode');
-    const getCodeBtn = document.getElementById('getCodeBtn');
-    const cnLoginBtn = document.getElementById('cnLoginBtn');
-    const cnLoginForm = document.getElementById('cnLoginForm');
+    <div id="successModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>🎉 登录成功</h2>
+        <p>欢迎回来！请回到 Discord 继续使用机器人。</p>
+        <p class="countdown">可以关闭本页面</p>
+        <button class="redirect-button">关闭</button>
+      </div>
+    </div>
 
-    // 國際服元素
-    const globalLoginForm = document.getElementById('globalLoginForm');
-    const globalEmail = document.getElementById('globalEmail');
-    const globalPassword = document.getElementById('globalPassword');
-    const improvedEmail = document.getElementById('improvedEmail');
-    const improvedPassword = document.getElementById('improvedPassword');
-    const globalPhone = document.getElementById('globalPhone');
-    const globalSmsCode = document.getElementById('globalSmsCode');
-    const getGlobalSmsBtn = document.getElementById('getGlobalSmsBtn');
+    <script>
+      // 国服元素
+      const phoneInput = document.getElementById("phone");
+      const verificationCodeInput = document.getElementById("verificationCode");
+      const getCodeBtn = document.getElementById("getCodeBtn");
+      const cnLoginBtn = document.getElementById("cnLoginBtn");
+      const cnLoginForm = document.getElementById("cnLoginForm");
 
-    // 通用元素
-    const modal = document.getElementById('successModal');
-    const closeBtn = modal.querySelector('.close');
+      // 国际服元素
+      const globalLoginForm = document.getElementById("globalLoginForm");
+      const globalEmail = document.getElementById("globalEmail");
+      const globalPassword = document.getElementById("globalPassword");
+      const improvedEmail = document.getElementById("improvedEmail");
+      const improvedPassword = document.getElementById("improvedPassword");
+      const globalPhone = document.getElementById("globalPhone");
+      const globalSmsCode = document.getElementById("globalSmsCode");
+      const getGlobalSmsBtn = document.getElementById("getGlobalSmsBtn");
 
-    // 當前選中的服務器
-    let currentServer = 'cn';
+      // 通用元素
+      const modal = document.getElementById("successModal");
+      const closeBtn = modal.querySelector(".close");
 
-    // 重試計數器
-    let retryCount = 0;
-    const maxRetries = 2;
+      // 当前选中的服务器
+      let currentServer = "global";
 
-    // 服務器切換功能
-    document.querySelectorAll('.server-tab').forEach(tab => {
-      tab.addEventListener('click', function () {
-        // 移除所有活動狀態
-        document.querySelectorAll('.server-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.login-form').forEach(f => f.classList.remove('active'));
+      // 重试计数器
+      let retryCount = 0;
+      const maxRetries = 2;
 
-        // 添加活動狀態
-        this.classList.add('active');
-        currentServer = this.dataset.server;
+      const globalServerDesc = document.getElementById("globalServerDesc");
+      const cnServerDesc = document.getElementById("cnServerDesc");
 
-        if (currentServer === 'cn') {
-          cnLoginForm.classList.add('active');
-        } else {
-          globalLoginForm.classList.add('active');
-        }
-      });
-    });
+      // 服务器切换功能
+      document.querySelectorAll(".server-tab").forEach((tab) => {
+        tab.addEventListener("click", function () {
+          // 移除所有活动状态
+          document
+            .querySelectorAll(".server-tab")
+            .forEach((t) => t.classList.remove("active"));
+          document
+            .querySelectorAll(".login-form")
+            .forEach((f) => f.classList.remove("active"));
+          document
+            .querySelectorAll(".server-desc")
+            .forEach((d) => d.classList.remove("active"));
 
-    // 國際服輸入驗證
-    globalEmail.addEventListener('input', function () {
-      globalLoginBtn.disabled = this.value === "" || globalPassword.value === "";
-    });
+          // 添加活动状态
+          this.classList.add("active");
+          currentServer = this.dataset.server;
 
-    globalPassword.addEventListener('input', function () {
-      globalLoginBtn.disabled = this.value === "" || globalEmail.value === "";
-    });
-
-    // 國服輸入驗證
-    phoneInput.addEventListener('input', function () {
-      getCodeBtn.disabled = this.value.length !== 11;
-      cnLoginBtn.disabled = this.value.length !== 11 || verificationCodeInput.value === "";
-    });
-
-    verificationCodeInput.addEventListener('input', function () {
-      cnLoginBtn.disabled = this.value === "" || phoneInput.value.length !== 11;
-    });
-
-
-    const headers = {
-      "devcode": generateRandomString(),
-      "source": "h5",
-    };
-
-    const captchaId = "ec4aa4174277d822d73f2442a165a2cd";
-    const product = "bind";
-
-    initGeetest4({
-      captchaId: captchaId,
-      product: product,
-    }, function (captcha) {
-      captcha.onReady(function () {
-      }).onSuccess(function () {
-        var result = captcha.getValidate();
-        if (!result) {
-          return alert('请完成验证');
-        }
-        result.captcha_id = captchaId
-        $.ajax({
-          url: 'https://api.kurobbs.com/user/getSmsCodeForH5',
-          type: 'POST', // 通常发送数据使用 POST
-          data: {"mobile": phoneInput.value, "geeTestData": JSON.stringify(result)},
-          headers: headers,
-          success: res => alert(res.success ? '验证码已发送' : '验证码发送失败 : ' + res.msg),
-          error: () => alert('请求出错，请检查网络连接')
-        });
-      }).onError(function () {
-        alert('请求出错，请检查网络连接');
-      })
-
-      getCodeBtn.onclick = function () {
-        this.disabled = true;
-        let countdown = 60;
-        const originalText = this.textContent;
-
-        captcha.showBox();
-
-        const timer = setInterval(() => {
-          this.textContent = `${countdown}秒后重试`;
-          countdown--;
-          if (countdown < 0) {
-            clearInterval(timer);
-            this.textContent = originalText;
-            this.disabled = false;
-            captcha.hideBox();
+          if (currentServer === "cn") {
+            cnLoginForm.classList.add("active");
+            cnServerDesc.classList.add("active");
+          } else {
+            globalLoginForm.classList.add("active");
+            globalServerDesc.classList.add("active");
           }
-        }, 1000);
-      }
-    });
-
-    // 國服登入
-    cnLoginForm.addEventListener('submit', function (e) {
-      const data = {
-        mobile: phoneInput.value,
-        code: verificationCodeInput.value,
-        auth: "{{ auth }}"
-      }
-      e.preventDefault();
-      $.ajax({
-        url: '{{ server_url }}/waves/login',
-        type: 'POST',
-        data: JSON.stringify(data),
-        contentType: 'application/json',
-        success: res => res.success ? showSuccessModal() : alert('登录失败' + (res.msg ? res.msg : '，请重试')),
-        error: () => alert('登录失败，请重试')
+        });
       });
-    });
 
-    // 國際服登入
-    globalLoginForm.addEventListener('submit', function (e) {
-      e.preventDefault();
+      // 国际服输入验证
+      globalEmail.addEventListener("input", function () {
+        globalLoginBtn.disabled =
+          this.value === "" || globalPassword.value === "";
+      });
 
-      const email = globalEmail.value;
-      const password = globalPassword.value;
+      globalPassword.addEventListener("input", function () {
+        globalLoginBtn.disabled = this.value === "" || globalEmail.value === "";
+      });
 
-      if (!email || !password) {
-        alert('請填寫郵箱和密碼');
-        return;
-      }
+      // 国服输入验证
+      phoneInput.addEventListener("input", function () {
+        getCodeBtn.disabled = this.value.length !== 11;
+        cnLoginBtn.disabled =
+          this.value.length !== 11 || verificationCodeInput.value === "";
+      });
 
-      // 檢查是否已經有 Geetest 驗證數據
-      const geetestData = window.geetestResult;
+      verificationCodeInput.addEventListener("input", function () {
+        cnLoginBtn.disabled =
+          this.value === "" || phoneInput.value.length !== 11;
+      });
 
-      // 調用國際服登入 API
-      const requestData = {
-        email: email,
-        password: password,
-        auth: '{{ auth }}',
-        geetest_data: geetestData
+      const headers = {
+        devcode: generateRandomString(),
+        source: "h5",
       };
 
-      console.log('發送登入請求:', requestData);
-      console.log('Geetest 數據:', geetestData);
-      console.log('服務器 URL:', '{{ server_url }}');
+      const captchaId = "ec4aa4174277d822d73f2442a165a2cd";
+      const product = "bind";
 
-      fetch('{{ server_url }}/waves/international/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      initGeetest4(
+        {
+          captchaId: captchaId,
+          product: product,
         },
-        body: JSON.stringify(requestData)
-      })
-        .then(response => {
-          console.log('響應狀態:', response.status);
-          return response.json();
-        })
-        .then(data => {
-          console.log('響應數據:', data);
-          // 保存響應數據供模態框使用
-          window.lastResponse = data;
+        function (captcha) {
+          captcha
+            .onReady(function () {})
+            .onSuccess(function () {
+              var result = captcha.getValidate();
+              if (!result) {
+                return alert("请完成验证");
+              }
+              result.captcha_id = captchaId;
+              $.ajax({
+                url: "https://api.kurobbs.com/user/getSmsCodeForH5",
+                type: "POST", // 通常发送数据使用 POST
+                data: {
+                  mobile: phoneInput.value,
+                  geeTestData: JSON.stringify(result),
+                },
+                headers: headers,
+                success: (res) =>
+                  alert(
+                    res.success
+                      ? "验证码已发送"
+                      : "验证码发送失败 : " + res.msg,
+                  ),
+                error: () => alert("请求出错，请检查网络连接"),
+              });
+            })
+            .onError(function () {
+              alert("请求出错，请检查网络连接");
+            });
 
-          if (data.success) {
-            retryCount = 0; // 重置重試計數器
-            showSuccessModal();
-          } else if (data.need_verification) {
-            // 需要 Geetest 驗證
-            console.log('需要進行 Geetest 驗證');
-            if (retryCount < maxRetries) {
-              retryCount++;
-              console.log(`第 ${retryCount} 次重試`);
-              showGeetestVerification();
-            } else {
-              console.error('重試次數已達上限');
-              alert('驗證失敗次數過多，請重新載入頁面後再試');
-              retryCount = 0; // 重置計數器
-            }
-          } else {
-            console.error('登入失敗:', data.msg);
-            // 檢查是否為 Geetest 驗證失敗
-            if (data.msg && (data.msg.includes('Geetest') || data.msg.includes('驗證') || data.msg.includes('校验码'))) {
-              console.log('檢測到 Geetest 驗證失敗，嘗試重新驗證');
+          getCodeBtn.onclick = function () {
+            this.disabled = true;
+            let countdown = 60;
+            const originalText = this.textContent;
+
+            captcha.showBox();
+
+            const timer = setInterval(() => {
+              this.textContent = `${countdown}秒后重试`;
+              countdown--;
+              if (countdown < 0) {
+                clearInterval(timer);
+                this.textContent = originalText;
+                this.disabled = false;
+                captcha.hideBox();
+              }
+            }, 1000);
+          };
+        },
+      );
+
+      // 国服登录
+      cnLoginForm.addEventListener("submit", function (e) {
+        const data = {
+          mobile: phoneInput.value,
+          code: verificationCodeInput.value,
+          auth: "{{ auth }}",
+        };
+        e.preventDefault();
+        $.ajax({
+          url: "{{ server_url }}/waves/login",
+          type: "POST",
+          data: JSON.stringify(data),
+          contentType: "application/json",
+          success: (res) =>
+            res.success
+              ? showSuccessModal()
+              : alert("登录失败" + (res.msg ? res.msg : "，请重试")),
+          error: () => alert("登录失败，请重试"),
+        });
+      });
+
+      // 国际服登录
+      globalLoginForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const email = globalEmail.value;
+        const password = globalPassword.value;
+
+        if (!email || !password) {
+          alert("请填写邮箱和密码");
+          return;
+        }
+
+        // 检查是否已经有 Geetest 验证数据
+        const geetestData = window.geetestResult;
+
+        // 调用国际服登录 API
+        const requestData = {
+          email: email,
+          password: password,
+          auth: "{{ auth }}",
+          geetest_data: geetestData,
+        };
+
+        console.log("发送登录请求:", requestData);
+        console.log("Geetest 数据:", geetestData);
+        console.log("服务器 URL:", "{{ server_url }}");
+
+        fetch("{{ server_url }}/waves/international/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+        })
+          .then((response) => {
+            console.log("响应状态:", response.status);
+            return response.json();
+          })
+          .then((data) => {
+            console.log("响应数据:", data);
+            // 保存响应数据供模态框使用
+            window.lastResponse = data;
+
+            if (data.success) {
+              retryCount = 0; // 重置重试计数器
+              showSuccessModal();
+            } else if (data.need_verification) {
+              // 需要 Geetest 验证
+              console.log("需要进行 Geetest 验证");
               if (retryCount < maxRetries) {
                 retryCount++;
-                console.log(`第 ${retryCount} 次重試（Geetest 驗證失敗）`);
+                console.log(`第 ${retryCount} 次重试`);
                 showGeetestVerification();
               } else {
-                console.error('重試次數已達上限');
-                alert('驗證失敗次數過多，請重新載入頁面後再試');
-                retryCount = 0; // 重置計數器
+                console.error("重试次数已达上限");
+                alert("验证失败次数过多，请重新加载页面后再试");
+                retryCount = 0; // 重置计数器
               }
             } else {
-              alert('登入失敗: ' + (data.msg || '請重試'));
-              retryCount = 0; // 重置計數器
-            }
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('登入失敗，請重試');
-      });
-    });
-
-    // 顯示 Geetest 驗證
-    function showGeetestVerification() {
-      const geetestContainer = document.getElementById('geetestContainer');
-      geetestContainer.style.display = 'block';
-
-      // 清除之前的驗證結果
-      window.geetestResult = null;
-
-      // 初始化 Geetest
-      // 使用遊戲登入的 CaptchaId，而不是網站登入的
-      initGeetest4({
-        captchaId: "1f4565ff7acc97b1a2fc97b921743aa4", // CaptchaId.GAME
-        product: "bind",
-        language: "zh-Hant",
-      }, function (captcha) {
-        captcha.onReady(function () {
-          captcha.showCaptcha();
-        });
-
-        captcha.onSuccess(function () {
-          // 保存驗證結果
-          const validateData = captcha.getValidate();
-          console.log('Geetest 原始數據:', validateData);
-
-          // 檢查原始數據的字段
-          console.log('lot_number:', validateData.lot_number);
-          console.log('pass_token:', validateData.pass_token);
-          console.log('gen_time:', validateData.gen_time);
-          console.log('captcha_output:', validateData.captcha_output);
-
-          // 驗證必要字段
-          if (!validateData.lot_number || !validateData.pass_token || !validateData.gen_time) {
-            console.error('Geetest 數據不完整:', validateData);
-            alert('驗證數據不完整，請重新驗證');
-            captcha.reset(); // 重置驗證
-            return;
-          }
-
-          // 檢查時間戳是否合理
-          let genTime = validateData.gen_time || "";
-          const currentTime = Math.floor(Date.now() / 1000);
-
-          if (genTime) {
-            try {
-              const genTimeInt = parseInt(genTime);
-              if (genTimeInt > currentTime + 300) { // 如果時間戳超過當前時間5分鐘
-                console.warn(`Geetest 時間戳異常: ${genTime}, 當前時間: ${currentTime}`);
-                genTime = currentTime.toString();
-                console.info(`已修正時間戳為: ${genTime}`);
+              console.error("登录失败:", data.msg);
+              // 检查是否为 Geetest 验证失败
+              if (
+                data.msg &&
+                (data.msg.includes("Geetest") ||
+                  data.msg.includes("验证") ||
+                  data.msg.includes("校验码"))
+              ) {
+                console.log("检测到 Geetest 验证失败，尝试重新验证");
+                if (retryCount < maxRetries) {
+                  retryCount++;
+                  console.log(`第 ${retryCount} 次重试（Geetest 验证失败）`);
+                  showGeetestVerification();
+                } else {
+                  console.error("重试次数已达上限");
+                  alert("验证失败次数过多，请重新加载页面后再试");
+                  retryCount = 0; // 重置计数器
+                }
+              } else {
+                alert("登录失败: " + (data.msg || "请重试"));
+                retryCount = 0; // 重置计数器
               }
-            } catch (e) {
-              console.warn("Geetest 時間戳格式錯誤，使用當前時間");
-              genTime = currentTime.toString();
             }
-          } else {
-            genTime = currentTime.toString();
-          }
-
-          // 轉換為 MMTResult 格式（匹配 kuro.py 的最新要求）
-          // 使用遊戲登入的 CaptchaId，而不是網站登入的
-          const mmtResult = {
-            captcha_id: "1f4565ff7acc97b1a2fc97b921743aa4", // CaptchaId.GAME
-            lot_number: validateData.lot_number || "",
-            pass_token: validateData.pass_token || "",
-            gen_time: genTime,
-            captcha_output: validateData.captcha_output || ""
-          };
-
-          // 添加調試信息
-          console.log('Geetest 驗證數據檢查:');
-          console.log('- lot_number:', mmtResult.lot_number ? '存在' : '缺失');
-          console.log('- pass_token:', mmtResult.pass_token ? '存在' : '缺失');
-          console.log('- gen_time:', mmtResult.gen_time);
-          console.log('- captcha_output:', mmtResult.captcha_output ? '存在' : '缺失');
-          console.log('- 時間戳差異:', Math.floor(Date.now() / 1000) - parseInt(genTime), '秒');
-
-          window.geetestResult = JSON.stringify(mmtResult);
-          console.log('Geetest 轉換後數據:', window.geetestResult);
-
-          // 隱藏驗證界面
-          geetestContainer.style.display = 'none';
-
-          // 自動重新提交登入
-          globalLoginForm.dispatchEvent(new Event('submit'));
-        });
-
-        captcha.onError(function () {
-          console.error('Geetest 驗證失敗');
-          alert('驗證失敗，請重試');
-        });
-
-        captcha.onClose(function () {
-          console.log('Geetest 驗證被關閉');
-          // 可以選擇是否隱藏驗證界面
-        });
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("登录失败，请重试");
+          });
       });
-    }
 
+      // 显示 Geetest 验证
+      function showGeetestVerification() {
+        const geetestContainer = document.getElementById("geetestContainer");
+        geetestContainer.style.display = "block";
 
+        // 清除之前的验证結果
+        window.geetestResult = null;
 
-    function showSuccessModal() {
-      const modal = document.getElementById('successModal');
-      const redirectButton = modal.querySelector('.redirect-button');
+        // 初始化 Geetest
+        // 使用游戏登录的 CaptchaId，而不是网站登录的
+        initGeetest4(
+          {
+            captchaId: "1f4565ff7acc97b1a2fc97b921743aa4", // CaptchaId.GAME
+            product: "bind",
+            language: "zh-Hans",
+          },
+          function (captcha) {
+            captcha.onReady(function () {
+              captcha.showCaptcha();
+            });
 
-      modal.classList.add('show');
-      setTimeout(() => {
-        modal.querySelector('.modal-content').style.transform = 'scale(1)';
-        modal.querySelector('.modal-content').style.opacity = '1';
-      }, 10);
+            captcha.onSuccess(function () {
+              // 保存验证結果
+              const validateData = captcha.getValidate();
+              console.log("Geetest 原始数据:", validateData);
 
-      const dismiss = () => {
-        modal.querySelector('.modal-content').style.transform = 'scale(0.7)';
-        modal.querySelector('.modal-content').style.opacity = '0';
-        setTimeout(() => modal.classList.remove('show'), 300);
-      };
+              // 检查原始数据的字段
+              console.log("lot_number:", validateData.lot_number);
+              console.log("pass_token:", validateData.pass_token);
+              console.log("gen_time:", validateData.gen_time);
+              console.log("captcha_output:", validateData.captcha_output);
 
-      redirectButton.addEventListener('click', dismiss);
-      modal.querySelector('.close').addEventListener('click', dismiss);
-    }
+              // 验证必要字段
+              if (
+                !validateData.lot_number ||
+                !validateData.pass_token ||
+                !validateData.gen_time
+              ) {
+                console.error("Geetest 数据不完整:", validateData);
+                alert("验证数据不完整，请重新验证");
+                captcha.reset(); // 重置验证
+                return;
+              }
 
-    closeBtn.addEventListener('click', closeModal);
+              // 检查时间戳是否合理
+              let genTime = validateData.gen_time || "";
+              const currentTime = Math.floor(Date.now() / 1000);
 
-    function closeModal() {
-      modal.querySelector('.modal-content').style.transform = 'scale(0.7)';
-      setTimeout(() => {
-        modal.classList.remove('show');
-      }, 300);
-    }
+              if (genTime) {
+                try {
+                  const genTimeInt = parseInt(genTime);
+                  if (genTimeInt > currentTime + 300) {
+                    // 如果时间戳超过当前时间5分钟
+                    console.warn(
+                      `Geetest 时间戳异常: ${genTime}, 当前时间: ${currentTime}`,
+                    );
+                    genTime = currentTime.toString();
+                    console.info(`已修正时间戳为: ${genTime}`);
+                  }
+                } catch (e) {
+                  console.warn("Geetest 时间戳格式错误，使用当前时间");
+                  genTime = currentTime.toString();
+                }
+              } else {
+                genTime = currentTime.toString();
+              }
 
-    window.addEventListener('click', function (event) {
-      if (event.target === modal) {
-        closeModal();
+              // 转换为 MMTResult 格式（匹配 kuro.py 的最新要求）
+              // 使用游戏登录的 CaptchaId，而不是网站登录的
+              const mmtResult = {
+                captcha_id: "1f4565ff7acc97b1a2fc97b921743aa4", // CaptchaId.GAME
+                lot_number: validateData.lot_number || "",
+                pass_token: validateData.pass_token || "",
+                gen_time: genTime,
+                captcha_output: validateData.captcha_output || "",
+              };
+
+              // 添加调试信息
+              console.log("Geetest 验证数据检查:");
+              console.log(
+                "- lot_number:",
+                mmtResult.lot_number ? "存在" : "缺失",
+              );
+              console.log(
+                "- pass_token:",
+                mmtResult.pass_token ? "存在" : "缺失",
+              );
+              console.log("- gen_time:", mmtResult.gen_time);
+              console.log(
+                "- captcha_output:",
+                mmtResult.captcha_output ? "存在" : "缺失",
+              );
+              console.log(
+                "- 时间戳差异:",
+                Math.floor(Date.now() / 1000) - parseInt(genTime),
+                "秒",
+              );
+
+              window.geetestResult = JSON.stringify(mmtResult);
+              console.log("Geetest 转换后数据:", window.geetestResult);
+
+              // 隐藏验证界面
+              geetestContainer.style.display = "none";
+
+              // 自动重新提交登录
+              globalLoginForm.dispatchEvent(new Event("submit"));
+            });
+
+            captcha.onError(function () {
+              console.error("Geetest 验证失败");
+              alert("验证失败，请重试");
+            });
+
+            captcha.onClose(function () {
+              console.log("Geetest 验证被关闭");
+              // 可以选择是否隐藏验证界面
+            });
+          },
+        );
       }
-    });
 
-    function loadBackgroundImage() {
-      const img = new Image();
-      img.onload = function () {
-        document.body.style.backgroundImage = `url(${img.src})`;
-        document.body.classList.add('bg-loaded');
-      };
-      img.src = 'https://prod-alicdn-community.kurobbs.com/forum/465dcb694966492aba4d4982c47f0e8520240914.jpg';
-    }
+      function showSuccessModal() {
+        const modal = document.getElementById("successModal");
+        const redirectButton = modal.querySelector(".redirect-button");
 
-    window.addEventListener('load', loadBackgroundImage);
+        modal.classList.add("show");
+        setTimeout(() => {
+          modal.querySelector(".modal-content").style.transform = "scale(1)";
+          modal.querySelector(".modal-content").style.opacity = "1";
+        }, 10);
 
-    function generateRandomString() {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      return Array(32)
-        .fill(0)
-        .map(() => chars.charAt(Math.floor(Math.random() * chars.length)))
-        .join('');
-    }
-  </script>
-</body>
+        const dismiss = () => {
+          modal.querySelector(".modal-content").style.transform = "scale(0.7)";
+          modal.querySelector(".modal-content").style.opacity = "0";
+          setTimeout(() => modal.classList.remove("show"), 300);
+        };
 
+        redirectButton.addEventListener("click", dismiss);
+        modal.querySelector(".close").addEventListener("click", dismiss);
+      }
+
+      closeBtn.addEventListener("click", closeModal);
+
+      function closeModal() {
+        modal.querySelector(".modal-content").style.transform = "scale(0.7)";
+        setTimeout(() => {
+          modal.classList.remove("show");
+        }, 300);
+      }
+
+      window.addEventListener("click", function (event) {
+        if (event.target === modal) {
+          closeModal();
+        }
+      });
+
+      function loadBackgroundImage() {
+        const img = new Image();
+        img.onload = function () {
+          document.body.style.backgroundImage = `url(${img.src})`;
+          document.body.classList.add("bg-loaded");
+        };
+        img.src =
+          "https://prod-alicdn-community.kurobbs.com/forum/465dcb694966492aba4d4982c47f0e8520240914.jpg";
+      }
+
+      window.addEventListener("load", loadBackgroundImage);
+
+      function generateRandomString() {
+        const chars =
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        return Array(32)
+          .fill(0)
+          .map(() => chars.charAt(Math.floor(Math.random() * chars.length)))
+          .join("");
+      }
+    </script>
+  </body>
 </html>
