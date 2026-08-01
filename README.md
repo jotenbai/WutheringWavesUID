@@ -238,7 +238,7 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 | 私聊       | `帮助`、`练度统计`、`绑定<特征码>`                            |
 | 服务器频道 | `@机器人 帮助`                                                |
 | 国际服数据 | 绑定 UID → 发送官方 DC 卡片图 `分析` → `角色面板`             |
-| 国际服登录 | `登录` → 浏览器 OS 國際服 → 邮箱密码（可能需 Geetest）        |
+| 国际服登录 | `登录` → 浏览器（默认已选国际服）→ 邮箱密码（可能需 Geetest） |
 | 国际服体力 | 登录成功后发 `体力` 或 `mr`（走 `kuro-py`，非国服库街区 API） |
 
 指令详情见插件内 `帮助` 图、本仓库 [国际服指令使用说明](discord_bot/command-guide/manual.md)，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
