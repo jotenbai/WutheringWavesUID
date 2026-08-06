@@ -14,6 +14,10 @@ waves_change_weapon_reson_level = SV("waves修改武器精炼", priority=5, pm=1
 waves_change_sonata_and_first_echo = SV("waves修改首位声骸与套装")
 waves_phantom_score_ocr_query = SV("waves声骸ocr查分")
 
+# 支持「莫宁3c」与「莫宁c3」两种写法
+_PHANTOM_OCR_CMD_PATTERN = rf"^{CHAR_NAME_PATTERN}\s*(?:\d\s*[cC]|[cC]\s*\d)"
+_PHANTOM_OCR_PARSE_PATTERN = rf"({CHAR_NAME_PATTERN})\s*(?:(\d)\s*[cC]|[cC]\s*(\d))"
+
 
 @waves_discord_bot_card_analyze.on_command(("分析卡片", "卡片分析", "dc卡片", "fx", "分析"), block=True)
 async def analyze_card(bot: Bot, ev: Event):
@@ -38,15 +42,15 @@ async def analyze_card(bot: Bot, ev: Event):
     await async_ocr(bot, ev)
 
 
-@waves_phantom_score_ocr_query.on_regex(rf"^{CHAR_NAME_PATTERN}\s*\d\s*[cC]", block=True)
+@waves_phantom_score_ocr_query.on_regex(_PHANTOM_OCR_CMD_PATTERN, block=True)
 async def phantom_score_ocr_query(bot: Bot, ev: Event):
     """声骸OCR查分"""
-    match = re.search(rf"({CHAR_NAME_PATTERN})\s*(\d)\s*[cC]", get_event_command_text(ev))
+    match = re.search(_PHANTOM_OCR_PARSE_PATTERN, get_event_command_text(ev))
     if not match:
         return
 
     char_name = match.group(1)
-    cost = match.group(2)
+    cost = match.group(2) or match.group(3)
 
     await phantom_score_ocr(bot, ev, char_name, int(cost))
 
