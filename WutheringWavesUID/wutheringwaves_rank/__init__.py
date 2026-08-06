@@ -4,6 +4,7 @@ from gsuid_core.bot import Bot
 from gsuid_core.models import Event
 from gsuid_core.sv import SV
 
+from ..utils.database.models import WavesBind
 from ..utils.name_convert import CHAR_NAME_PATTERN, get_event_command_text
 from ..wutheringwaves_config import WutheringWavesConfig
 from .darw_rank_card import draw_rank_img
@@ -20,6 +21,34 @@ sv_waves_rank_total_list = SV("ww练度总排行", priority=0)
 sv_waves_gacha_server_rank = SV("ww抽卡全服排行", priority=0)
 sv_waves_matrix_rank = SV("ww矩阵群排行", priority=-1)
 sv_waves_matrix_rank_all = SV("ww矩阵总排行", priority=-1)
+
+
+async def resolve_group_id_for_dm_rank(ev: Event) -> tuple[str | None, bool]:
+    """私聊群排行：改用该用户曾在频道里留下的 group_id（取绑定人数最多的频道）。
+
+    Returns:
+        (effective_group_id, used_channel_fallback)
+    """
+    if getattr(ev, "user_type", None) != "direct" or not ev.group_id:
+        return ev.group_id, False
+
+    bind = await WavesBind.select_data(ev.user_id, ev.bot_id)
+    if not bind or not bind.group_id:
+        return ev.group_id, False
+
+    candidates = [gid for gid in bind.group_id.split("_") if gid and gid != ev.group_id]
+    if not candidates:
+        return ev.group_id, False
+
+    best_gid = candidates[0]
+    best_count = -1
+    for gid in candidates:
+        users = await WavesBind.get_group_all_uid(gid)
+        count = len(users) if users else 0
+        if count > best_count:
+            best_count = count
+            best_gid = gid
+    return best_gid, True
 
 
 @sv_waves_rank_list.on_regex(f"^{CHAR_NAME_PATTERN}?(?:(群|bot)?排(行|名))$", block=True)
@@ -43,6 +72,7 @@ async def send_rank_card(bot: Bot, ev: Event):
     char = char.replace("伤害", "").replace("评分", "")
 
     is_bot_rank = "bot" in ev.text.strip()
+    used_channel_fallback = False
     if is_bot_rank:
         botData = WutheringWavesConfig.get_config("botData").data
         if not botData:
@@ -53,6 +83,11 @@ async def send_rank_card(bot: Bot, ev: Event):
         else:
             im = await draw_bot_rank_img(bot, ev, char, rank_type)
     else:
+        # 私聊时用曾使用过的频道成员做群排行
+        resolved_gid, used_channel_fallback = await resolve_group_id_for_dm_rank(ev)
+        if resolved_gid:
+            ev.group_id = resolved_gid
+
         if "练度" in char:
             im = await draw_local_total_rank(bot, ev)
         else:
@@ -64,17 +99,20 @@ async def send_rank_card(bot: Bot, ev: Event):
     if isinstance(im, bytes):
         await bot.send(im)
 
-    # Discord / 私聊：群排行按当前会话的 group_id 统计，DM 里通常只有自己
-    if (
-        not is_bot_rank
-        and getattr(ev, "user_type", None) == "direct"
-        and isinstance(im, bytes)
-    ):
-        await bot.send(
-            "说明：群排行按「当前频道」里绑定过的成员统计。"
-            "私聊没有群成员，榜上通常只有自己；请到服务器频道查询完整群排行。"
-            "全服榜请用「角色名总排行」，私聊也可以。"
-        )
+    if not is_bot_rank and getattr(ev, "user_type", None) == "direct" and isinstance(im, bytes):
+        if used_channel_fallback:
+            await bot.send(
+                "说明：\n"
+                "· 私聊群排行已按你曾使用过的服务器频道成员统计\n"
+                "· 全服榜请用「角色名总排行」"
+            )
+        else:
+            await bot.send(
+                "说明：\n"
+                "· 群排行按「频道」统计成员（同一 Discord 服务器里，不同频道也互不相通）\n"
+                "· 私聊没有频道成员，榜上通常只有自己；请到服务器频道查询，或先在频道用过本机器人后再私聊查询\n"
+                "· 全服榜请用「角色名总排行」，私聊也可以"
+            )
 
 
 @sv_waves_rank_all_list.on_regex(f"^{CHAR_NAME_PATTERN}(?:总排行|总排名)(\\d+)?$", block=True)

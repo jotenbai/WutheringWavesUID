@@ -243,6 +243,11 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 
 指令详情见插件内 `帮助` 图、本仓库 [国际服指令使用说明](discord_bot/command-guide/manual.md)，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
 
+**Discord 与 `group_id`：** 桥接里 Discord 的 `group_id` = **频道 ID**（不是服务器 ID）。  
+绑定 / 登录 / 刷新面板等会把当前频道记入用户的绑定列表。  
+- **不受影响：** `角色面板`、`分析`、`练度统计`、`体力`、全服 `总排行` 等按用户 UID / 本地库，换频道或私聊一般照常。  
+- **按频道隔离：** `角色名排行`（群排行）、群练度排行、群持有率、无尽群排行，以及「群排行是否需登录」等群配置；同一服务器不同频道互不相通。私聊另有独立频道 ID，群排行通常只有自己。
+
 **国际服说明：** 体力、先约电台、结晶波片等数据由 `kuro-py` 从 Kuro 国际服接口拉取，**并非**国服「库街区便笺」同一套 API。登录成功后应能出图；若只绑定 UID、未 `登录`，或 token 过期，会提示重新登录。周度游历等国际服暂无的字段会显示「国际服暂无数据」。
 
 **总排行：** 接入全服总排行所需的 token / URL 为防止滥用**并未公开**，详情请咨询 [MoonShadow1976](https://github.com/MoonShadow1976)。
@@ -262,6 +267,7 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 | 重启 core 后 Discord 无响应                               | `systemctl --user restart discordbot`                                                   |
 | VPS 重启后 bot 全挂、网页打不开                           | 确认已 `sudo loginctl enable-linger $USER`；`systemctl --user status gscore discordbot` |
 | `pip install -U` 或重建 venv 后问题复发                   | 重新运行三个补丁脚本                                                                    |
+| 私聊 / 另一频道 `莫宁排行` 人很少或只有自己               | 正常：群排行按 **Discord 频道** 隔离，见上文「Discord 与 group_id」；全服用 `总排行`   |
 
 ---
 
