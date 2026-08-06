@@ -42,7 +42,8 @@ async def send_rank_card(bot: Bot, ev: Event):
         rank_type = "评分"
     char = char.replace("伤害", "").replace("评分", "")
 
-    if "bot" in ev.text.strip():
+    is_bot_rank = "bot" in ev.text.strip()
+    if is_bot_rank:
         botData = WutheringWavesConfig.get_config("botData").data
         if not botData:
             return await bot.send("[鸣潮] 未开启bot排行")
@@ -62,6 +63,18 @@ async def send_rank_card(bot: Bot, ev: Event):
         await bot.send(im, at_sender)
     if isinstance(im, bytes):
         await bot.send(im)
+
+    # Discord / 私聊：群排行按当前会话的 group_id 统计，DM 里通常只有自己
+    if (
+        not is_bot_rank
+        and getattr(ev, "user_type", None) == "direct"
+        and isinstance(im, bytes)
+    ):
+        await bot.send(
+            "说明：群排行按「当前频道」里绑定过的成员统计。"
+            "私聊没有群成员，榜上通常只有自己；请到服务器频道查询完整群排行。"
+            "全服榜请用「角色名总排行」，私聊也可以。"
+        )
 
 
 @sv_waves_rank_all_list.on_regex(f"^{CHAR_NAME_PATTERN}(?:总排行|总排名)(\\d+)?$", block=True)
