@@ -28,6 +28,7 @@ from ..utils.resource.RESOURCE_PATH import (
     SHARE_BG_PATH,
     WEAPON_PATH,
 )
+from ..wutheringwaves_config import WutheringWavesConfig
 
 ICON = Path(__file__).parent.parent.parent / "ICON.png"
 TEXT_PATH = Path(__file__).parent / "texture2d"
@@ -123,8 +124,12 @@ def load_asset(path, mode: str = "RGBA") -> Image.Image:
     except OSError:
         # 文件不存在时保持与 Image.open 一致的报错行为
         return Image.open(path_str).convert(mode)
-    with _asset_copy_lock:
-        return _load_asset_cached(path_str, mtime_ns, mode).copy()
+
+    if WutheringWavesConfig.get_config("ResourceCache").data:
+        with _asset_copy_lock:
+            return _load_asset_cached(path_str, mtime_ns, mode).copy()
+    else:
+        return Image.open(path_str).convert(mode)
 
 
 def get_ICON():
