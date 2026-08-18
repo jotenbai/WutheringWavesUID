@@ -83,15 +83,18 @@ async def send_rank_card(bot: Bot, ev: Event):
         else:
             im = await draw_bot_rank_img(bot, ev, char, rank_type)
     else:
-        # 私聊时用曾使用过的频道成员做群排行
+        # 私聊：用曾使用过的频道成员做榜，但勿改坏回信用的 group_id（Discord 靠它定位频道）
+        reply_group_id = ev.group_id
         resolved_gid, used_channel_fallback = await resolve_group_id_for_dm_rank(ev)
         if resolved_gid:
             ev.group_id = resolved_gid
-
-        if "练度" in char:
-            im = await draw_local_total_rank(bot, ev)
-        else:
-            im = await draw_rank_img(bot, ev, char, rank_type)
+        try:
+            if "练度" in char:
+                im = await draw_local_total_rank(bot, ev)
+            else:
+                im = await draw_rank_img(bot, ev, char, rank_type)
+        finally:
+            ev.group_id = reply_group_id
 
     if isinstance(im, str):
         at_sender = True if ev.group_id else False
