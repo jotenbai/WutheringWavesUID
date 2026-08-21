@@ -63,7 +63,7 @@
 依赖 [Wuthery](https://wuthery.com) 解析；库洛侧抖动时上传可能失败，可稍后再刷。
 
 > **版本更新后头几天：** 鸣潮一开新版本，Wuthery 的 pcap 解析常要跟几天协议，期间本 bot 的 `上传pcap` / `解析pcap` 也会失败（常见提示含 Incomplete data / 解析失败）。**这不是守岸人坏了。**  
-> 可到 [Wuthery 官网 Import Data](https://wuthery.com/import) 用同一份 `.pcap` 试传：若官网也显示 error，即可确认是 Wuthery 尚未适配，等几天再传；这期间可用路径 B（`分析`）临时更新本地面板。
+> 可自行验证：看 [Wuthery Status](https://status.wuthery.com/) **第一行总状态**（例如「部分服务出现故障」），或到 [Wuthery Import Data](https://wuthery.com/import) 用同一份 `.pcap` 试传。若 status 异常 / 官网导入也失败，等几天再试；这期间可用路径 B（`分析`）临时更新本地面板。
 
 ### 路径 B：只想先看一个角色（上手最快）
 
@@ -127,4 +127,6 @@
 - 本仓库：[WutheringWavesUID_for_discord](https://github.com/jotenbai/WutheringWavesUID)
 - Upstream：[MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID)
 - pcap 教程：[Wuthery Guides](https://wuthery.com/guides)
+- Wuthery 服务状态：[status.wuthery.com](https://status.wuthery.com/)
+- Wuthery 数据导入：[wuthery.com/import](https://wuthery.com/import)
 - 官方 DC 出卡教程（巴哈）：[DC機器人製作個人角色卡](https://forum.gamer.com.tw/C.php?bsn=74934&snA=8077)
