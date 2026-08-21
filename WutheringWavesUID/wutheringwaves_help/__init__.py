@@ -31,7 +31,8 @@ async def send_help_img(bot: Bot, ev: Event):
         WavesButton("练度统计", "练度统计"),
     ]
     await bot.send_option(await get_help(ev.user_pm), buttons)
-    await bot.send(f"国际服新手说明（指令示例与配图）：\n{MANUAL_URL}")
+    # Discord：<> 包裹链接可抑制嵌入预览，仍可点击
+    await bot.send(f"国际服新手说明（指令示例与配图）：\n<{MANUAL_URL}>")
 
 
 @sv_waves_change_help.on_fullmatch(("替换帮助", "面板替换帮助"))
