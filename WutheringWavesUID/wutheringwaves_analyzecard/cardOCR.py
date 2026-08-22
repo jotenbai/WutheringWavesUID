@@ -487,6 +487,54 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
                     del_text = del_text.replace(uid_save.group(0), "")
                 line = line.replace(del_text, "")
 
+            REPLACE_MAP = {
+                "吟槑": "吟霖",
+                "鑒几": "鉴心",
+                "千唉": "千咲",
+                "千眹": "千咲",
+                "蕾貝卡": "丽贝卡",
+                "莫寧": "莫宁",
+            }
+
+            def normalize_char_name(name: str) -> str | None:
+                for old, new in REPLACE_MAP.items():
+                    name = name.replace(old, new)
+                if not re.match(r"^[\u4e00-\u9fa5]+$", name):
+                    return None
+                # 过滤「玩家名稱」被 OCR 打成乱码后的残片
+                if re.search(r"(?:玩家|特徵|特征|家名|名秘|名抽|名稀)", name):
+                    return None
+                if len(name) < 2:
+                    return None
+                return cc.convert(name)
+
+            # 优先：同一物理行里「角色名 … LV.xx」（避免玩家名乱码抢先当角色名）
+            lv_line_re = re.compile(r"(?i)(?:LV|L\.?V\.?)\s*\.?\s*(\d{1,2})")
+            for raw_line in re.split(r"[\r\n]+", line):
+                if not lv_line_re.search(raw_line):
+                    continue
+                cleaned = re.sub(r"[^\u4e00-\u9fa5A-Za-z0-9\s]", " ", raw_line)
+                cleaned = re.sub(r"\s+", " ", cleaned).strip()
+                lv_m = lv_line_re.search(cleaned)
+                if not lv_m:
+                    continue
+                before_lv = cleaned[: lv_m.start()].strip()
+                if not final_result["角色信息"].get("等级"):
+                    final_result["角色信息"]["等级"] = min(int(lv_m.group(1)), 90)
+                for token in before_lv.split(" "):
+                    token = token.strip()
+                    if not token or re.fullmatch(r"(?i)L\.?V\.?\d*", token):
+                        continue
+                    # 跳过「特徵碼xxxx」粘连块
+                    if re.search(r"(?:特|徵|碼)", token) and re.search(r"\d", token):
+                        continue
+                    name = normalize_char_name(re.sub(r"[0-9A-Za-z]", "", token) or token)
+                    if name:
+                        final_result["角色信息"]["角色名"] = name
+                        break
+                if final_result["角色信息"].get("角色名"):
+                    break
+
             # 文本预处理：删除非数字中英文的符号及多余空白
             line = re.sub(r" ", "", line)
             line_clean_text = re.sub(
@@ -508,25 +556,19 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
                 if level_match and not final_result["角色信息"].get("等级"):
                     final_result["角色信息"]["等级"] = min(int(level_match.group(1)), 90)  # 最大等级为90
 
-                # 角色名提取
+                # 角色名提取（仅当 LV 行未取到时回退）
                 if not final_result["角色信息"].get("角色名"):
                     name_match = patterns["name"].search(line_clean)
                     if name_match:
-                        name = name_match.group()
-                        REPLACE_MAP = {
-                            "吟槑": "吟霖",
-                            "鑒几": "鉴心",
-                            "千唉": "千咲",
-                            "千眹": "千咲",
-                            "蕾貝卡": "丽贝卡",
-                            "莫寧": "莫宁",
-                        }
-                        for old, new in REPLACE_MAP.items():
-                            name = name.replace(old, new)
-                        if not re.match(r"^[\u4e00-\u9fa5]+$", name):
-                            logger.warning(f" [鸣潮][dc卡片识别] 识别出非中文角色名:{name}，退出识别！")
-                            return False, final_result
-                        final_result["角色信息"]["角色名"] = cc.convert(name)
+                        name = normalize_char_name(name_match.group())
+                        if name is None:
+                            if name_match.group() and not re.match(r"^[\u4e00-\u9fa5]+$", name_match.group()):
+                                logger.warning(
+                                    f" [鸣潮][dc卡片识别] 识别出非中文角色名:{name_match.group()}，退出识别！"
+                                )
+                                return False, final_result
+                            continue
+                        final_result["角色信息"]["角色名"] = name
 
     # 处理武器信息（第二个结果）1
     if len(ocr_results) > 1 and ocr_results[1]["text"] is not None:
