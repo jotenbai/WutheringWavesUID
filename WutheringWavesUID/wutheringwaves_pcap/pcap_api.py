@@ -1,4 +1,5 @@
 import asyncio
+import json
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +22,7 @@ class PcapApi:
             file_path: pcap 文件路徑
 
         Returns:
-            解析結果字典，如果失敗返回 None
+            成功时为解析结果；失败时为 {"data": None, "error": "..."}；文件不存在时为 None
         """
         try:
             file_path = Path(file_path)
@@ -50,17 +51,25 @@ class PcapApi:
                         result = await response.json()
                         logger.info(f"PCAP 解析成功: {file_path.name}")
                         return result
-                    else:
-                        error_text = await response.text()
-                        logger.error(f"PCAP 解析失敗: {response.status} - {error_text}")
-                        return None
+
+                    error_text = await response.text()
+                    logger.error(f"PCAP 解析失敗: {response.status} - {error_text}")
+                    detail = f"HTTP {response.status}"
+                    try:
+                        payload = json.loads(error_text)
+                        if isinstance(payload, dict) and payload.get("message"):
+                            detail = str(payload["message"])
+                    except Exception:
+                        if error_text:
+                            detail = error_text[:200]
+                    return {"data": None, "error": detail}
 
         except asyncio.TimeoutError:
             logger.error(f"PCAP 解析超時: {file_path}")
-            return None
+            return {"data": None, "error": "Wuthery 解析超时"}
         except Exception as e:
             logger.exception(f"PCAP 解析異常: {file_path}", e)
-            return None
+            return {"data": None, "error": f"解析异常：{e}"}
 
 
 # 創建全局實例

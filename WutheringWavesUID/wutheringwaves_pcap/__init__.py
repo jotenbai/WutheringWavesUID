@@ -102,7 +102,13 @@ async def pcap_parse(bot: Bot, ev: Event):
 
             # 檢查結果是否包含錯誤信息
             if isinstance(result, dict) and result.get("error"):
-                return await bot.send(f"解析失败：{result.get('error', '未知错误')}\n", at_sender)
+                err = result.get("error", "未知错误")
+                return await bot.send(
+                    f"解析失败（Wuthery）：{err}\n"
+                    "版本更新后头几天常见；可对照 status.wuthery.com / wuthery.com/import，"
+                    "官网同失败则等 Wuthery 适配后再传。也可先用「分析」。\n",
+                    at_sender,
+                )
 
             # 解析數據
             # 檢查結果是否包含數據
@@ -110,7 +116,11 @@ async def pcap_parse(bot: Bot, ev: Event):
                 return await bot.send("解析失败：API 没有返回数据\n", at_sender)
 
             if result.get("data") is None:
-                return await bot.send("解析失败：返回数据为空\n", at_sender)
+                return await bot.send(
+                    "解析失败：返回数据为空（多为 Wuthery 未适配新版本）\n"
+                    "请对照官网 Import；也可先用「分析」。\n",
+                    at_sender,
+                )
 
             parser = PcapDataParser()
             waves_data = await parser.parse_pcap_data(result["data"])

@@ -66,14 +66,22 @@ class PcapFileHandler:
 
             # 檢查結果是否包含錯誤信息
             if isinstance(result, dict) and result.get("error"):
-                return f"解析失败：{result.get('error', '未知错误')}\n"
+                err = result.get("error", "未知错误")
+                return (
+                    f"解析失败（Wuthery）：{err}\n"
+                    "版本更新后头几天常见；可对照 status.wuthery.com / wuthery.com/import，"
+                    "官网同失败则等 Wuthery 适配后再传。也可先用「分析」。\n"
+                )
 
             # 檢查結果是否包含數據
             if not isinstance(result, dict) or "data" not in result:
                 return "解析失败：API 没有返回数据\n"
 
             if result.get("data") is None:
-                return "解析失败：返回数据为空\n"
+                return (
+                    "解析失败：返回数据为空（多为 Wuthery 未适配新版本）\n"
+                    "请对照官网 Import；也可先用「分析」。\n"
+                )
 
             # 解析數據
             waves_data = await self.parser.parse_pcap_data(result["data"])

@@ -62,8 +62,8 @@
 
 依赖 [Wuthery](https://wuthery.com) 解析；库洛侧抖动时上传可能失败，可稍后再刷。
 
-> **版本更新后头几天：** 鸣潮一开新版本，Wuthery 的 pcap 解析常要跟几天协议，期间本 bot 的 `上传pcap` / `解析pcap` 也会失败（常见提示含 Incomplete data / 解析失败）。**这不是守岸人坏了。**  
-> 可自行验证：看 [Wuthery Status](https://status.wuthery.com/) **第一行总状态**（例如「部分服务出现故障」），或到 [Wuthery Import Data](https://wuthery.com/import) 用同一份 `.pcap` 试传。若 status 异常 / 官网导入也失败，等几天再试；这期间可用路径 B（`分析`）临时更新本地面板。
+> **版本更新后头几天：** 鸣潮一开新版本，Wuthery 的 pcap 解析常要跟几天协议，期间本 bot 的 `上传pcap` / `解析pcap` 也会失败（常见提示含 Incomplete data / 解析失败）。**这不是机器人故障。**  
+> 可自行验证：看 [Wuthery Status](https://status.wuthery.com/) **第一行总状态**，或到 [Wuthery Import Data](https://wuthery.com/import) 用同一份 `.pcap` 试传。注意：**PCAP Server Health 绿灯只表示服务在线**，不等于已适配新版本；官网导入也失败时，请等 Wuthery 解析恢复后再传。这期间可用路径 B（`分析`）临时更新本地面板。
 
 ### 路径 B：只想先看一个角色（上手最快）
 

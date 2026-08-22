@@ -164,13 +164,21 @@ async def handle_file_list(files: list[UploadFile]) -> ResultModel:
         try:
             # 调用pcap API解析
             result = await pcap_api.parse_pcap_file(temp_path)
-            if not isinstance(result, dict) or result.get("data") is None:
+            if not isinstance(result, dict):
                 fail_num += 1
-                fail_msg.append(f"❌ {file.filename} 文件解析失败，返回数据为空")
+                fail_msg.append(f"❌ {file.filename} 文件解析失败，请稍后重试")
                 continue
-            if isinstance(result, dict) and result.get("error"):
+            if result.get("error") or result.get("data") is None:
                 fail_num += 1
-                fail_msg.append(f"❌ {file.filename} 文件解析失败，{result.get('error', '未知错误')}")
+                api_err = result.get("error") or "返回数据为空"
+                tip = (
+                    f"❌ {file.filename} 解析失败（Wuthery）：{api_err}\n"
+                    "· 版本更新后头几天常见，属 Wuthery 协议未适配，不是机器人故障\n"
+                    "· 可对照 https://status.wuthery.com/ 与 https://wuthery.com/import ；"
+                    "官网同失败则等 Wuthery 恢复后再传\n"
+                    "· 也可先用「分析」更新单个角色本地面板"
+                )
+                fail_msg.append(tip)
                 continue
 
             # 解析数据
