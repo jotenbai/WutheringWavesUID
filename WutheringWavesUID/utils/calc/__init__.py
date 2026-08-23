@@ -127,6 +127,7 @@ class WuWaCalc:
                 name: str | Any = two_piece.effect
                 effect = two_piece.param[0]
                 result["ph"] = waves_sonata_result.name
+                logger.debug(f"两件套效果：{name} {effect}，完整信息 {value}")
                 if name not in result:
                     result[name] = effect
                 else:
