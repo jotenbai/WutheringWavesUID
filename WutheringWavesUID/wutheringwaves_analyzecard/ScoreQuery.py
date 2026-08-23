@@ -511,10 +511,10 @@ def build_change_list_regex(extra: str) -> str:
     # 按"换"拆分，剔除以"声骸"开头的片段（即用户输入的"换声骸..."内容）
     segments = extra.split("换")
     kept = [seg for seg in segments if not seg.strip().startswith("声骸")]
-    cleaned_extra = "".join(kept).strip()
+    cleaned_extra = "换".join(kept).strip()
 
     if cleaned_extra:
-        return f"{FIXED_PREFIX}换{cleaned_extra}"
+        return f"{FIXED_PREFIX} {cleaned_extra}"
     return FIXED_PREFIX
 
 
