@@ -1,5 +1,6 @@
 # change from https://github.com/alone-art/ScoreQuery
 
+import copy
 import difflib
 import io
 from pathlib import Path
@@ -14,7 +15,7 @@ from gsuid_core.utils.image.image_tools import crop_center_img
 from opencc import OpenCC
 from PIL import Image, ImageDraw
 
-from ..utils.api.model import Props
+from ..utils.api.model import EquipPhantom, FetterDetail, PhantomProp, Props
 from ..utils.ascension.char import get_char_model
 from ..utils.cache import TimedCache
 from ..utils.calculate import (
@@ -35,7 +36,8 @@ from ..utils.image import (
     get_role_pile,
     get_square_avatar,
 )
-from ..utils.name_convert import alias_to_char_name, char_name_to_char_id
+from ..utils.name_convert import alias_to_char_name, char_name_to_char_id, phantom_id_to_phantom_name
+from .char_fetterDetail import echo_data_to_cost, get_fetterDetail_from_char
 from .ocrspace import get_upload_img, ocrspace
 
 cc = OpenCC("t2s")  # 繁体转简体
@@ -425,6 +427,185 @@ async def phantom_score_ocr(bot: Bot, ev: Event, char_name: str, cost: int):
             await bot.send(img, at_sender)
         return
     return await bot.send(msg, at_sender)
+
+
+def build_equip_phantom(
+    props: list[Props],
+    cost: int,
+    echo_id: int,
+    name: str,
+    fetter_template: dict,
+    phantom_template: dict,
+) -> EquipPhantom:
+    """根据OCR识别到的词条列表、cost、声骸id与套装模板构造一个EquipPhantom。
+
+    主词条与小词条放入mainProps（前2个），其余放入subProps，
+    与cardOCR/echo_data_to_cost的输入结构保持一致。
+    套装(fetterDetail)/声骸图标(phantomProp)沿用get_fetterDetail_from_char的模板。
+    """
+    main_props = props[:2] if len(props) >= 2 else props
+    sub_props = props[len(main_props) :]
+    return EquipPhantom(
+        phantomProp=PhantomProp(
+            phantomPropId=phantom_template.get("phantomPropId", 0),
+            name=name,
+            phantomId=echo_id,
+            quality=phantom_template.get("quality", 5),
+            cost=cost,
+            iconUrl=phantom_template.get("iconUrl", ""),
+            skillDescription=phantom_template.get("skillDescription"),
+        ),
+        cost=cost,
+        quality=phantom_template.get("quality", 5),
+        level=phantom_template.get("level", 25),
+        fetterDetail=FetterDetail(
+            groupId=fetter_template.get("groupId", 0),
+            name=fetter_template.get("name", ""),
+            iconUrl=fetter_template.get("iconUrl") or None,
+            num=fetter_template.get("num", 0),
+            firstDescription=fetter_template.get("firstDescription") or None,
+            secondDescription=fetter_template.get("secondDescription") or None,
+        ),
+        mainProps=main_props,
+        subProps=sub_props,
+    )
+
+
+async def phantom_score_ocr_to_char(bot: Bot, ev: Event, char_name: str):
+    """声骸OCR查分 -> 构造角色面板。
+
+    用户输入5张声骸截图，OCR提取词条后构造为角色数据并绘制角色面板：
+    - 若用户已有该角色，武器/技能/命座等沿用用户已有数据，仅声骸部分用OCR数据覆盖；
+    - 否则使用generate_online_role_detail生成的默认数据。
+    """
+    at_sender = True if ev.group_id else False
+
+    time_stamp = can_score_query_card(ev.user_id)
+    if time_stamp > 0:
+        return await bot.send(
+            f"[鸣潮]声骸评分进行中，请等待评分完成或{time_stamp}秒后再进行评分！\n",
+            at_sender,
+        )
+
+    char_name = alias_to_char_name(char_name)
+    char_id = char_name_to_char_id(char_name)
+    if not char_id:
+        return await bot.send(
+            f"[鸣潮] 角色 {char_name} 无法找到, 可能暂未适配, 请先检查输入是否正确！\n",
+            at_sender,
+        )
+
+    bool_i, images = await get_upload_img(ev)
+    if not bool_i or not images:
+        await bot.send(
+            "[鸣潮][角色评分] 未获取到图片，请在30秒内发送5张以内的声骸截图或图片链接\n(请保证图片清晰否则可能导致识别失败)\n",
+            at_sender,
+        )
+
+        resp = await bot.receive_resp(timeout=30)
+        if resp is not None:
+            bool_i, images = await get_upload_img(resp)
+        else:
+            return await bot.send("[鸣潮] 等待超时，角色评分已关闭\n", at_sender)
+
+    if not bool_i or not images:
+        return await bot.send("[鸣潮] 获取图片失败！角色评分已关闭\n", at_sender)
+
+    # 压缩image到90KB以内
+    images = compress_image(images, 90)
+
+    set_cache_score_query_card(ev.user_id, True)  # 设置时限
+    ocr_results = await ocrspace(images, bot, at_sender, language="chs", isTable=False)
+    set_cache_score_query_card(ev.user_id, False)  # 清除时限
+    if isinstance(ocr_results, str):
+        return await bot.send(ocr_results, at_sender)
+
+    # 构造EquipPhantom列表
+    # 套装取自CHAR_DETAIL[char_id]["fetterDetail"]（参考calc_score_script.py），
+    # cost与声骸id由echo_data_to_cost根据OCR主词条计算（参考char_fetterDetail.py）
+    ECHO = await get_fetterDetail_from_char(char_id)
+    cost4_counter = 0  # 4cost 计数器，用于在4cost声骸id列表中循环
+    equip_phantom_list: list[EquipPhantom | None] = []
+    slot = 0
+    for part in ocr_results:
+        if not part["text"]:
+            continue
+        contexts = part["text"].split("\n")
+        logger.debug(f"[鸣潮][角色评分] 识别内容: {contexts}")
+        results = extract_valid_info(contexts)
+        if not results:
+            continue
+
+        for keys, values, ocr_cost in results:
+            if slot >= 5:
+                break
+            logger.info(f"[鸣潮][角色评分] 提取结果: cost {ocr_cost}, 词条：{keys}, 数值：{values}")
+            if len(keys) != len(values):
+                logger.warning(f"识别到的词条和值数量不匹配！keys: {keys}, values: {values}")
+                continue
+
+            props = [Props(attributeName=keys[i].replace("小", ""), attributeValue=values[i]) for i in range(len(keys))]
+            if len(props) < 2:
+                logger.warning(f"[鸣潮][角色评分] 识别词条不足2个，无法判定cost，跳过: {keys}")
+                continue
+
+            # echo_data_to_cost 需要 [主词条, 小词条] 的dict结构
+            main_props_dicts = [
+                {
+                    "attributeName": props[0].attributeName,
+                    "attributeValue": props[0].attributeValue,
+                },
+                {
+                    "attributeName": props[1].attributeName,
+                    "attributeValue": props[1].attributeValue,
+                },
+            ]
+            echo_id, cost = await echo_data_to_cost(char_id, main_props_dicts, slot, cost4_counter)
+            name = (phantom_id_to_phantom_name(str(echo_id)) if cost == 4 else "") or f"识别默认{cost}c"
+
+            sonata_echo = copy.deepcopy(ECHO[slot]) if slot < len(ECHO) else {}
+            fetter_template = sonata_echo.get("fetterDetail", {}) if sonata_echo else {}
+            phantom_template = sonata_echo.get("phantomProp", {}) if sonata_echo else {}
+
+            equip_phantom_list.append(build_equip_phantom(props, cost, echo_id, name, fetter_template, phantom_template))
+            if cost == 4:
+                cost4_counter += 1
+            slot += 1
+
+    if not equip_phantom_list:
+        return await bot.send(
+            "[鸣潮][角色评分] 未识别到有效声骸信息！请确保图片内容清晰规范！\n",
+            at_sender,
+        )
+
+    # 延迟导入避免循环依赖
+    from ..utils.database.models import WavesBind
+    from ..wutheringwaves_charinfo.draw_char_card import draw_char_detail_img
+
+    uid = await WavesBind.get_uid_by_game(ev.user_id, ev.bot_id)
+    if uid:
+        im = await draw_char_detail_img(
+            ev,
+            uid,
+            char_name,
+            ev.user_id,
+            change_list_regex="换声骸 声骸ocr直出面板 1到5",
+            override_equip_phantom_list=equip_phantom_list,
+        )
+    else:
+        # 未绑定uid，使用默认账户构造（极限查询模式）
+        im = await draw_char_detail_img(
+            ev,
+            "1",
+            char_name,
+            ev.user_id,
+            is_limit_query=True,
+            change_list_regex="换声骸 声骸ocr直出面板 1到5",
+            override_equip_phantom_list=equip_phantom_list,
+        )
+
+    if isinstance(im, str) or isinstance(im, bytes):
+        return await bot.send(im, at_sender)
 
 
 # if __name__ == "__main__":
