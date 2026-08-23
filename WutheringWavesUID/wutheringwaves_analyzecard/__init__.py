@@ -55,12 +55,14 @@ async def phantom_score_ocr_query(bot: Bot, ev: Event):
 @waves_char_score_ocr_query.on_regex(rf"^{CHAR_NAME_PATTERN}评分", block=True)
 async def char_score_ocr_query(bot: Bot, ev: Event):
     """声骸OCR构造角色面板"""
-    match = re.search(rf"({CHAR_NAME_PATTERN})评分", get_event_command_text(ev))
+    command_text = get_event_command_text(ev)
+    match = re.search(rf"({CHAR_NAME_PATTERN})评分(?P<extra>.*)", command_text)
     if not match:
         return
 
     char_name = match.group(1)
-    await phantom_score_ocr_to_char(bot, ev, char_name)
+    extra = match.group("extra") or ""
+    await phantom_score_ocr_to_char(bot, ev, char_name, extra)
 
 
 @waves_change_sonata_and_first_echo.on_regex(

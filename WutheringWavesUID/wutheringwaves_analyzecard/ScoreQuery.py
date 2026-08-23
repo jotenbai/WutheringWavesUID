@@ -39,6 +39,7 @@ from ..utils.image import (
 from ..utils.name_convert import alias_to_char_name, char_name_to_char_id, phantom_id_to_phantom_name
 from .char_fetterDetail import echo_data_to_cost, get_fetterDetail_from_char
 from .ocrspace import get_upload_img, ocrspace
+from .Phantom_check import PhantomValidator
 
 cc = OpenCC("t2s")  # 繁体转简体
 
@@ -411,6 +412,28 @@ async def phantom_score_ocr(bot: Bot, ev: Event, char_name: str, cost: int):
 
             final_cost = ocr_cost if ocr_cost else cost
 
+            # 声骸数据校验与修正（参考check_phantom_data）
+            phantom_dict = {
+                "cost": final_cost,
+                "mainProps": [{"attributeName": p.attributeName, "attributeValue": p.attributeValue} for p in props[:2]],
+                "subProps": [{"attributeName": p.attributeName, "attributeValue": p.attributeValue} for p in props[2:]],
+            }
+            validator = PhantomValidator([phantom_dict])
+            is_valid, corrected_list = await validator.validate_phatom_list()
+            if not is_valid or isinstance(corrected_list, str):
+                msg.append(f"声骸数据异常：{corrected_list}！请确保图片内容清晰规范！\n")
+                continue
+            # 用修正后的值更新props
+            corrected_ph = corrected_list[0]
+            if corrected_ph:
+                for j, pd in enumerate(corrected_ph.get("mainProps", [])):
+                    if j < len(props) and pd:
+                        props[j].attributeValue = pd["attributeValue"]
+                for j, pd in enumerate(corrected_ph.get("subProps", [])):
+                    idx = j + 2
+                    if idx < len(props) and pd:
+                        props[idx].attributeValue = pd["attributeValue"]
+
             try:
                 img = await draw_score(char_name, char_id, props, final_cost, calc_temp)
             except Exception as e:
@@ -471,7 +494,31 @@ def build_equip_phantom(
     )
 
 
-async def phantom_score_ocr_to_char(bot: Bot, ev: Event, char_name: str):
+def build_change_list_regex(extra: str) -> str:
+    """构造change_list_regex。
+
+    固定前缀"换声骸 声骸ocr直出面板 1到5"始终在最前面；
+    用户额外输入中涉及"换声骸"的片段一律删除，只保留其余变更命令。
+    """
+    FIXED_PREFIX = "换声骸 声骸ocr直出面板 1到5"
+
+    if not extra:
+        return FIXED_PREFIX
+
+    # 剔除链接
+    extra = re.sub(r"https?://[^\s]+", "", extra)
+
+    # 按"换"拆分，剔除以"声骸"开头的片段（即用户输入的"换声骸..."内容）
+    segments = extra.split("换")
+    kept = [seg for seg in segments if not seg.strip().startswith("声骸")]
+    cleaned_extra = "".join(kept).strip()
+
+    if cleaned_extra:
+        return f"{FIXED_PREFIX}换{cleaned_extra}"
+    return FIXED_PREFIX
+
+
+async def phantom_score_ocr_to_char(bot: Bot, ev: Event, char_name: str, extra: str = ""):
     """声骸OCR查分 -> 构造角色面板。
 
     用户输入5张声骸截图，OCR提取词条后构造为角色数据并绘制角色面板：
@@ -578,18 +625,50 @@ async def phantom_score_ocr_to_char(bot: Bot, ev: Event, char_name: str):
             at_sender,
         )
 
+    # 声骸数据校验与修正（参考check_phantom_data）
+    phantom_dicts = []
+    for ep in equip_phantom_list:
+        if ep:
+            d = ep.model_dump()
+            phantom_dicts.append(d)
+        else:
+            phantom_dicts.append(None)
+
+    validator = PhantomValidator(phantom_dicts)
+    is_valid, corrected_list = await validator.validate_phatom_list()
+    if not is_valid or isinstance(corrected_list, str):
+        return await bot.send(
+            f"[鸣潮][角色评分] 声骸数据异常：{corrected_list}！\n请调整异常声骸位置后或使用更高分辨率图片重新识别！\n",
+            at_sender,
+        )
+
+    # 用修正后的值更新EquipPhantom的props
+    for i, corrected in enumerate(corrected_list):
+        if corrected and equip_phantom_list[i]:
+            ep = equip_phantom_list[i]
+            if ep and ep.mainProps and corrected.get("mainProps"):
+                for j, pd in enumerate(corrected["mainProps"]):
+                    if j < len(ep.mainProps) and pd:
+                        ep.mainProps[j].attributeValue = pd["attributeValue"]
+            if ep and ep.subProps and corrected.get("subProps"):
+                for j, pd in enumerate(corrected["subProps"]):
+                    if j < len(ep.subProps) and pd:
+                        ep.subProps[j].attributeValue = pd["attributeValue"]
+
     # 延迟导入避免循环依赖
     from ..utils.database.models import WavesBind
     from ..wutheringwaves_charinfo.draw_char_card import draw_char_detail_img
 
     uid = await WavesBind.get_uid_by_game(ev.user_id, ev.bot_id)
+    change_list_regex = build_change_list_regex(extra)
+    logger.debug(f"[鸣潮][角色评分][替换细节] 角色: {char_name}, 替换: {change_list_regex}")
     if uid:
         im = await draw_char_detail_img(
             ev,
             uid,
             char_name,
             ev.user_id,
-            change_list_regex="换声骸 声骸ocr直出面板 1到5",
+            change_list_regex=change_list_regex,
             override_equip_phantom_list=equip_phantom_list,
         )
     else:
@@ -600,7 +679,7 @@ async def phantom_score_ocr_to_char(bot: Bot, ev: Event, char_name: str):
             char_name,
             ev.user_id,
             is_limit_query=True,
-            change_list_regex="换声骸 声骸ocr直出面板 1到5",
+            change_list_regex=change_list_regex,
             override_equip_phantom_list=equip_phantom_list,
         )
 
