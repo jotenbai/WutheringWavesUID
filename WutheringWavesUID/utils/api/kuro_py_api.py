@@ -306,12 +306,12 @@ async def get_base_info_overseas(bot_id: str, user_id: str, uid: str) -> tuple[N
 
     BoxList = []
     name_list = {
-        "1": "基准奇藏箱",
-        "2": "朴素奇藏箱",
+        "1": "朴素奇藏箱",
+        "2": "基准奇藏箱",
         "3": "精密奇藏箱",
         "4": "辉光奇藏箱",
     }
-    for box_type, box_count in basic.basic_chests.items():  # not chests, but basic_chests
+    for box_type, box_count in sorted(basic.basic_chests.items()):  # not chests, but basic_chests
         BoxList.append(Box2(name=name_list.get(box_type, "未知宝箱"), num=box_count))
 
     TidalHeritagesList = []
@@ -320,7 +320,7 @@ async def get_base_info_overseas(bot_id: str, user_id: str, uid: str) -> tuple[N
         "2": "潮汐之遗紫",
         "3": "潮汐之遗金",
     }
-    for heritage_type, heritage_count in basic.tidal_heritages.items():
+    for heritage_type, heritage_count in sorted(basic.tidal_heritages.items()):
         TidalHeritagesList.append(Box2(name=name_list.get(heritage_type, "未知潮汐之遗"), num=heritage_count))
 
     baseInfo = AccountBaseInfo(
