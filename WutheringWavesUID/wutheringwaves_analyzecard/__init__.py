@@ -7,12 +7,13 @@ from gsuid_core.sv import SV
 from ..utils.name_convert import CHAR_NAME_PATTERN, get_event_command_text
 from .cardOCR import async_ocr
 from .changeEcho import change_echo, change_weapon_resonLevel
-from .ScoreQuery import phantom_score_ocr
+from .ScoreQuery import phantom_score_ocr, phantom_score_ocr_to_char
 
 waves_discord_bot_card_analyze = SV("waves分析discord_bot卡片")
 waves_change_weapon_reson_level = SV("waves修改武器精炼", priority=5, pm=1)
 waves_change_sonata_and_first_echo = SV("waves修改首位声骸与套装")
 waves_phantom_score_ocr_query = SV("waves声骸ocr查分")
+waves_char_score_ocr_query = SV("waves声骸ocr构造角色面板")
 
 # 支持「莫宁3c」与「莫宁c3」两种写法
 _PHANTOM_OCR_CMD_PATTERN = rf"^{CHAR_NAME_PATTERN}\s*(?:\d\s*[cC]|[cC]\s*\d)"
@@ -53,6 +54,19 @@ async def phantom_score_ocr_query(bot: Bot, ev: Event):
     cost = match.group(2) or match.group(3)
 
     await phantom_score_ocr(bot, ev, char_name, int(cost))
+
+
+@waves_char_score_ocr_query.on_regex(rf"^{CHAR_NAME_PATTERN}评分\s*(?:$|换|http)", block=True)
+async def char_score_ocr_query(bot: Bot, ev: Event):
+    """声骸OCR构造角色面板"""
+    command_text = get_event_command_text(ev)
+    match = re.search(rf"({CHAR_NAME_PATTERN})评分(?P<extra>.*)", command_text)
+    if not match:
+        return
+
+    char_name = match.group(1)
+    extra = match.group("extra") or ""
+    await phantom_score_ocr_to_char(bot, ev, char_name, extra)
 
 
 @waves_change_sonata_and_first_echo.on_regex(

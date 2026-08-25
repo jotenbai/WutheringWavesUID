@@ -12,6 +12,8 @@ from PIL import Image, ImageDraw, ImageEnhance
 from ..utils import hint
 from ..utils.api.model import (
     AccountBaseInfo,
+    EquipPhantom,
+    EquipPhantomData,
     OnlineRoleList,
     RoleDetailData,
     WeaponData,
@@ -607,6 +609,7 @@ async def draw_char_detail_img(
     change_list_regex=None,
     is_limit_query=False,
     is_refresh: int = 0,
+    override_equip_phantom_list: list[EquipPhantom | None] | None = None,
 ):
     char, damageId = parse_text_and_number(char)
 
@@ -670,26 +673,57 @@ async def draw_char_detail_img(
         )
         force_resource_id = char_id
     # 获取数据
-    avatar, role_detail = await get_role_need(
-        ev,
-        char_id,
-        ck,
-        uid,
-        char_name,
-        waves_id,
-        is_force_avatar,
-        force_resource_id,
-        is_online_user,
-        is_limit_query,
-        change_list_regex,
-    )
-    if isinstance(role_detail, str):
-        error_msg = role_detail
-        account_info, avatar, role_detail = await get_user_role_data_online(ev, char_id, uid, waves_id)
+    if override_equip_phantom_list is not None:
+        # 构造模式：优先使用用户已有角色数据，否则使用默认生成数据，
+        # 随后用传入的声骸列表覆盖声骸部分
+        avatar, role_detail = await get_role_need(
+            ev,
+            char_id,
+            ck,
+            uid,
+            char_name,
+            waves_id,
+            is_force_avatar,
+            force_resource_id,
+            is_online_user,
+            is_limit_query,
+            change_list_regex,
+        )
+        if isinstance(role_detail, str) or not role_detail:
+            role_detail = await generate_online_role_detail(char_id)
+            if not role_detail:
+                return (
+                    f"[鸣潮] 未找到【{char_name}】角色信息且无法构造默认数据，"
+                    f"国服用户请使用[{PREFIX}刷新{char_name}面板]进行刷新！\n"
+                )
+            avatar = await draw_char_with_ring(char_id)
+        # 用构造的声骸覆盖声骸部分（其余配置保留用户已有/默认数据）
+        total_cost = sum(_ep.cost for _ep in override_equip_phantom_list if _ep)
+        role_detail.phantomData = EquipPhantomData(
+            cost=total_cost,
+            equipPhantomList=override_equip_phantom_list,
+        )
+    else:
+        avatar, role_detail = await get_role_need(
+            ev,
+            char_id,
+            ck,
+            uid,
+            char_name,
+            waves_id,
+            is_force_avatar,
+            force_resource_id,
+            is_online_user,
+            is_limit_query,
+            change_list_regex,
+        )
         if isinstance(role_detail, str):
-            return role_detail
-        if not role_detail:
-            return error_msg
+            error_msg = role_detail
+            account_info, avatar, role_detail = await get_user_role_data_online(ev, char_id, uid, waves_id)
+            if isinstance(role_detail, str):
+                return role_detail
+            if not role_detail:
+                return error_msg
 
     change_command = ""
     oneRank: OneRankResponse | None = None

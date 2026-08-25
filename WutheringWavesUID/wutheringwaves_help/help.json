@@ -170,6 +170,22 @@
     "desc": "在执行查询之前请绑定账号(括号内容为可选参数)",
     "data": [
       {
+        "name": "ocr声骸评分",
+        "desc": "ocr声骸评分",
+        "eg": "白芷1c",
+        "need_ck": false,
+        "need_sk": false,
+        "need_admin": false
+      },
+      {
+        "name": "ocr声骸直出面板",
+        "desc": "ocr声骸直出面板",
+        "eg": "白芷评分",
+        "need_ck": false,
+        "need_sk": false,
+        "need_admin": false
+      },
+      {
         "name": "鸣潮面板更新",
         "desc": "鸣潮面板更新",
         "eg": "刷新面板",
@@ -197,14 +213,6 @@
         "name": "查询声骸",
         "desc": "查询声骸",
         "eg": "声骸(2)",
-        "need_ck": true,
-        "need_sk": false,
-        "need_admin": false
-      },
-      {
-        "name": "ocr声骸评分",
-        "desc": "ocr声骸评分",
-        "eg": "莫宁1c",
         "need_ck": true,
         "need_sk": false,
         "need_admin": false
