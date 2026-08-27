@@ -52,7 +52,7 @@ async def phantom_score_ocr_query(bot: Bot, ev: Event):
     await phantom_score_ocr(bot, ev, char_name, int(cost))
 
 
-@waves_char_score_ocr_query.on_regex(rf"^{CHAR_NAME_PATTERN}评分", block=True)
+@waves_char_score_ocr_query.on_regex(rf"^{CHAR_NAME_PATTERN}评分\s*(?:$|换|http)", block=True)
 async def char_score_ocr_query(bot: Bot, ev: Event):
     """声骸OCR构造角色面板"""
     command_text = get_event_command_text(ev)
