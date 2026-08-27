@@ -152,5 +152,26 @@
   "进阶5": {
     "desc": "wwuid长离面板对比 换武器 90级 满精 长离专武",
     "data": []
+  },
+  "特殊": {
+    "desc": "声骸图ocr提取 放到角色面板上",
+    "data": [
+      {
+        "name": "识别到已有面板上",
+        "desc": "识别到已有面板上",
+        "eg": "今汐评分 换声骸1到2",
+        "need_ck": false,
+        "need_sk": false,
+        "need_admin": false
+      },
+      {
+        "name": "未拥角色可配置",
+        "desc": "未拥角色可配置",
+        "eg": "心评分 换武器心专武换角色6链",
+        "need_ck": false,
+        "need_sk": false,
+        "need_admin": false
+      }
+    ]
   }
 }

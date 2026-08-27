@@ -494,19 +494,23 @@ def build_equip_phantom(
     )
 
 
-def parse_extra_for_phantom_mapping(extra: str) -> tuple[dict[int, int], str]:
-    """从用户输入 extra 中解析「换声骸 X到Y ...」位置映射。
+def parse_extra_for_phantom_mapping(extra: str) -> tuple[dict[int, list[int]], str]:
+    """从用户输入 extra 中解析「换声骸 X到Y [...]」位置映射。
+
+    只有以「声骸」开头、且紧跟的正文中包含至少一个「数字到数字」模式
+    的片段才视作 OCR 槽位映射指令（会被剥离并解析）；
+    其他形似「换声骸主词条 c3 攻击」等没有位置映射的片段予以保留，
+    仍通过 change_list_regex 传给 ChangeParser 处理。
+
+    同一 OCR 序号可被映射到多个目标槽位（如「2到2 2到3」表示同一条OCR声骸
+    同时放入槽 2、槽 3），此时 value 为长度 ≥ 1 的 list。
 
     返回:
-        slot_mapping: ocr序号(0based) -> 目标槽位(0based)
-        cleaned_extra: 去除所有换声骸片段、去链接后可用于构造 change_list_regex 的文本
-
-    示例:
-        extra = "换声骸 2到2 1到5换面板换角色六链换武器景燃专武"
-        -> slot_mapping = {1: 1, 0: 4}
-        -> cleaned_extra = "换面板换角色六链换武器景燃专武"
+        slot_mapping: ocr序号(0based) -> 目标槽位列表(0based，按出现顺序)
+        cleaned_extra: 去掉位置映射型换声骸片段、去链接后
+            可用于构造 change_list_regex 的文本
     """
-    slot_mapping: dict[int, int] = {}
+    slot_mapping: dict[int, list[int]] = {}
     if not extra:
         return slot_mapping, ""
 
@@ -520,13 +524,17 @@ def parse_extra_for_phantom_mapping(extra: str) -> tuple[dict[int, int], str]:
         stripped = seg.strip()
         if stripped.startswith("声骸"):
             content = stripped[len("声骸") :].strip()
-            for from_pos, to_pos in re.findall(r"(\d+)\s*到\s*(\d+)", content):
-                ocr_idx = int(from_pos) - 1
-                slot_idx = int(to_pos) - 1
-                if 0 <= ocr_idx < 5 and 0 <= slot_idx < 5:
-                    slot_mapping[ocr_idx] = slot_idx
-        else:
-            kept.append(seg)
+            pairs = re.findall(r"(\d+)\s*到\s*(\d+)", content)
+            if pairs:
+                # 这是位置映射型换声骸片段 → 解析映射，不保留入 change_list_regex
+                for from_pos, to_pos in pairs:
+                    ocr_idx = int(from_pos) - 1
+                    slot_idx = int(to_pos) - 1
+                    if 0 <= ocr_idx < 5 and 0 <= slot_idx < 5:
+                        slot_mapping.setdefault(ocr_idx, []).append(slot_idx)
+                continue
+            # 否则是非位置型换声骸（如「声骸主词条 c3 攻击」）→ 保留
+        kept.append(seg)
 
     cleaned_extra = "换".join(kept).strip()
     return slot_mapping, cleaned_extra
@@ -852,14 +860,18 @@ async def _build_merged_equip_phantom_list(
     char_id,
     ECHO: list[dict],
     ocr_raw_list: list[tuple[list[Props], list[dict]]],
-    slot_mapping: dict[int, int],
+    slot_mapping: dict[int, list[int]],
     base_phantom_list: list[EquipPhantom | None],
 ) -> list[EquipPhantom | None]:
     """合并填充：保留基准声骸，按映射替换指定槽位。
 
+    同一条 OCR 声骸可被放入多个槽位（dict value 为 list[int]），
+    每一个目标槽位都会独立用其槽位号调用 echo_data_to_cost 并生成
+    一份独立的 EquipPhantom（这样 cost/套装模板/4cost id 都与对应槽位匹配）。
     ocr序号超出 OCR 列表范围的映射忽略；目标槽位越界忽略。
-    cost4_counter 从基准中的 4cost 数量开始累计，确保 id 循环尽量连续。
-    映射处理按目标槽位升序执行，保证 slot=0 时 echo_data_to_cost 的 needId 分支优先命中。
+    cost4_counter 从基准中的 4cost 数量开始累计，每生成一个 4cost
+    副本就递增。映射处理按目标槽位升序依次展开，保证 slot=0 时
+    echo_data_to_cost 的 needId 分支优先命中。
     """
     merged: list[EquipPhantom | None] = list(base_phantom_list)
     while len(merged) < 5:
@@ -868,9 +880,14 @@ async def _build_merged_equip_phantom_list(
     # 计算基准已有 4cost 数量，用于延续ID循环
     cost4_counter = sum(1 for p in merged if p is not None and getattr(p, "cost", 0) == 4)
 
-    # 按目标槽位升序处理映射
-    sorted_mappings = sorted(slot_mapping.items(), key=lambda kv: kv[1])
-    for ocr_idx, slot_idx in sorted_mappings:
+    # 展开成 [(slot_idx, ocr_idx), ...]，按 slot_idx 升序处理
+    flat_pairs: list[tuple[int, int]] = []
+    for ocr_idx, slot_indices in slot_mapping.items():
+        for slot_idx in slot_indices:
+            flat_pairs.append((slot_idx, ocr_idx))
+    flat_pairs.sort(key=lambda kv: kv[0])
+
+    for slot_idx, ocr_idx in flat_pairs:
         if ocr_idx < 0 or ocr_idx >= len(ocr_raw_list):
             logger.debug(f"[鸣潮][角色评分] ocr序号{ocr_idx + 1}超出范围，跳过映射")
             continue
