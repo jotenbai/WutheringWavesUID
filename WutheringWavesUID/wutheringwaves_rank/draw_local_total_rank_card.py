@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from ..utils.cache import TimedCache
 from ..utils.database.models import WavesBind, WavesUser
+from .rank_users import get_users_for_group_rank
 from ..utils.fonts.waves_fonts import (
     waves_font_12,
     waves_font_16,
@@ -112,7 +113,7 @@ async def get_bot_total_rank_data(ev: Event, bot_bool: bool) -> list[BotTotalRan
     if bot_bool:
         users = await WavesBind.get_all_data()
     else:
-        users = await WavesBind.get_group_all_uid(ev.group_id)
+        users = await get_users_for_group_rank(ev)
 
     if not users:
         return []

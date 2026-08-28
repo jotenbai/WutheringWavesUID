@@ -1,7 +1,11 @@
 from gsuid_core.logger import logger
 from gsuid_core.server import on_core_start
 
+from ..utils.zh_convert import install_msg_process_t2s
 from ..wutheringwaves_resource import startup
+
+# 插件加载时挂上：指令匹配前统一繁体→简体
+install_msg_process_t2s()
 
 
 @on_core_start

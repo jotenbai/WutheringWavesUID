@@ -21,6 +21,7 @@ from ..utils.calculate import (
 from ..utils.char_info_utils import get_all_role_detail_info_list
 from ..utils.damage.abstract import DamageRankRegister
 from ..utils.database.models import WavesBind, WavesUser
+from .rank_users import get_users_for_group_rank
 from ..utils.fonts.waves_fonts import (
     waves_font_14,
     waves_font_16,
@@ -279,8 +280,8 @@ async def draw_rank_img(bot: Bot, ev: Event, char: str, rank_type: str) -> str |
 
     start_time = time.time()
     logger.info(f"[get_rank_info_for_user] start: {start_time}")
-    # 获取群里的所有拥有该角色人的数据
-    users = await WavesBind.get_group_all_uid(ev.group_id)
+    # 获取排行候选人（Discord 含仅私聊录入的用户）
+    users = await get_users_for_group_rank(ev)
 
     tokenLimitFlag, wavesTokenUsersMap = await get_waves_token_condition(ev)
     if not users:
@@ -530,7 +531,7 @@ async def draw_rank_img(bot: Bot, ev: Event, char: str, rank_type: str) -> str |
 
     # 备注
     rank_row_title = "入榜条件"
-    rank_row = f"1.本群内使用过命令 {PREFIX}练度"
+    rank_row = f"1.使用过本机器人并录入该角色面板（频道或私聊均可）"
     title_draw.text((20, 420), f"{rank_row_title}", SPECIAL_GOLD, waves_font_16, "lm")
     title_draw.text((90, 420), f"{rank_row}", GREY, waves_font_16, "lm")
     if tokenLimitFlag:
