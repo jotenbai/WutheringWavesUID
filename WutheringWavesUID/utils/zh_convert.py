@@ -15,13 +15,22 @@ except ImportError:  # pragma: no cover
     logger.warning("[鸣潮] 未安装 opencc，繁体指令将无法自动转简体")
 
 
-# 简繁转换后仍须手工指定的用词（OpenCC 与游戏/社区习惯不一致）
+# 角色官译 override（参考 wuthering.gg/zh-Hant/characters；与 OpenCC s2t 仅 3 处不一致）
+# 丽贝卡→蕾貝卡、鉴心→鑒心（OpenCC 出 鑑心，正字作 鑒）、维里奈→維里奈（OpenCC 出 維裏奈）
 _TRAD_OVERRIDES: tuple[tuple[str, str], ...] = (
     ("丽贝卡", "蕾貝卡"),
     ("麗貝卡", "蕾貝卡"),
     ("瑞贝卡", "蕾貝卡"),
     ("瑞貝卡", "蕾貝卡"),
+    ("维里奈", "維里奈"),
+    ("維裏奈", "維里奈"),
+    ("鉴心", "鑒心"),
+    ("鑑心", "鑒心"),
 )
+
+
+class TradRaw(str):
+    """出图 UI 原文，跳过繁体转换（如游戏昵称）。"""
 
 
 def to_simplified(text: str) -> str:
@@ -32,6 +41,8 @@ def to_simplified(text: str) -> str:
 
 def ui_text(text: str) -> str:
     """出图 UI 文案：简体 → 繁体（含少量 override）。"""
+    if isinstance(text, TradRaw):
+        return str(text)
     if not text or _s2t is None:
         return text
     if not any("\u4e00" <= c <= "\u9fff" for c in text):

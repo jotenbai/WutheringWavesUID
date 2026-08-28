@@ -79,6 +79,7 @@ from ..utils.image import (
     get_weapon_type,
 )
 from ..utils.name_convert import alias_to_char_name, char_name_to_char_id
+from ..utils.zh_convert import TradRaw
 from ..utils.resource.constant import (
     ATTRIBUTE_ID_MAP,
     DEAFAULT_WEAPON_ID,
@@ -499,7 +500,7 @@ async def draw_fixed_img(img, avatar, account_info, role_detail):
 
     base_info_bg = Image.open(TEXT_PATH / "base_info_bg.png")
     base_info_draw = ImageDraw.Draw(base_info_bg)
-    base_info_draw.text((275, 120), f"{account_info.name[:7]}", "white", waves_font_30, "lm")
+    base_info_draw.text((275, 120), TradRaw(account_info.name[:7]), "white", waves_font_30, "lm")
     base_info_draw.text((226, 173), f"特征码:  {account_info.id}", GOLD, waves_font_25, "lm")
     img.paste(base_info_bg, (35, -30), base_info_bg)
 

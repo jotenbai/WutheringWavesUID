@@ -25,6 +25,7 @@ from ..utils.fonts.waves_fonts import (
     waves_font_42,
 )
 from ..utils.hint import error_reply
+from ..utils.zh_convert import TradRaw
 from ..utils.image import (
     CHAIN_COLOR,
     CHAIN_COLOR_LIST,
@@ -185,7 +186,7 @@ async def draw_char_list_img(
     # 基础信息 名字 特征码
     base_info_bg = Image.open(TEXT_PATH / "base_info_bg.png")
     base_info_draw = ImageDraw.Draw(base_info_bg)
-    base_info_draw.text((275, 120), f"{account_info.name[:7]}", "white", waves_font_30, "lm")
+    base_info_draw.text((275, 120), TradRaw(account_info.name[:7]), "white", waves_font_30, "lm")
     base_info_draw.text((226, 173), f"特征码:  {account_info.id}", GOLD, waves_font_25, "lm")
     card_img.paste(base_info_bg, (15, 20), base_info_bg)
 
