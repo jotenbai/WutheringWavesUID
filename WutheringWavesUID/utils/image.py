@@ -434,6 +434,47 @@ async def get_user_avatar(
     raise ValueError(f"无法获取用户头像: {qid}") from last_err
 
 
+def _alpha_centroid(mask: Image.Image) -> tuple[float, float]:
+    """遮罩不透明区域重心（用于圆形头像对齐）。"""
+    alpha = mask.getchannel("A") if "A" in mask.getbands() else mask.convert("L")
+    w, h = alpha.size
+    px = alpha.load()
+    sum_x = sum_y = total = 0
+    for y in range(h):
+        for x in range(w):
+            a = px[x, y]
+            if a > 128:
+                sum_x += x * a
+                sum_y += y * a
+                total += a
+    if not total:
+        return w / 2, h / 2
+    return sum_x / total, sum_y / total
+
+
+def compose_rank_user_avatar(
+    pic: Image.Image,
+    avatar_mask: Image.Image,
+    *,
+    canvas_size: int = 180,
+    avatar_size: int = 120,
+) -> Image.Image:
+    """排行圆形用户头像：把头像中心对齐遮罩 alpha 圆心，避免素材偏心导致 Discord 默认头「往右歪」。"""
+    pic_temp = crop_center_img(pic, avatar_size, avatar_size)
+    mask_pic = avatar_mask.copy().resize((avatar_size, avatar_size))
+    cx, cy = _alpha_centroid(mask_pic)
+    # paste(im, box, mask) 时图与遮罩同源坐标，只改 box 无法相对对齐；先平移头像再套遮罩
+    aligned = Image.new("RGBA", (avatar_size, avatar_size))
+    aligned.paste(
+        pic_temp,
+        (int(round(cx - avatar_size / 2)), int(round(cy - avatar_size / 2))),
+    )
+    img = Image.new("RGBA", (canvas_size, canvas_size))
+    # 保留原先 (0, -5) 在条上的大致位置
+    img.paste(aligned, (0, -5), mask_pic)
+    return img
+
+
 async def get_event_avatar(
     ev: Event,
     avatar_path: Path | None = None,

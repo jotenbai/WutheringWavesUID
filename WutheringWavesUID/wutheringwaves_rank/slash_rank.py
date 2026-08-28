@@ -7,7 +7,6 @@ from gsuid_core.bot import Bot
 from gsuid_core.logger import logger
 from gsuid_core.models import Event
 from gsuid_core.utils.image.convert import convert_img
-from gsuid_core.utils.image.image_tools import crop_center_img
 import httpx
 from PIL import Image, ImageDraw
 
@@ -38,6 +37,7 @@ from ..utils.image import (
     WAVES_SIERRA,
     WAVES_VOID,
     add_footer,
+    compose_rank_user_avatar,
     get_ICON,
     get_square_avatar,
     get_user_avatar,
@@ -321,12 +321,7 @@ async def get_avatar(
             pic = await get_user_avatar(qid, size=100)
             pic_cache.set(qid, pic)
 
-        # 统一处理 crop 和遮罩（onebot/discord 共用逻辑）
-        pic_temp = crop_center_img(pic, 120, 120)
-        img = Image.new("RGBA", (180, 180))
-        avatar_mask_temp = avatar_mask.copy()
-        mask_pic_temp = avatar_mask_temp.resize((120, 120))
-        img.paste(pic_temp, (0, -5), mask_pic_temp)
+        img = compose_rank_user_avatar(pic, avatar_mask)
 
     except Exception as e:
         # 打印异常，进行降级处理
