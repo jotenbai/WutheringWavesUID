@@ -303,16 +303,15 @@ def get_target_season_info(schedule_data: dict, param: str = "") -> tuple[str, s
     def parse_chinese(s: str) -> int | None:
         if not s:
             return None
-        digit = {"零": 0, "一": 1, "二": 2, "三": 3, "四": 4,
-                 "五": 5, "六": 6, "七": 7, "八": 8, "九": 9}
+        digit = {"零": 0, "一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9}
         if s in digit:
             return digit[s]
         if s == "十":
             return 10
         if "十" in s:
-            if s[0] == "十":          # 十几
+            if s[0] == "十":  # 十几
                 return 10 + digit.get(s[1], 0)
-            parts = s.split("十")     # 几十 / 几十几
+            parts = s.split("十")  # 几十 / 几十几
             tens = digit.get(parts[0], 0) * 10
             ones = digit.get(parts[1], 0) if len(parts) > 1 and parts[1] else 0
             return tens + ones
@@ -321,12 +320,24 @@ def get_target_season_info(schedule_data: dict, param: str = "") -> tuple[str, s
     # ---------- 根据 param 解析目标赛季 ----------
     if param.isdigit():
         target = int(param)
-        return (str(target), schedule_data[str(target)]["begin"], schedule_data[str(target)]["end"]) \
-               if str(target) in schedule_data else None
+        return (
+            (str(target), schedule_data[str(target)]["begin"], schedule_data[str(target)]["end"])
+            if str(target) in schedule_data
+            else None
+        )
 
-    offsets = {"上上期": -2, "上期": -1, "上": -1, "prev": -1,
-               "当期": 0, "current": 0,
-               "下期": 1, "下": 1, "next": 1, "下下期": 2}
+    offsets = {
+        "上上期": -2,
+        "上期": -1,
+        "上": -1,
+        "prev": -1,
+        "当期": 0,
+        "current": 0,
+        "下期": 1,
+        "下": 1,
+        "next": 1,
+        "下下期": 2,
+    }
     if param in offsets:
         try:
             idx = sorted_ids.index(current_id)
