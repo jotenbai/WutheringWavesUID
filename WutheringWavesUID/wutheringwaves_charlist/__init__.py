@@ -8,54 +8,62 @@ from ..utils.at_help import ruser_id
 from ..utils.database.models import WavesBind
 from ..utils.error_reply import WAVES_CODE_103
 from ..utils.hint import error_reply
+from ..utils.name_convert import get_event_command_text
+from ..utils.trad_ui import disable_traditional_ui, enable_traditional_ui
 from .draw_char_list import draw_char_list_img
 
 sv_waves_char_list = SV("ww角色练度统计")
 
 
 @sv_waves_char_list.on_regex(
-    r"^(\d+)?(练度统计|刷新练度统计|练度|刷新练度|角色列表|刷新角色列表)(\d+)?$",
+    r"^(?P<trad>繁)?(\d+)?(练度统计|刷新练度统计|练度|刷新练度|角色列表|刷新角色列表)(\d+)?$",
     block=True,
 )
 async def send_char_list_msg_new(bot: Bot, ev: Event):
+    cmd = get_event_command_text(ev)
     match = re.search(
-        r"(?P<waves_id>\d+)?(?P<query_type>练度统计|刷新练度统计|练度|刷新练度|角色列表|刷新角色列表)(?P<num>\d+)?",
-        ev.raw_text,
+        r"(?P<trad>繁)?(?P<waves_id>\d+)?(?P<query_type>练度统计|刷新练度统计|练度|刷新练度|角色列表|刷新角色列表)(?P<num>\d+)?",
+        cmd,
     )
     if not match:
         return
-    query_waves_id = match.group("waves_id")
-    query_type = match.group("query_type")
+    traditional = bool(match.group("trad"))
+    _ui_token = enable_traditional_ui(traditional)
+    try:
+        query_waves_id = match.group("waves_id")
+        query_type = match.group("query_type")
 
-    is_refresh = False
-    if "刷新" in query_type:
-        is_refresh = True
+        is_refresh = False
+        if "刷新" in query_type:
+            is_refresh = True
 
-    is_peek = False
-    if query_waves_id:
-        is_peek = True
-        if not query_waves_id.isdigit() or len(query_waves_id) != 9:
-            return await bot.send("请输入正确的查询特征码")
+        is_peek = False
+        if query_waves_id:
+            is_peek = True
+            if not query_waves_id.isdigit() or len(query_waves_id) != 9:
+                return await bot.send("请输入正确的查询特征码")
 
-    user_id = ruser_id(ev)
-    user_waves_id = await WavesBind.get_uid_by_game(user_id, ev.bot_id)
-    if not query_waves_id:
-        query_waves_id = user_waves_id
+        user_id = ruser_id(ev)
+        user_waves_id = await WavesBind.get_uid_by_game(user_id, ev.bot_id)
+        if not query_waves_id:
+            query_waves_id = user_waves_id
 
-    # 参数校验
-    if not query_waves_id:
-        return await bot.send(error_reply(WAVES_CODE_103))
+        # 参数校验
+        if not query_waves_id:
+            return await bot.send(error_reply(WAVES_CODE_103))
 
-    if not is_peek:
-        # 更新groupid
-        await WavesBind.insert_waves_uid(user_id, ev.bot_id, query_waves_id, ev.group_id, lenth_limit=9)
+        if not is_peek:
+            # 更新groupid
+            await WavesBind.insert_waves_uid(user_id, ev.bot_id, query_waves_id, ev.group_id, lenth_limit=9)
 
-    im = await draw_char_list_img(
-        query_waves_id,
-        ev,
-        user_id,
-        is_refresh,
-        is_peek,
-        user_waves_id,
-    )
-    return await bot.send(im)
+        im = await draw_char_list_img(
+            query_waves_id,
+            ev,
+            user_id,
+            is_refresh,
+            is_peek,
+            user_waves_id,
+        )
+        return await bot.send(im)
+    finally:
+        disable_traditional_ui(_ui_token)

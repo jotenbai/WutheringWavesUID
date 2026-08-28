@@ -13,6 +13,7 @@ from ..utils.error_reply import WAVES_CODE_103
 from ..utils.hint import error_reply
 from ..utils.name_convert import CHAR_NAME_PATTERN, char_name_to_char_id, get_event_command_text
 from ..utils.resource.constant import SPECIAL_CHAR
+from ..utils.trad_ui import disable_traditional_ui, enable_traditional_ui
 from ..utils.waves_api import waves_api
 from ..wutheringwaves_config import WutheringWavesConfig
 from .draw_char_card import draw_char_detail_img, draw_char_score_img
@@ -181,135 +182,140 @@ async def send_char_detail_msg(bot: Bot, ev: Event):
 
 
 @waves_new_char_detail.on_regex(
-    rf"^(\d+)?{CHAR_NAME_PATTERN}(面板|面包|伤害(\d+)?)(pk|对比|PK|比|比较)?(?:\s*)((换[^换]*)*)?$",
+    rf"^(?P<trad>繁)?(\d+)?{CHAR_NAME_PATTERN}(面板|面包|伤害(\d+)?)(pk|对比|PK|比|比较)?(?:\s*)((换[^换]*)*)?$",
     block=True,
 )
 async def send_char_detail_msg2(bot: Bot, ev: Event):
     match = re.search(
-        rf"(?P<waves_id>\d+)?(?P<char>{CHAR_NAME_PATTERN})(?P<query_type>面板|面包|伤害(?P<damage>(\d+)?))(?P<is_pk>pk|对比|PK|比|比较)?(\s*)?(?P<change_list>((换[^换]*)*)?)",
+        rf"(?P<trad>繁)?(?P<waves_id>\d+)?(?P<char>{CHAR_NAME_PATTERN})(?P<query_type>面板|面包|伤害(?P<damage>(\d+)?))(?P<is_pk>pk|对比|PK|比|比较)?(\s*)?(?P<change_list>((换[^换]*)*)?)",
         get_event_command_text(ev),
     )
     if not match:
         return
-    ev.regex_dict = match.groupdict()
-    waves_id = ev.regex_dict.get("waves_id")
-    char = ev.regex_dict.get("char")
-    damage = ev.regex_dict.get("damage")
-    query_type = ev.regex_dict.get("query_type")
-    is_pk = ev.regex_dict.get("is_pk") is not None
-    change_list_regex = ev.regex_dict.get("change_list")
+    traditional = bool(match.group("trad"))
+    _ui_token = enable_traditional_ui(traditional)
+    try:
+        ev.regex_dict = match.groupdict()
+        waves_id = ev.regex_dict.get("waves_id")
+        char = ev.regex_dict.get("char")
+        damage = ev.regex_dict.get("damage")
+        query_type = ev.regex_dict.get("query_type")
+        is_pk = ev.regex_dict.get("is_pk") is not None
+        change_list_regex = ev.regex_dict.get("change_list")
 
-    if waves_id and len(waves_id) != 9:
-        return
-
-    if isinstance(query_type, str) and "伤害" in query_type and not damage:
-        damage = "1"
-
-    is_limit_query = False
-    if isinstance(char, str) and "极限" in char:
-        is_limit_query = True
-        char = char.replace("极限", "")
-    if char:
-        if "刷新" in char or "更新" in char:
+        if waves_id and len(waves_id) != 9:
             return
-        char_id = char_name_to_char_id(char)
 
-    if damage:
-        char = f"{char}{damage}"
-    if not char:
-        return
-    logger.debug(f"[鸣潮] [角色面板] CHAR: {char} {ev.regex_dict}")
+        if isinstance(query_type, str) and "伤害" in query_type and not damage:
+            damage = "1"
 
-    if is_limit_query:
-        im = await draw_char_detail_img(ev, "1", char, ev.user_id, is_limit_query=is_limit_query)
-        if isinstance(im, str) or isinstance(im, bytes):
-            return await bot.send(im)
+        is_limit_query = False
+        if isinstance(char, str) and "极限" in char:
+            is_limit_query = True
+            char = char.replace("极限", "")
+        if char:
+            if "刷新" in char or "更新" in char:
+                return
+            char_id = char_name_to_char_id(char)
+
+        if damage:
+            char = f"{char}{damage}"
+        if not char:
+            return
+        logger.debug(f"[鸣潮] [角色面板] CHAR: {char} {ev.regex_dict}")
+
+        if is_limit_query:
+            im = await draw_char_detail_img(ev, "1", char, ev.user_id, is_limit_query=is_limit_query)
+            if isinstance(im, str) or isinstance(im, bytes):
+                return await bot.send(im)
+            else:
+                return
+
+        at_sender = True if ev.group_id else False
+        if is_pk:
+            if not waves_id and not is_valid_at(ev):
+                return await bot.send(f"[鸣潮] [角色面板] 角色【{char}】PK需要指定目标玩家!\n", at_sender)
+
+            uid = await WavesBind.get_uid_by_game(ev.user_id, ev.bot_id)
+            if not uid:
+                return await bot.send(error_reply(WAVES_CODE_103))
+
+            im1 = await draw_char_detail_img(
+                ev,
+                uid,
+                char,
+                ev.user_id,
+                waves_id=None,
+                need_convert_img=False,
+                is_force_avatar=True,
+                change_list_regex=change_list_regex,
+            )
+            if isinstance(im1, str):
+                return await bot.send(im1, at_sender)
+
+            if not isinstance(im1, Image.Image):
+                return
+
+            user_id = ruser_id(ev)
+            uid = await WavesBind.get_uid_by_game(user_id, ev.bot_id)
+            if not uid:
+                return await bot.send(error_reply(WAVES_CODE_103))
+            im2 = await draw_char_detail_img(ev, uid, char, user_id, waves_id, need_convert_img=False)
+            if isinstance(im2, str):
+                return await bot.send(im2, at_sender)
+
+            if not isinstance(im2, Image.Image):
+                return
+
+            # 创建一个新的图片对象
+            new_im = Image.new("RGBA", (im1.size[0] + im2.size[0], max(im1.size[1], im2.size[1])))
+
+            # 将两张图片粘贴到新图片对象上
+            new_im.paste(im1, (0, 0))
+            new_im.paste(im2, (im1.size[0], 0))
+            new_im = await convert_img(new_im)
+            return await bot.send(new_im)
         else:
-            return
+            user_id = ruser_id(ev)
+            uid = await WavesBind.get_uid_by_game(user_id, ev.bot_id)
+            if not uid:
+                return await bot.send(error_reply(WAVES_CODE_103))
 
-    at_sender = True if ev.group_id else False
-    if is_pk:
-        if not waves_id and not is_valid_at(ev):
-            return await bot.send(f"[鸣潮] [角色面板] 角色【{char}】PK需要指定目标玩家!\n", at_sender)
+            msg = ""
+            is_refresh = 0  # 面板直出刷新标志
+            if (
+                not waves_id
+                and not waves_api.is_net(uid)
+                and not change_list_regex
+                and not re.search(r"\d", char)
+                and WutheringWavesConfig.get_config("CharCardRefresh").data
+            ):
+                if not char_id or len(char_id) != 4:
+                    return await bot.send(f"[鸣潮] 角色名【{char}】无法找到, 可能暂未适配, 请先检查输入是否正确！\n")
+                refresh_type = [char_id]
+                if char_id in SPECIAL_CHAR:
+                    refresh_type = SPECIAL_CHAR.copy()[char_id]
 
-        uid = await WavesBind.get_uid_by_game(ev.user_id, ev.bot_id)
-        if not uid:
-            return await bot.send(error_reply(WAVES_CODE_103))
+                from .draw_refresh_char_card import draw_refresh_char_detail_img
 
-        im1 = await draw_char_detail_img(
-            ev,
-            uid,
-            char,
-            ev.user_id,
-            waves_id=None,
-            need_convert_img=False,
-            is_force_avatar=True,
-            change_list_regex=change_list_regex,
-        )
-        if isinstance(im1, str):
-            return await bot.send(im1, at_sender)
+                buttons = []
+                msg = await draw_refresh_char_detail_img(bot, ev, user_id, uid, buttons, refresh_type, True)
+                if isinstance(msg, bool):
+                    is_refresh = 1 if msg else 0
+                if isinstance(msg, str):
+                    is_refresh = -1
+            if msg:
+                logger.warning(msg)
 
-        if not isinstance(im1, Image.Image):
-            return
-
-        user_id = ruser_id(ev)
-        uid = await WavesBind.get_uid_by_game(user_id, ev.bot_id)
-        if not uid:
-            return await bot.send(error_reply(WAVES_CODE_103))
-        im2 = await draw_char_detail_img(ev, uid, char, user_id, waves_id, need_convert_img=False)
-        if isinstance(im2, str):
-            return await bot.send(im2, at_sender)
-
-        if not isinstance(im2, Image.Image):
-            return
-
-        # 创建一个新的图片对象
-        new_im = Image.new("RGBA", (im1.size[0] + im2.size[0], max(im1.size[1], im2.size[1])))
-
-        # 将两张图片粘贴到新图片对象上
-        new_im.paste(im1, (0, 0))
-        new_im.paste(im2, (im1.size[0], 0))
-        new_im = await convert_img(new_im)
-        return await bot.send(new_im)
-    else:
-        user_id = ruser_id(ev)
-        uid = await WavesBind.get_uid_by_game(user_id, ev.bot_id)
-        if not uid:
-            return await bot.send(error_reply(WAVES_CODE_103))
-
-        msg = ""
-        is_refresh = 0  # 面板直出刷新标志
-        if (
-            not waves_id
-            and not waves_api.is_net(uid)
-            and not change_list_regex
-            and not re.search(r"\d", char)
-            and WutheringWavesConfig.get_config("CharCardRefresh").data
-        ):
-            if not char_id or len(char_id) != 4:
-                return await bot.send(f"[鸣潮] 角色名【{char}】无法找到, 可能暂未适配, 请先检查输入是否正确！\n")
-            refresh_type = [char_id]
-            if char_id in SPECIAL_CHAR:
-                refresh_type = SPECIAL_CHAR.copy()[char_id]
-
-            from .draw_refresh_char_card import draw_refresh_char_detail_img
-
-            buttons = []
-            msg = await draw_refresh_char_detail_img(bot, ev, user_id, uid, buttons, refresh_type, True)
-            if isinstance(msg, bool):
-                is_refresh = 1 if msg else 0
-            if isinstance(msg, str):
-                is_refresh = -1
-        if msg:
-            logger.warning(msg)
-
-        im = await draw_char_detail_img(
-            ev, uid, char, user_id, waves_id, change_list_regex=change_list_regex, is_refresh=is_refresh
-        )
-        if isinstance(im, bytes):
-            return await bot.send(im)
-        if isinstance(im, str) and isinstance(msg, str):
-            return await bot.send(msg + "\n" + im, at_sender)
+            im = await draw_char_detail_img(
+                ev, uid, char, user_id, waves_id, change_list_regex=change_list_regex, is_refresh=is_refresh
+            )
+            if isinstance(im, bytes):
+                return await bot.send(im)
+            if isinstance(im, str) and isinstance(msg, str):
+                return await bot.send(msg + "\n" + im, at_sender)
+    finally:
+        disable_traditional_ui(_ui_token)
 
 
 @waves_new_char_detail.on_regex(rf"^(\d+)?{CHAR_NAME_PATTERN}(?:权重)$", block=True)
