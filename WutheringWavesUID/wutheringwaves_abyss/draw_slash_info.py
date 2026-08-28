@@ -268,11 +268,7 @@ def get_target_season_info(schedule_data: dict, param: str = "") -> tuple[str, s
         return None
     sorted_ids = sorted(schedule_data.keys(), key=lambda x: int(x))
 
-    if param and param.isdigit():
-        if param in schedule_data:
-            return param, schedule_data[param]["begin"], schedule_data[param]["end"]
-        return None
-
+    # ---------- 确定当前赛季（时间优先，否则取最大） ----------
     now = datetime.now()
     date_format = "%Y-%m-%d"
     current_id = None
@@ -300,21 +296,57 @@ def get_target_season_info(schedule_data: dict, param: str = "") -> tuple[str, s
     if current_id is None and sorted_ids:
         current_id = sorted_ids[-1]
 
-    if not param:
-        if current_id:
-            return current_id, schedule_data[current_id]["begin"], schedule_data[current_id]["end"]
+    if current_id is None:
         return None
 
-    if param in ["下期", "下", "next"]:
+    # ---------- 辅助解析中文数字 ----------
+    def parse_chinese(s: str) -> int | None:
+        if not s:
+            return None
+        digit = {"零": 0, "一": 1, "二": 2, "三": 3, "四": 4,
+                 "五": 5, "六": 6, "七": 7, "八": 8, "九": 9}
+        if s in digit:
+            return digit[s]
+        if s == "十":
+            return 10
+        if "十" in s:
+            if s[0] == "十":          # 十几
+                return 10 + digit.get(s[1], 0)
+            parts = s.split("十")     # 几十 / 几十几
+            tens = digit.get(parts[0], 0) * 10
+            ones = digit.get(parts[1], 0) if len(parts) > 1 and parts[1] else 0
+            return tens + ones
+        return None
+
+    # ---------- 根据 param 解析目标赛季 ----------
+    if param.isdigit():
+        target = int(param)
+        return (str(target), schedule_data[str(target)]["begin"], schedule_data[str(target)]["end"]) \
+               if str(target) in schedule_data else None
+
+    offsets = {"上上期": -2, "上期": -1, "上": -1, "prev": -1,
+               "当期": 0, "current": 0,
+               "下期": 1, "下": 1, "next": 1, "下下期": 2}
+    if param in offsets:
         try:
             idx = sorted_ids.index(current_id)
-            if idx + 1 < len(sorted_ids):
-                nid = sorted_ids[idx + 1]
-                return nid, schedule_data[nid]["begin"], schedule_data[nid]["end"]
-        except Exception:
+            new_idx = idx + offsets[param]
+            if 0 <= new_idx < len(sorted_ids):
+                target_id = sorted_ids[new_idx]
+                return target_id, schedule_data[target_id]["begin"], schedule_data[target_id]["end"]
+        except ValueError:
             pass
+        return None
 
-    return None
+    if "期" in param:
+        num_str = param.replace("第", "").replace("期", "")
+        target = int(num_str) if num_str.isdigit() else parse_chinese(num_str)
+        if target is not None and str(target) in schedule_data:
+            return str(target), schedule_data[str(target)]["begin"], schedule_data[str(target)]["end"]
+        return None
+
+    # 无匹配时默认当期
+    return current_id, schedule_data[current_id]["begin"], schedule_data[current_id]["end"]
 
 
 # -------------------- 绘图常量 --------------------
@@ -638,21 +670,21 @@ async def draw_buff_items_section(
 
 async def draw_slash_info_img(param: str = "", mode: str = "whiwa") -> str | bytes:
     if mode != "whiwa":
-        return "请使用活动相关指令查看。"
+        return "请使用海墟相关指令查看。"
 
     schedule = await get_slash_schedule()
     if not schedule:
-        return "获取活动排期失败，API可能无法访问。"
+        return "获取海墟排期失败，API可能无法访问。"
 
     clean_param = param.replace("信息", "").strip()
     season_info = get_target_season_info(schedule, clean_param)
     if not season_info:
-        return "未查询到有效的活动排期数据。"
+        return "未查询到有效的海墟排期数据。"
 
     s_id, s_begin, s_end = season_info
     detail = await get_whiwa_detail(s_id)
     if not detail:
-        return f"获取活动第 {s_id} 期详情失败。"
+        return f"获取海墟第 {s_id} 期详情失败。"
 
     # 关卡按 OrderIndex 倒序排列
     levels = sorted(detail.Levels, key=lambda x: x.OrderIndex, reverse=True)
