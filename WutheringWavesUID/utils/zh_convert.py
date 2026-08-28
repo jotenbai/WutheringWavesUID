@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from gsuid_core.logger import logger
 
 try:
@@ -14,10 +17,10 @@ except ImportError:  # pragma: no cover
     _s2t = None
     logger.warning("[鸣潮] 未安装 opencc，繁体指令将无法自动转简体")
 
+_MAP_DIR = Path(__file__).resolve().parent / "map"
 
-# 角色官译 override（参考 wuthering.gg/zh-Hant/characters；与 OpenCC s2t 仅 3 处不一致）
-# 丽贝卡→蕾貝卡、鉴心→鑒心（OpenCC 出 鑑心，正字作 鑒）、维里奈→維里奈（OpenCC 出 維裏奈）
-_TRAD_OVERRIDES: tuple[tuple[str, str], ...] = (
+# 角色官译（wuthering.gg/zh-Hant/characters；OpenCC 仅 3 处不一致）
+_CHAR_TRAD_OVERRIDES: tuple[tuple[str, str], ...] = (
     ("丽贝卡", "蕾貝卡"),
     ("麗貝卡", "蕾貝卡"),
     ("瑞贝卡", "蕾貝卡"),
@@ -27,6 +30,31 @@ _TRAD_OVERRIDES: tuple[tuple[str, str], ...] = (
     ("鉴心", "鑒心"),
     ("鑑心", "鑒心"),
 )
+
+
+def _load_trad_overrides() -> tuple[tuple[str, str], ...]:
+    pairs: list[tuple[str, str]] = list(_CHAR_TRAD_OVERRIDES)
+    path = _MAP_DIR / "ui_trad_overrides.json"
+    if path.is_file():
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            for src, dst in data.get("opencc_to_wg", {}).items():
+                if src and dst and src != dst:
+                    pairs.append((src, dst))
+        except (OSError, json.JSONDecodeError) as exc:
+            logger.warning(f"[鸣潮] 读取 ui_trad_overrides.json 失败: {exc}")
+    # 长串优先，避免短串误替（如「無常兇鷺」嵌在「夢魘·…」内）
+    seen: set[str] = set()
+    ordered: list[tuple[str, str]] = []
+    for src, dst in sorted(pairs, key=lambda item: len(item[0]), reverse=True):
+        if src in seen:
+            continue
+        seen.add(src)
+        ordered.append((src, dst))
+    return tuple(ordered)
+
+
+_TRAD_OVERRIDES = _load_trad_overrides()
 
 
 class TradRaw(str):
@@ -40,7 +68,7 @@ def to_simplified(text: str) -> str:
 
 
 def ui_text(text: str) -> str:
-    """出图 UI 文案：简体 → 繁体（含少量 override）。"""
+    """出图 UI 文案：简体 → 繁体（OpenCC + wuthering.gg override）。"""
     if isinstance(text, TradRaw):
         return str(text)
     if not text or _s2t is None:
