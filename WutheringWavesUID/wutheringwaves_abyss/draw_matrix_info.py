@@ -261,7 +261,7 @@ def draw_rounded_rect(img: Image.Image, xy, radius, color):
 async def get_matrix_schedule() -> list[int]:
     """获取矩阵所有赛季ID列表"""
     async with aiohttp.ClientSession() as session:
-        async with session.get(URL + f"?{QUERY}") as resp:
+        async with session.get(URL) as resp:
             if resp.status != 200:
                 return []
             data = await resp.json()
@@ -284,14 +284,48 @@ def get_target_season_info(season_ids: list[int], param: str = "") -> int | None
     """根据参数确定目标赛季ID"""
     if not season_ids:
         return None
-    if param and param.isdigit():
-        target = int(param)
-        if target in season_ids:
-            return target
+
+    current = max(season_ids)
+
+    # 解析中文数字（纯数字部分，不含“第”“期”）
+    def parse_chinese(s: str) -> int | None:
+        if not s:
+            return None
+        digit = {"零": 0, "一": 1, "二": 2, "三": 3, "四": 4,
+                 "五": 5, "六": 6, "七": 7, "八": 8, "九": 9}
+        if s in digit:
+            return digit[s]
+        if s == "十":
+            return 10
+        if "十" in s:
+            if s[0] == "十":          # 十几
+                return 10 + digit.get(s[1], 0)
+            parts = s.split("十")     # 几十或几十几
+            tens = digit.get(parts[0], 0) * 10
+            ones = digit.get(parts[1], 0) if len(parts) > 1 and parts[1] else 0
+            return tens + ones
         return None
-    if param in ["下期", "下", "next"]:
-        return max(season_ids)
-    return max(season_ids) - 1
+
+    if param.isdigit():
+        target = int(param)
+        return target if target in season_ids else None
+
+    offsets = {"上上期": -2, "上期": -1, "上": -1, "prev": -1,
+               "当期": 0, "current": 0,
+               "下期": 1, "下": 1, "next": 1, "下下期": 2}
+    if param in offsets:
+        target = current + offsets[param]
+        return target
+
+    if "期" in param:
+        num_str = param.replace("第", "").replace("期", "")
+        if num_str.isdigit():
+            target = int(num_str)
+        else:
+            target = parse_chinese(num_str)
+        return target
+
+    return current  # 无匹配时默认当期
 
 
 def parse_color(color_str: str) -> str:
@@ -713,16 +747,16 @@ async def draw_level_card(level: LevelDetail, width: int) -> Image.Image:
 
 async def draw_matrix_info_img(param: str = "", mode: str = "matrix") -> str | bytes:
     if mode != "matrix":
-        return "请使用深塔相关指令查看。"
+        return "请使用矩阵相关指令查看。"
 
     season_ids = await get_matrix_schedule()
     if not season_ids:
-        return "获取深塔排期失败，API可能无法访问。"
+        return "获取矩阵排期失败，API可能无法访问。"
 
     clean_param = param.replace("信息", "").strip()
     target_season = get_target_season_info(season_ids, clean_param)
     if target_season is None:
-        return "未查询到有效的深塔赛季。"
+        return "未查询到有效的矩阵赛季。"
 
     detail = await get_matrix_detail(str(target_season))
     if not detail:
