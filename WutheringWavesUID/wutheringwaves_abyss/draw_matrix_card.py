@@ -227,13 +227,27 @@ async def draw_matrix_img(ev: Event, uid: str, user_id: str) -> bytes | str:
             card_img_draw,
             f"{mode.score}",
             mode_bg_x + mode_bg.width // 2,
-            mode_bg_y + mode_bg.height - 10,
+            mode_bg_y + mode_bg.height - 20,
             waves_font_58,
             fill_color=score_color,
             shadow_color="black",
             offset=(2, 2),
             anchor="mm",
         )
+
+        mode_name = MATRIX_MODE_NAMES.get(mode.modeId, "")
+        if mode_name:
+            draw_text_with_shadow(
+                card_img_draw,
+                mode_name,
+                mode_bg_x + mode_bg.width // 2,
+                mode_bg_y + mode_bg.height + 30,
+                waves_font_42,
+                fill_color="white",
+                shadow_color="black",
+                offset=(1, 1),
+                anchor="mm",
+            )
 
         if mode.teams:
             team_count = len(mode.teams)
