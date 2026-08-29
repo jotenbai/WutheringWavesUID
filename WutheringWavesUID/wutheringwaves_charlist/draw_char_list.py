@@ -239,7 +239,7 @@ async def draw_char_list_img(
             bar_star.alpha_composite(score_bg, (200, 2))
             bar_star_draw.text(
                 (348, 42),
-                f"{int(_rank.score * 100) / 100:.2f}",
+                f"{_rank.score:.2f}",
                 "white",
                 waves_font_30,
                 "mm",

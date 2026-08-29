@@ -147,7 +147,7 @@ async def get_one_rank_info(user_id, uid, role_detail, rankDetail):
             "level": role_detail.role.level,
             "chain": role_detail.get_chain_num(),
             "chainName": role_detail.get_chain_name(),
-            "score": round(int(phantom_score * 100) / 100, ndigits=2),
+            "score": round(phantom_score, 2),
             "score_bg": phantom_bg,
             "expected_damage": expected_damage,
             "expected_damage_int": int(expected_damage.replace(",", "")),
@@ -409,7 +409,7 @@ async def draw_rank_img(bot: Bot, ev: Event, char: str, rank_type: str) -> str |
             bar_bg.alpha_composite(score_bg, (320, 2))
             bar_star_draw.text(
                 (466, 42),
-                f"{int(rank.score * 100) / 100:.2f}",
+                f"{rank.score:.2f}",
                 "white",
                 waves_font_30,
                 "mm",

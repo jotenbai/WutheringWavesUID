@@ -404,7 +404,7 @@ async def draw_bot_rank_img(bot: Bot, ev: Event, char: str, rank_type: str) -> s
             bar_bg.alpha_composite(score_bg, (545, 2))
             bar_star_draw.text(
                 (707, 45),
-                f"{int(rank.score * 100) / 100:.2f}",
+                f"{rank.score:.2f}",
                 "white",
                 waves_font_34,
                 "mm",

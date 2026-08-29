@@ -243,7 +243,7 @@ async def draw_all_rank_card(bot: Bot, ev: Event, char: str, rank_type: str, pag
             bar_bg.alpha_composite(score_bg, (545, 2))
             bar_star_draw.text(
                 (707, 45),
-                f"{int(rank.phantom_score * 100) / 100:.2f}",
+                f"{rank.phantom_score:.2f}",
                 "white",
                 waves_font_34,
                 "mm",
