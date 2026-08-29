@@ -336,6 +336,28 @@ def _parse_discord_rank_user_id(qid: str) -> tuple[str, str] | None:
     return None
 
 
+def _discord_snowflake_from_rank_qid(qid: str) -> str | None:
+    """从排行 user_id 提取 Discord 雪花 ID（含 `雪花/` 空 hash 上传格式）。"""
+    if "/" in qid:
+        left, _ = qid.split("/", 1)
+        if _looks_like_discord_user_id(left):
+            return left
+    if _looks_like_discord_user_id(qid):
+        return qid
+    return None
+
+
+def _rank_qid_custom_hash(qid: str) -> str:
+    discord_rank = _parse_discord_rank_user_id(qid)
+    if discord_rank:
+        return discord_rank[1]
+    if "/" in qid:
+        right = _normalize_discord_avatar_hash(qid.split("/", 1)[1])
+        if _is_usable_discord_avatar_hash(right):
+            return right
+    return ""
+
+
 def _extract_discord_avatar_hash_from_url(user_id: str, avatar_url: str) -> str:
     """从 sender.avatar URL 提取自定义 hash；默认 embed 头返回空串。"""
     if not avatar_url:
@@ -379,6 +401,8 @@ async def get_user_avatar(
     qid: int | str | None = None,
     avatar_url: str | None = None,
     size: int = 640,
+    *,
+    allow_discord_default: bool = True,
 ) -> Image.Image:
     qid = str(qid)
     logger.debug(f"[鸣潮] 获取头像: {qid} {avatar_url} {size}")
@@ -388,9 +412,17 @@ async def get_user_avatar(
 
     if qid:
         discord_rank = _parse_discord_rank_user_id(qid)
-        lookup_id = discord_rank[0] if discord_rank else qid
-        custom_hash = discord_rank[1] if discord_rank else ""
-        is_discord = discord_rank is not None or _looks_like_discord_user_id(lookup_id)
+        snowflake = _discord_snowflake_from_rank_qid(qid)
+        if discord_rank:
+            lookup_id = discord_rank[0]
+            custom_hash = discord_rank[1]
+        elif snowflake:
+            lookup_id = snowflake
+            custom_hash = _rank_qid_custom_hash(qid)
+        else:
+            lookup_id = qid
+            custom_hash = ""
+        is_discord = discord_rank is not None or snowflake is not None
 
         data = await WavesUserAvatar.select_data(lookup_id)
         if data:  # 说明本地有个人数据，没有是排行数据
@@ -407,7 +439,8 @@ async def get_user_avatar(
             # Discord：自定义头 → 失败再用默认纯色头；绝不走 QQ（否则雪花 ID 会出企鹅）
             if _is_usable_discord_avatar_hash(custom_hash):
                 urls.append(_discord_custom_avatar_url(lookup_id, custom_hash, size))
-            urls.append(_discord_default_avatar_url(lookup_id))
+            if allow_discord_default:
+                urls.append(_discord_default_avatar_url(lookup_id))
         elif not urls:
             if qid.isdigit():
                 urls.append(f"http://q1.qlogo.cn/g?b=qq&nk={qid}&s={size}")
@@ -439,15 +472,12 @@ async def rank_user_has_custom_avatar(qid: int | str | None) -> bool:
     if not qid:
         return False
     qid = str(qid)
-    discord_rank = _parse_discord_rank_user_id(qid)
-    lookup_id = discord_rank[0] if discord_rank else qid
-    custom_hash = discord_rank[1] if discord_rank else ""
-    is_discord = discord_rank is not None or _looks_like_discord_user_id(lookup_id)
-
-    if not is_discord:
+    snowflake = _discord_snowflake_from_rank_qid(qid)
+    if not snowflake:
         return True
 
-    data = await WavesUserAvatar.select_data(lookup_id)
+    custom_hash = _rank_qid_custom_hash(qid)
+    data = await WavesUserAvatar.select_data(snowflake)
     if data and data.bot_id == "discord":
         stored = _normalize_discord_avatar_hash(data.avatar_hash or "")
         if _is_usable_discord_avatar_hash(stored):

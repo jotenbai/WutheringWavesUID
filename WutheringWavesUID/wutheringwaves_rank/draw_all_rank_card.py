@@ -18,7 +18,6 @@ from ..utils.api.wwapi import (
 )
 from ..utils.ascension.char import get_char_model
 from ..utils.ascension.weapon import get_weapon_model
-from ..utils.cache import TimedCache
 from ..utils.database.models import WavesBind
 from ..utils.fonts.waves_fonts import (
     waves_font_14,
@@ -76,8 +75,6 @@ char_mask = Image.open(TEXT_PATH / "char_mask.png")
 char_mask2 = Image.open(TEXT_PATH / "char_mask.png")
 char_mask2 = char_mask2.resize((1300, char_mask2.size[1]))
 logo_img = Image.open(TEXT_PATH / "logo_small_2.png")
-pic_cache = TimedCache(600, 200)
-
 
 BOT_COLOR = [
     WAVES_MOLTEN,
@@ -464,15 +461,7 @@ async def get_avatar(
         return await _char_rank_avatar(char_id)
 
     try:
-        if WutheringWavesConfig.get_config("QQPicCache").data:
-            pic = pic_cache.get(qid)
-            if not pic:
-                pic = await get_user_avatar(qid, size=100)
-                pic_cache.set(qid, pic)
-        else:
-            pic = await get_user_avatar(qid, size=100)
-            pic_cache.set(qid, pic)
-
+        pic = await get_user_avatar(qid, size=100, allow_discord_default=False)
         return compose_rank_user_avatar(pic, avatar_mask)
 
     except Exception as e:
