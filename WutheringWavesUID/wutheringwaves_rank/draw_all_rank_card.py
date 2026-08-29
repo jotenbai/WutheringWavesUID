@@ -55,6 +55,7 @@ from ..utils.image import (
     get_square_weapon,
     get_user_avatar,
     get_waves_bg,
+    rank_user_has_custom_avatar,
 )
 from ..utils.name_convert import alias_to_char_name, char_name_to_char_id
 from ..utils.resource.constant import ATTRIBUTE_ID_MAP, SPECIAL_CHAR_NAME
@@ -450,10 +451,18 @@ def get_breach(breach: int | None, level: int):
     return breach
 
 
+async def _char_rank_avatar(char_id: int | str) -> Image.Image:
+    pic = await get_square_avatar(char_id)
+    return compose_rank_user_avatar(pic, avatar_mask)
+
+
 async def get_avatar(
     qid: str | None,
     char_id: int | str,
 ) -> Image.Image:
+    if not qid or not await rank_user_has_custom_avatar(qid):
+        return await _char_rank_avatar(char_id)
+
     try:
         if WutheringWavesConfig.get_config("QQPicCache").data:
             pic = pic_cache.get(qid)
@@ -464,23 +473,8 @@ async def get_avatar(
             pic = await get_user_avatar(qid, size=100)
             pic_cache.set(qid, pic)
 
-        img = compose_rank_user_avatar(pic, avatar_mask)
+        return compose_rank_user_avatar(pic, avatar_mask)
 
     except Exception as e:
-        # 打印异常，进行降级处理
-        logger.warning(f"头像获取失败，使用默认头像: {e}")
-        pic = await get_square_avatar(char_id)
-
-        pic_temp = Image.new("RGBA", pic.size)
-        pic_temp.paste(pic.resize((160, 160)), (10, 10))
-        pic_temp = pic_temp.resize((160, 160))
-
-        avatar_mask_temp = avatar_mask.copy()
-        mask_pic_temp = Image.new("RGBA", avatar_mask_temp.size)
-        mask_pic_temp.paste(avatar_mask_temp, (-20, -45), avatar_mask_temp)
-        mask_pic_temp = mask_pic_temp.resize((160, 160))
-
-        img = Image.new("RGBA", (180, 180))
-        img.paste(pic_temp, (0, 0), mask_pic_temp)
-
-    return img
+        logger.warning(f"头像获取失败，使用角色头像: {e}")
+        return await _char_rank_avatar(char_id)

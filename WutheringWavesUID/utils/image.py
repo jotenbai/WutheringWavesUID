@@ -434,6 +434,28 @@ async def get_user_avatar(
     raise ValueError(f"无法获取用户头像: {qid}") from last_err
 
 
+async def rank_user_has_custom_avatar(qid: int | str | None) -> bool:
+    """排行用：Discord 无自定义头像时返回 False（应改用角色头）；其它平台仍尝试用户头像。"""
+    if not qid:
+        return False
+    qid = str(qid)
+    discord_rank = _parse_discord_rank_user_id(qid)
+    lookup_id = discord_rank[0] if discord_rank else qid
+    custom_hash = discord_rank[1] if discord_rank else ""
+    is_discord = discord_rank is not None or _looks_like_discord_user_id(lookup_id)
+
+    if not is_discord:
+        return True
+
+    data = await WavesUserAvatar.select_data(lookup_id)
+    if data and data.bot_id == "discord":
+        stored = _normalize_discord_avatar_hash(data.avatar_hash or "")
+        if _is_usable_discord_avatar_hash(stored):
+            return True
+
+    return _is_usable_discord_avatar_hash(custom_hash)
+
+
 def _alpha_centroid(mask: Image.Image) -> tuple[float, float]:
     """遮罩不透明区域重心（用于圆形头像对齐）。"""
     alpha = mask.getchannel("A") if "A" in mask.getbands() else mask.convert("L")
