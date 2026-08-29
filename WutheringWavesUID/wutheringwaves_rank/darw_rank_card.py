@@ -403,15 +403,22 @@ async def draw_rank_img(bot: Bot, ev: Event, char: str, rank_type: str) -> str |
         info_block_draw.text((5, 10), f"Lv.{rank.level}", "white", waves_font_18, "lm")
         bar_bg.alpha_composite(info_block, (240, 30))
 
-        # 共效（有声骸时显示，与面板数值一致）
+        # 评分与共效（有声骸时显示）
         if rank.score > 0.0:
             score_bg = Image.open(TEXT_PATH / f"score_{rank.score_bg}.png")
             bar_bg.alpha_composite(score_bg, (320, 2))
             bar_star_draw.text(
-                (466, 58),
-                format_energy_regen_line(rank.energy_regen),
+                (466, 42),
+                f"{int(rank.score * 100) / 100:.2f}",
                 "white",
-                waves_font_22,
+                waves_font_30,
+                "mm",
+            )
+            bar_star_draw.text(
+                (466, 75),
+                format_energy_regen_line(rank.energy_regen),
+                SPECIAL_GOLD,
+                waves_font_16,
                 "mm",
             )
 

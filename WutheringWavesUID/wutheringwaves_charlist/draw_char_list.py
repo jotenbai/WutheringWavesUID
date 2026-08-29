@@ -233,15 +233,22 @@ async def draw_char_list_img(
         info_block_draw.text((2, 10), f"{role_detail.get_chain_name()}", "white", waves_font_18, "lm")
         bar_star.alpha_composite(info_block, (120, 15))
 
-        # 共效（有声骸时显示，与面板数值一致）
+        # 评分与共效（有声骸时显示）
         if _rank.score > 0.0:
             score_bg = Image.open(TEXT_PATH / f"score_{_rank.score_bg}.png")
             bar_star.alpha_composite(score_bg, (200, 2))
             bar_star_draw.text(
-                (348, 58),
-                format_energy_regen_line(_rank.energy_regen),
+                (348, 42),
+                f"{int(_rank.score * 100) / 100:.2f}",
                 "white",
-                waves_font_22,
+                waves_font_30,
+                "mm",
+            )
+            bar_star_draw.text(
+                (348, 75),
+                format_energy_regen_line(_rank.energy_regen),
+                SPECIAL_GOLD,
+                waves_font_16,
                 "mm",
             )
 
