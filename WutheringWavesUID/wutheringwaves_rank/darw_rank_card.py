@@ -21,6 +21,7 @@ from ..utils.calculate import (
 from ..utils.char_info_utils import get_all_role_detail_info_list
 from ..utils.damage.abstract import DamageRankRegister
 from ..utils.database.models import WavesBind, WavesUser
+from ..utils.expression_ctx import format_energy_regen_line
 from .rank_users import get_users_for_group_rank
 from ..utils.fonts.waves_fonts import (
     waves_font_14,
@@ -83,6 +84,7 @@ class RankInfo(BaseModel):
     expected_damage: str  # 期望伤害
     expected_damage_int: int  # 期望伤害
     sonata_name: str  # 合鸣效果
+    energy_regen: str = ""  # 共鸣效率，与面板 role_card 一致（如 125.0%）
 
 
 async def get_one_rank_info(user_id, uid, role_detail, rankDetail):
@@ -150,6 +152,7 @@ async def get_one_rank_info(user_id, uid, role_detail, rankDetail):
             "expected_damage": expected_damage,
             "expected_damage_int": int(expected_damage.replace(",", "")),
             "sonata_name": sonata_name,
+            "energy_regen": calc.role_card.get("共鸣效率", "0%"),
         }
     )
     return rankInfo
@@ -400,18 +403,17 @@ async def draw_rank_img(bot: Bot, ev: Event, char: str, rank_type: str) -> str |
         info_block_draw.text((5, 10), f"Lv.{rank.level}", "white", waves_font_18, "lm")
         bar_bg.alpha_composite(info_block, (240, 30))
 
-        # 评分
+        # 共效（有声骸时显示，与面板数值一致）
         if rank.score > 0.0:
             score_bg = Image.open(TEXT_PATH / f"score_{rank.score_bg}.png")
             bar_bg.alpha_composite(score_bg, (320, 2))
             bar_star_draw.text(
-                (466, 42),
-                f"{int(rank.score * 100) / 100:.2f}",
+                (466, 58),
+                format_energy_regen_line(rank.energy_regen),
                 "white",
-                waves_font_30,
+                waves_font_22,
                 "mm",
             )
-            bar_star_draw.text((466, 75), "声骸分数", SPECIAL_GOLD, waves_font_16, "mm")
 
         # 合鸣效果
         if rank.sonata_name:

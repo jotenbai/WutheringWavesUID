@@ -10,7 +10,7 @@ from ..utils.api.model import RoleDetailData, WeaponData
 from ..utils.ascension.weapon import get_breach
 from ..utils.char_info_utils import get_all_roleid_detail_info_int
 from ..utils.error_reply import WAVES_CODE_099
-from ..utils.expression_ctx import WavesCharRank, get_waves_char_rank
+from ..utils.expression_ctx import WavesCharRank, format_energy_regen_line, get_waves_char_rank
 from ..utils.fonts.waves_fonts import (
     waves_font_16,
     waves_font_18,
@@ -233,18 +233,17 @@ async def draw_char_list_img(
         info_block_draw.text((2, 10), f"{role_detail.get_chain_name()}", "white", waves_font_18, "lm")
         bar_star.alpha_composite(info_block, (120, 15))
 
-        # 评分
+        # 共效（有声骸时显示，与面板数值一致）
         if _rank.score > 0.0:
             score_bg = Image.open(TEXT_PATH / f"score_{_rank.score_bg}.png")
             bar_star.alpha_composite(score_bg, (200, 2))
             bar_star_draw.text(
-                (348, 42),
-                f"{int(_rank.score * 100) / 100:.2f}",
+                (348, 58),
+                format_energy_regen_line(_rank.energy_regen),
                 "white",
-                waves_font_30,
+                waves_font_22,
                 "mm",
             )
-            bar_star_draw.text((348, 75), "声骸分数", SPECIAL_GOLD, waves_font_16, "mm")
 
         # 技能
         skill_img_temp = Image.new("RGBA", (1500, 300))

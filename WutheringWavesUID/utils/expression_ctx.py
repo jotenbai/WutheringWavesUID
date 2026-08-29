@@ -8,6 +8,11 @@ from .damage.abstract import DamageRankRegister
 from .damage.utils import comma_separated_number
 
 
+def format_energy_regen_line(energy_regen: str) -> str:
+    """列表/排行用共效单行，数值与面板 role_card['共鸣效率'] 一致。"""
+    return f"共效{(energy_regen or '0%').strip()}"
+
+
 class WavesCharRank(BaseModel):
     roleId: int  # 角色id
     roleName: str  # 角色名字
@@ -24,6 +29,7 @@ class WavesCharRank(BaseModel):
     weaponResonLevel: int  # 武器共鸣等级
     sonataName: str  # 合鸣效果
     expected_name: str  # 期望伤害名字
+    energy_regen: str = ""  # 共鸣效率，与面板 role_card 一致（如 125.0%）
 
     def to_rank_dict(self):
         return {
@@ -60,6 +66,7 @@ async def get_waves_char_rank(uid, all_role_detail, need_expected_damage=False):
 
         sonataName = ""
         expected_name = ""
+        energy_regen = ""
         if role_detail.phantomData and role_detail.phantomData.equipPhantomList:
             equipPhantomList = role_detail.phantomData.equipPhantomList
 
@@ -94,6 +101,9 @@ async def get_waves_char_rank(uid, all_role_detail, need_expected_damage=False):
                     sonataName = ph_detail["ph_name"]
                     break
 
+            calc.role_card = calc.enhance_summation_card_value(calc.phantom_card)
+            energy_regen = calc.role_card.get("共鸣效率", "0%")
+
         phantom_score = round(phantom_score, 2)
         wcr = WavesCharRank(
             **{
@@ -111,6 +121,7 @@ async def get_waves_char_rank(uid, all_role_detail, need_expected_damage=False):
                 "weaponResonLevel": role_detail.weaponData.resonLevel,
                 "sonataName": sonataName,
                 "expected_name": expected_name,
+                "energy_regen": energy_regen,
             }
         )
         waves_char_rank.append(wcr)
