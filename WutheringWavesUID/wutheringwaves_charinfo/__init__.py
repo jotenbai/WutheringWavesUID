@@ -221,7 +221,7 @@ async def send_char_detail_msg2(bot: Bot, ev: Event):
     logger.debug(f"[鸣潮] [角色面板] CHAR: {char} {ev.regex_dict}")
 
     if is_limit_query:
-        im = await draw_char_detail_img(ev, "1", char, ev.user_id, is_limit_query=is_limit_query)
+        im = await draw_char_detail_img(ev, "1", char, ev.user_id, is_limit_query=is_limit_query, change_list_regex=change_list_regex)
         if isinstance(im, str) or isinstance(im, bytes):
             return await bot.send(im)
         else:
