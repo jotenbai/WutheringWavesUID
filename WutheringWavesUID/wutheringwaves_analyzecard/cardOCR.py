@@ -685,6 +685,18 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
     return True, final_result
 
 
+_ROVER_ATTR_ORDER = {"湮灭": 0, "衍射": 1, "气动": 2, "导电": 3}
+
+
+def _rover_branch_sort_key(item: tuple[str, dict]) -> tuple[int, int, str]:
+    """漂泊者分支：属性固定顺序，同属性男在前女在后（男左女右）。"""
+    cid, info = item
+    attr = info["name"].split("·")[-1] if "·" in info["name"] else info["name"]
+    attr_order = _ROVER_ATTR_ORDER.get(attr, 99)
+    sex_order = {"男": 0, "女": 1}.get(info.get("sex", ""), 2)
+    return attr_order, sex_order, cid
+
+
 async def which_char(bot: Bot, ev: Event, char: str) -> tuple[None | str, None | str]:
     if not char.strip():  # 为空
         return None, None
@@ -720,7 +732,8 @@ async def which_char(bot: Bot, ev: Event, char: str) -> tuple[None | str, None |
         char_id, info = candidates[0]
         return info["name"], char_id
 
-    # 为漂泊者？
+    candidates.sort(key=_rover_branch_sort_key)
+
     options = []
     flat_choices = []  # 存储 (角色名, id)
     for idx, (char_id, info) in enumerate(candidates, 1):
