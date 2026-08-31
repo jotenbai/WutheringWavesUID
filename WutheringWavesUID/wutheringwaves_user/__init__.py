@@ -163,7 +163,7 @@ async def send_waves_bind_uid_msg(bot: Bot, ev: Event):
             bot,
             code,
             {
-                0: f"[鸣潮] 特征码[{uid}]绑定成功！\n\n• =国服=用户请使用【{PREFIX}登录】，使用【{PREFIX}刷新面板】更新角色面板\n• =国际服=用户请使用【{PREFIX}分析】,【{PREFIX}pcap帮助】更新角色面板\n• 使用【{PREFIX}查看】查看已绑定的特征码\n• 使用【{PREFIX}切换】在已绑定的特征码中切换当前特征码\n",
+                0: f"[鸣潮] 特征码[{uid}]绑定成功！\n\n• =国服= 请使用【{PREFIX}登录】，再用【{PREFIX}刷新面板】更新角色面板\n• =国际服= 请使用【{PREFIX}登录】查体力等；角色面板请用【{PREFIX}分析】或【{PREFIX}pcap帮助】录入，再用【{PREFIX}刷新面板】\n• 使用【{PREFIX}查看】查看已绑定的特征码\n• 使用【{PREFIX}切换】在已绑定的特征码中切换当前特征码\n",
                 -1: f"[鸣潮] 特征码[{uid}]的位数不正确！\n",
                 -2: f"[鸣潮] 特征码[{uid}]已经绑定过了！\n",
                 -3: "[鸣潮] 你输入了错误的格式!\n",
