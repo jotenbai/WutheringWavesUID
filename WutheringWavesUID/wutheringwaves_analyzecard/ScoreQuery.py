@@ -15,6 +15,7 @@ from gsuid_core.utils.image.image_tools import crop_center_img
 from opencc import OpenCC
 from PIL import Image, ImageDraw
 
+from ..utils.at_help import ruser_id
 from ..utils.api.model import EquipPhantom, FetterDetail, PhantomProp, Props
 from ..utils.ascension.char import get_char_model
 from ..utils.cache import TimedCache
@@ -659,7 +660,7 @@ async def phantom_score_ocr_to_char(bot: Bot, ev: Event, char_name: str, extra: 
     base_phantom_list: list[EquipPhantom | None] = [None] * 5
     if slot_mapping:
         # 有用户映射指令：尝试加载已有角色声骸作为基准
-        base_list = await _load_base_equiphantom_list(ev, char_id, char_name, ev.user_id)
+        base_list = await _load_base_equiphantom_list(ev, char_id, char_name, ruser_id(ev))
         if base_list is not None and any(p is not None for p in base_list):
             # 基准有可用声骸 → 启用合并模式
             base_phantom_list = list(base_list)
