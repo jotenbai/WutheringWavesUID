@@ -12,7 +12,7 @@ from ..utils.api.model import (
 )
 from ..utils.api.wwapi import SlashDetailRequest
 from ..utils.ascension.char import get_char_model
-from ..utils.char_info_utils import get_all_roleid_detail_info
+from ..utils.char_info_utils import get_role_detail_info_with_refresh
 from ..utils.database.models import WavesBind
 from ..utils.error_reply import WAVES_CODE_102
 from ..utils.fonts.waves_fonts import (
@@ -202,8 +202,22 @@ async def draw_slash_img(ev: Event, uid: str, user_id: str) -> bytes | str:
     card_draw = ImageDraw.Draw(card_img)
     card_draw.text((620, 280), end_time_str, "white", waves_font_25, "lm")
 
-    # 根据面板数据获取详细信息
-    role_detail_info_map = await get_all_roleid_detail_info(uid)
+    # 收集冥海中需要共鸣链数据的角色ID
+    needed_role_ids: list[str] = []
+    for difficulty in slash_detail.difficultyList:
+        for challenge in difficulty.challengeList:
+            if challenge.challengeId not in query_challenge_ids:
+                continue
+            if not challenge.halfList:
+                continue
+            for half in challenge.halfList:
+                if half is None or not half.roleList:
+                    continue
+                for role in half.roleList:
+                    needed_role_ids.append(str(role.roleId))
+
+    # 根据面板数据获取详细信息（本地缺失的角色自动刷新）
+    role_detail_info_map = await get_role_detail_info_with_refresh(ev, user_id, uid, needed_role_ids)
     role_detail_info_map = role_detail_info_map if role_detail_info_map else {}
 
     # 绘制挑战信息
@@ -383,12 +397,14 @@ async def save_to_group_rank(
             for role in half.roleList:
                 char_model = get_char_model(role.roleId)
                 role_detail = role_details_map.get(str(role.roleId))
+                # 共鸣链缺失时用 -1 标记，排行绘制时会跳过显示
+                chain = role_detail.chainUnlockNum if role_detail and role_detail.chainUnlockNum is not None else -1
                 roles.append(
                     {
                         "roleId": role.roleId,
                         "roleName": char_model.name if char_model else "",
                         "level": role_detail.level if role_detail else 0,
-                        "chain": role_detail.chainUnlockNum if role_detail else 0,
+                        "chain": chain,
                         "iconUrl": role.iconUrl,
                         "starLevel": char_model.starLevel if char_model else 0,
                     }

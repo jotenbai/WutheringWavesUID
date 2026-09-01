@@ -10,7 +10,7 @@ from ..utils.api.model import (
     MatrixData,
     RoleList,
 )
-from ..utils.char_info_utils import get_all_roleid_detail_info
+from ..utils.char_info_utils import get_role_detail_info_with_refresh
 from ..utils.error_reply import WAVES_CODE_102
 from ..utils.fonts.waves_fonts import (
     waves_font_16,
@@ -132,8 +132,25 @@ async def draw_matrix_img(ev: Event, uid: str, user_id: str) -> bytes | str:
     base_info_bg = base_info_bg.resize((int(2560 * 0.8), int(1440 * 0.8)))
     card_img.paste(base_info_bg, (30, 10), base_info_bg)
 
-    # 获取角色详情
-    role_detail_info_map = await get_all_roleid_detail_info(uid)
+    # 收集矩阵中需要共鸣链数据的角色ID（通过 roleIconUrl 匹配）
+    needed_role_ids: list[str] = []
+    for mode in matrix_data.modeDetails:
+        if not mode.hasRecord or mode.modeId not in modeIds:
+            continue
+        if not mode.teams:
+            continue
+        for team in mode.teams:
+            if not team.roleIcons:
+                continue
+            for icon_url in team.roleIcons:
+                if not icon_url:
+                    continue
+                role = next((r for r in role_info.roleList if r.roleIconUrl == icon_url), None)
+                if role:
+                    needed_role_ids.append(str(role.roleId))
+
+    # 获取角色详情（本地缺失的角色自动刷新）
+    role_detail_info_map = await get_role_detail_info_with_refresh(ev, user_id, uid, needed_role_ids)
 
     # 绘制模式数据（改用内容宽度 1220，左右边距 30）
     y_offset = 200
@@ -455,14 +472,12 @@ async def save_matrix_to_group_rank(
             if not role:
                 continue
 
-            chain = None
+            # 共鸣链缺失时用 -1 标记，排行绘制时会跳过显示
+            chain = -1
             if role_detail_info_map:
                 role_detail = role_detail_info_map.get(str(role.roleId))
-                chain = role_detail.get_chain_num() if role_detail else None
-
-            if chain is None:
-                logger.warning(f"[矩阵本地保存] 无法匹配链度 (roleId={role.roleId}, name={role.roleName})")
-                return False
+                if role_detail:
+                    chain = role_detail.get_chain_num()
 
             char_scores.append(
                 {
