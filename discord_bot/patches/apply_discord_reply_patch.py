@@ -303,7 +303,7 @@ def main() -> None:
     pkg = find_genshinuid_dir()
     patch_client(pkg / "client.py")
     patch_send_utils(pkg / "send_utils.py")
-    print("完成。请重启 discordbot：screen -r discordbot → Ctrl+C → .venv/bin/nb run")
+    print("完成。请重启 discordbot：systemctl --user restart discordbot")
 
 
 if __name__ == "__main__":
