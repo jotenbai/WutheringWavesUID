@@ -17,6 +17,7 @@ from PIL import Image, ImageDraw
 
 from ..utils.api.model import EquipPhantom, FetterDetail, PhantomProp, Props
 from ..utils.ascension.char import get_char_model
+from ..utils.at_help import ruser_id
 from ..utils.cache import TimedCache
 from ..utils.calculate import (
     calc_phantom_entry,
@@ -659,7 +660,7 @@ async def phantom_score_ocr_to_char(bot: Bot, ev: Event, char_name: str, extra: 
     base_phantom_list: list[EquipPhantom | None] = [None] * 5
     if slot_mapping:
         # 有用户映射指令：尝试加载已有角色声骸作为基准
-        base_list = await _load_base_equiphantom_list(ev, char_id, char_name, ev.user_id)
+        base_list = await _load_base_equiphantom_list(ev, char_id, char_name, ruser_id(ev))
         if base_list is not None and any(p is not None for p in base_list):
             # 基准有可用声骸 → 启用合并模式
             base_phantom_list = list(base_list)
@@ -728,7 +729,7 @@ async def phantom_score_ocr_to_char(bot: Bot, ev: Event, char_name: str, extra: 
     from ..utils.database.models import WavesBind
     from ..wutheringwaves_charinfo.draw_char_card import draw_char_detail_img
 
-    uid = await WavesBind.get_uid_by_game(ev.user_id, ev.bot_id)
+    uid = await WavesBind.get_uid_by_game(ruser_id(ev), ev.bot_id)
     change_list_regex = build_change_list_regex(cleaned_extra)
     logger.debug(
         f"[鸣潮][角色评分] 角色: {char_name}, 合并模式: {use_merge_mode}, "
@@ -739,7 +740,7 @@ async def phantom_score_ocr_to_char(bot: Bot, ev: Event, char_name: str, extra: 
             ev,
             uid,
             char_name,
-            ev.user_id,
+            ruser_id(ev),
             change_list_regex=change_list_regex,
             override_equip_phantom_list=equip_phantom_list,
         )
@@ -749,7 +750,7 @@ async def phantom_score_ocr_to_char(bot: Bot, ev: Event, char_name: str, extra: 
             ev,
             "1",
             char_name,
-            ev.user_id,
+            ruser_id(ev),
             is_limit_query=True,
             change_list_regex=change_list_regex,
             override_equip_phantom_list=equip_phantom_list,
@@ -773,7 +774,6 @@ async def _load_base_equiphantom_list(
     """
     # 延迟导入避免循环依赖
     from ..utils.database.models import WavesBind
-    from ..utils.waves_api import waves_api
     from ..wutheringwaves_charinfo.draw_char_card import (
         generate_online_role_detail,
         get_role_need,
@@ -783,42 +783,19 @@ async def _load_base_equiphantom_list(
     is_limit_query = not bool(uid)
     use_uid = uid if uid else "1"
 
-    # 尝试获取 ck / is_online_user（与 draw_char_detail_img 保持一致）
-    ck = ""
-    is_online_user = False
-    if not is_limit_query:
-        try:
-            _, ck = await waves_api.get_ck_result(use_uid, user_id, ev.bot_id)
-            if waves_api.is_net(use_uid):
-                ck = await waves_api.get_waves_random_cookie(use_uid, user_id)
-            if ck:
-                online_list_res = await waves_api.get_online_list_role(ck)
-                if online_list_res.success and online_list_res.data:
-                    from ..utils.api.model import OnlineRoleList
-
-                    online_role_map = {str(i.roleId): i for i in OnlineRoleList.model_validate(online_list_res.data)}
-                    if char_id in online_role_map:
-                        is_online_user = True
-        except Exception as e:
-            logger.debug(f"[鸣潮][角色评分] 获取ck/online用户标记失败: {e}")
-
     force_resource_id = char_id if is_limit_query else None
-    # 用一个非空 change_list_flag 来保证当角色不在缓存时仍允许进入生成默认分支，
-    # 实际返回的 role_detail 声骸应该仍为None（会被我们正确判定为无基准）
-    change_list_flag = " "
 
     _avatar, role_detail = await get_role_need(
         ev,
         char_id,
-        ck,
+        "",  # ck
         use_uid,
         char_name,
         None,  # waves_id
         False,  # is_force_avatar
         force_resource_id,
-        is_online_user,
+        False,  # is_online_user
         is_limit_query,
-        change_list_flag,
     )
     if isinstance(role_detail, str) or not role_detail:
         role_detail = await generate_online_role_detail(char_id)

@@ -12,7 +12,7 @@ from ..utils.api.model import (
     RoleList,
 )
 from ..utils.api.wwapi import ABYSS_TYPE_MAP, AbyssDetail, AbyssItem
-from ..utils.char_info_utils import get_all_roleid_detail_info
+from ..utils.char_info_utils import get_role_detail_info_with_refresh
 from ..utils.error_reply import WAVES_CODE_102
 from ..utils.fonts.waves_fonts import (
     waves_font_18,
@@ -152,8 +152,18 @@ async def draw_abyss_img(ev: Event, uid: str, user_id: str) -> bytes | str:
         title_bar_draw.text((810, 78), f"Lv.{account_info.worldLevel}", "white", waves_font_42, "mm")
         card_img.paste(title_bar, (-20, 70), title_bar)
 
-    # 根据面板数据获取详细信息
-    role_detail_info_map = await get_all_roleid_detail_info(uid)
+    # 收集当前难度深渊中需要共鸣链数据的角色ID
+    needed_role_ids: list[str] = []
+    for tower in needAbyss.towerAreaList:
+        if not tower.floorList:
+            continue
+        for floor in tower.floorList:
+            if floor.roleList:
+                for _role in floor.roleList:
+                    needed_role_ids.append(str(_role.roleId))
+
+    # 根据面板数据获取详细信息（本地缺失的角色自动刷新）
+    role_detail_info_map = await get_role_detail_info_with_refresh(ev, user_id, uid, needed_role_ids)
 
     # frame
     frame = Image.open(TEXT_PATH / "frame.png")
