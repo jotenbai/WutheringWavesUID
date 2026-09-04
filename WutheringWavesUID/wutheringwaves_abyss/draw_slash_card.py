@@ -219,10 +219,15 @@ async def draw_slash_img(ev: Event, uid: str, user_id: str) -> bytes | str:
         title_bar_draw.text((810, 78), f"Lv.{account_info.worldLevel}", "white", waves_font_42, "mm")
         card_img.paste(title_bar, (-20, 70), title_bar)
 
-    # 赛季结束时间
+    # 赛季结束时间：本地数据存的是绝对时间戳（毫秒），直接转换；
+    # CK 获取的是相对时间（毫秒），需要加上当前时间
     from datetime import datetime, timedelta
 
-    end_time = datetime.now() + timedelta(milliseconds=slash_detail.seasonEndTime)
+    season_end_ms = slash_detail.seasonEndTime
+    if from_local:
+        end_time = datetime.fromtimestamp(season_end_ms / 1000)
+    else:
+        end_time = datetime.now() + timedelta(milliseconds=season_end_ms)
     end_time_str = f"本期截止时间: {end_time.strftime('%Y-%m-%d %H:%M')}"
     card_draw = ImageDraw.Draw(card_img)
     card_draw.text((620, 280), end_time_str, "white", waves_font_25, "lm")
@@ -383,7 +388,7 @@ async def draw_slash_img(ev: Event, uid: str, user_id: str) -> bytes | str:
     card_img = await convert_img(card_img)
 
     # 保存到群排行数据库
-    await save_to_group_rank(user_id, uid, slash_detail, account_info.name, role_info)
+    await save_to_group_rank(user_id, uid, slash_detail, account_info.name, role_info, from_local)
 
     return card_img
 
@@ -394,8 +399,10 @@ async def save_to_group_rank(
     slash_data: SlashDetail,
     name: str,
     role_info: RoleList,
+    from_local: bool = False,
 ):
     """保存无尽数据到群排行"""
+    from gsuid_core.logger import logger
     try:
         # 查找无尽挑战 (ID 12)
         target_challenge = None
@@ -457,10 +464,39 @@ async def save_to_group_rank(
             "halfList": half_list,
         }
 
+        from datetime import datetime
         import time
 
-        # seasonEndTime is in milliseconds
-        season_id = int(time.time() + slash_data.seasonEndTime / 1000) // 3600
+        from ..wutheringwaves_abyss.draw_slash_info import get_slash_schedule
+
+        now_ts = time.time()
+        if from_local:
+            # seasonEndTime 已是绝对时间戳（毫秒），直接转为秒
+            target_abs_ts = slash_data.seasonEndTime / 1000.0
+        else:
+            # seasonEndTime 是相对时间（毫秒），加上当前时间得到绝对时间
+            target_abs_ts = now_ts + slash_data.seasonEndTime / 1000.0
+
+        # 从赛季表中寻找最接近的结束日期
+        closest_finish_ts = None
+        schedule_data = await get_slash_schedule()
+        min_diff = 3 * 24 * 3600 + 1  # 最多偏差3天
+
+        for s in schedule_data.values():
+            finish_ts = datetime.strptime(s["end"], "%Y-%m-%d").timestamp()
+            diff = abs(target_abs_ts - finish_ts)
+            if diff <= 3 * 24 * 3600 and diff < min_diff:
+                min_diff = diff
+                closest_finish_ts = finish_ts
+
+        if closest_finish_ts is not None:
+            season_id = int((closest_finish_ts + 3 * 24 * 3600) // 3600)
+        else:
+            # 未匹配到时的回退计算
+            if from_local:
+                season_id = int(slash_data.seasonEndTime / 1000) // 3600
+            else:
+                season_id = int(now_ts + slash_data.seasonEndTime / 1000.0) // 3600
 
         await GroupRankRecord.save_record(
             user_id=user_id,
@@ -470,10 +506,9 @@ async def save_to_group_rank(
             challenge_id=12,
             data=data,
         )
+        logger.debug(f"[ww无尽] 保存用户 {waves_id} 数据成功, 赛季season_id {season_id}")
         await GroupRankRecord.clean_old_seasons(rank_type="endless")
     except Exception as e:
-        from gsuid_core.logger import logger
-
         logger.exception(f"[ww无尽] 保存用户 {waves_id} 无尽数据失败: {e}")
 
 
