@@ -2,7 +2,6 @@
 
 import os
 import re
-from pathlib import Path
 
 from gsuid_core.logger import logger
 import numpy as np
@@ -19,8 +18,12 @@ REF_W, REF_H = 1747, 983
 REF_SLOT_W, REF_SLOT_H = 91, 91
 
 RESONATORS_REF = [
-    (1260, 416), (1369, 416), (1478, 416),
-    (1260, 572), (1369, 572), (1478, 572),
+    (1260, 416),
+    (1369, 416),
+    (1478, 416),
+    (1260, 572),
+    (1369, 572),
+    (1478, 572),
 ]
 TOKENS_REF = [(1587, 416), (1587, 572)]
 

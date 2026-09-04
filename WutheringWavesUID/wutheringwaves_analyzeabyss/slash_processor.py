@@ -1,17 +1,17 @@
 """slash 分享图处理"""
 
 from dataclasses import dataclass, field
+from datetime import datetime
 import re
+import time
 
 from gsuid_core.bot import Bot
 from gsuid_core.logger import logger
 from PIL import Image
 
-from datetime import datetime
-import time
+from ..wutheringwaves_abyss.draw_slash_info import get_slash_schedule
 from .abyss_data_utils import build_slash_detail_model
 from .share_match import ReadWhiWaShare_image, ShareMatchResult, init
-from ..wutheringwaves_abyss.draw_slash_info import get_slash_schedule
 
 _RE_LONG = re.compile(r"\b(\d{6,15})\b")
 _RE_SHORT = re.compile(r"(\d{1,6})")
@@ -193,9 +193,18 @@ async def run_full_slash_recognize(
         now = datetime.now()
         schedule_data = await get_slash_schedule()
         sorted_ids = sorted(schedule_data, key=int)
-        current_id = next((s for s in sorted_ids if datetime.strptime(schedule_data[s]['begin'], '%Y-%m-%d') <= now <= datetime.strptime(schedule_data[s]['end'], '%Y-%m-%d')), next((s for s in sorted_ids if datetime.strptime(schedule_data[s]['begin'], '%Y-%m-%d') > now), sorted_ids[-1]))
-        season_end_time_ms = int(datetime.strptime(schedule_data[current_id]['end'], '%Y-%m-%d').timestamp() * 1000)
-        season_end_time_ms -=  int(time.time() * 1000)
+        current_id = next(
+            (
+                s
+                for s in sorted_ids
+                if datetime.strptime(schedule_data[s]["begin"], "%Y-%m-%d")
+                <= now
+                <= datetime.strptime(schedule_data[s]["end"], "%Y-%m-%d")
+            ),
+            next((s for s in sorted_ids if datetime.strptime(schedule_data[s]["begin"], "%Y-%m-%d") > now), sorted_ids[-1]),
+        )
+        season_end_time_ms = int(datetime.strptime(schedule_data[current_id]["end"], "%Y-%m-%d").timestamp() * 1000)
+        season_end_time_ms -= int(time.time() * 1000)
 
         detail = build_slash_detail_model(
             half_char_ids=half_char_ids,
