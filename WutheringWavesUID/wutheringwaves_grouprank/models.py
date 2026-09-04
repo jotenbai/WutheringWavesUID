@@ -55,7 +55,7 @@ class GroupRankTeam(SQLModel, table=True):
 
     team_index: int = Field(description="队伍索引（0或1）")
     team_score: int = Field(description="队伍得分")
-    buff_id: int = Field(description="队伍选择的增益ID")
+    buff_id: str = Field(description="队伍选择的增益ID")
     buff_quality: int = Field(default=3, description="队伍选择的增益品质")
 
     buff_icon: str = Field(default="", description="增益图标URL（矩阵专用）")

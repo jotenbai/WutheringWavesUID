@@ -14,7 +14,6 @@ from ..utils.api.wwapi import SlashDetailRequest
 from ..utils.ascension.char import get_char_model
 from ..utils.char_info_utils import get_role_detail_info_with_refresh
 from ..utils.database.models import WavesBind
-from ..utils.error_reply import WAVES_CODE_102
 from ..utils.fonts.waves_fonts import (
     waves_font_18,
     waves_font_25,
@@ -23,7 +22,6 @@ from ..utils.fonts.waves_fonts import (
     waves_font_40,
     waves_font_42,
 )
-from ..utils.hint import error_reply
 from ..utils.image import (
     GOLD,
     GREY,
@@ -37,12 +35,15 @@ from ..utils.queues.const import QUEUE_SLASH_RECORD
 from ..utils.queues.queues import push_item
 from ..utils.resource.RESOURCE_PATH import SLASH_PATH
 from ..utils.waves_api import waves_api
+from ..wutheringwaves_analyzeabyss.abyss_data_utils import get_slash_detail_local
+from ..wutheringwaves_analyzecard.user_info_utils import get_user_detail_info
+from ..wutheringwaves_config import PREFIX
 from ..wutheringwaves_grouprank.models import GroupRankRecord
 
 TEXT_PATH = Path(__file__).parent / "texture2d"
 
 SLASH_ERROR = "数据获取失败，请稍后再试"
-SLASH_ERROR_MESSAGE_NO_DATA = "当前暂无冥歌海墟数据"
+SLASH_ERROR_MESSAGE_NO_DATA = f"当前暂无冥歌海墟数据, 可考虑【{PREFIX}上传无尽】上传分享图"
 SLASH_ERROR_MESSAGE_NO_UNLOCK = "无冥歌海墟暂未解锁"
 
 
@@ -97,8 +98,6 @@ async def get_slash_data(uid: str, ck: str, is_self_ck: bool) -> SlashDetail | s
 
 async def draw_slash_img(ev: Event, uid: str, user_id: str) -> bytes | str:
     is_self_ck, ck = await waves_api.get_ck_result(uid, user_id, ev.bot_id)
-    if not ck:
-        return error_reply(WAVES_CODE_102)
 
     # 自动关联群组
     if ev.group_id:
@@ -117,49 +116,75 @@ async def draw_slash_img(ev: Event, uid: str, user_id: str) -> bytes | str:
         text = text.replace("层", "")
         if text.isdigit() and 1 <= int(text) <= 12:
             challengeIds = [int(text)]
-
     if not is_self_ck:
         challengeIds = [12]
 
+    # CK 获取
+    async def _try_ck(
+        uid, ck, is_self_ck, challengeIds
+    ) -> tuple[bool, str | tuple[AccountBaseInfo, RoleList, SlashDetail, list[int]]]:
+        # 获取冥海数据
+        slash_detail = await get_slash_data(uid, ck, is_self_ck)
+        if isinstance(slash_detail, str):
+            return False, slash_detail
+        if not is_self_ck and not slash_detail.isUnlock:
+            return False, SLASH_ERROR_MESSAGE_NO_UNLOCK
+        owned = [c.challengeId for d in slash_detail.difficultyList for c in d.challengeList if len(c.halfList) > 0]
+        if not owned:
+            return False, SLASH_ERROR_MESSAGE_NO_DATA
+        query_ids = [c for c in challengeIds if c in owned]
+        if not query_ids:
+            return False, SLASH_ERROR_MESSAGE_NO_DATA
+        # 账户数据
+        acc_resp = await waves_api.get_base_info(uid, ck)
+        if not acc_resp.success:
+            return False, acc_resp.throw_msg()
+        acc_info = AccountBaseInfo.model_validate(acc_resp.data)
+        # 共鸣者信息
+        role_resp = await waves_api.get_role_info(uid, ck)
+        if not role_resp.success:
+            return False, role_resp.throw_msg()
+        role_info = RoleList.model_validate(role_resp.data)
+        return True, (acc_info, role_info, slash_detail, query_ids)
+
+    # 本地 获取
+    async def _try_local(uid, challengeIds) -> tuple[AccountBaseInfo, RoleList, SlashDetail, list] | None:
+        slash_detail = await get_slash_detail_local(uid)
+        if slash_detail is None:
+            return None
+        owned = [c.challengeId for d in slash_detail.difficultyList for c in d.challengeList if len(c.halfList) > 0]
+        if not owned:
+            return None
+        query_ids = [c for c in challengeIds if c in owned]
+        if not query_ids:
+            return None
+        # 本地账户信息（如无则使用空对象）
+        acc_info = await get_user_detail_info(uid)
+        role_info = RoleList.model_construct(roleList=[])
+        return (acc_info, role_info, slash_detail, query_ids)
+
     # 冥海数据
-    slash_detail: SlashDetail | str = await get_slash_data(uid, ck, is_self_ck)
-    if isinstance(slash_detail, str):
-        return slash_detail
-
-    # check 冥海数据
-    if not is_self_ck and not slash_detail.isUnlock:
-        return SLASH_ERROR_MESSAGE_NO_UNLOCK
-
-    owned_challenge_ids = [
-        challenge.challengeId
-        for difficulty in slash_detail.difficultyList
-        for challenge in difficulty.challengeList
-        if len(challenge.halfList) > 0
-    ]
-    if len(owned_challenge_ids) == 0:
-        return SLASH_ERROR_MESSAGE_NO_DATA
-
-    query_challenge_ids = []
-    for challenge_id in challengeIds:
-        if challenge_id not in owned_challenge_ids:
-            continue
-        query_challenge_ids.append(challenge_id)
-
-    if len(query_challenge_ids) == 0:
-        return SLASH_ERROR_MESSAGE_NO_DATA
-
-    # 账户数据
-    account_info = await waves_api.get_base_info(uid, ck)
-    if not account_info.success:
-        return account_info.throw_msg()
-    account_info = AccountBaseInfo.model_validate(account_info.data)
-
-    # 共鸣者信息
-    role_info = await waves_api.get_role_info(uid, ck)
-    if not role_info.success:
-        return role_info.throw_msg()
-
-    role_info = RoleList.model_validate(role_info.data)
+    from_local = False
+    if waves_api.is_net(uid):
+        # 国际服，直接本地
+        local_result = await _try_local(uid, challengeIds)
+        if local_result is None and not isinstance(local_result, str):
+            return SLASH_ERROR_MESSAGE_NO_DATA
+        account_info, role_info, slash_detail, query_challenge_ids = local_result
+        from_local = True
+    else:
+        # 国服，先 CK，失败则本地
+        success, result = await _try_ck(uid, ck, is_self_ck, challengeIds)
+        if success and not isinstance(result, str):
+            account_info, role_info, slash_detail, query_challenge_ids = result
+        else:
+            # CK 失败，尝试本地
+            local_result = await _try_local(uid, challengeIds)
+            if local_result is not None and not isinstance(local_result, str):
+                account_info, role_info, slash_detail, query_challenge_ids = local_result
+                from_local = True
+            else:
+                return result if isinstance(result, str) else SLASH_ERROR_MESSAGE_NO_DATA
 
     # 绘制图片
     footer_h = 50
@@ -284,8 +309,9 @@ async def draw_slash_img(ev: Event, uid: str, user_id: str) -> bytes | str:
                     GOLD,
                     waves_font_25,
                 )
-                team_pic = await pic_download_from_url(SLASH_PATH, difficulty.teamIcon)
-                role_hang_bg.alpha_composite(team_pic, (30, 35))
+                if difficulty.teamIcon:
+                    team_pic = await pic_download_from_url(SLASH_PATH, difficulty.teamIcon)
+                    role_hang_bg.alpha_composite(team_pic, (30, 35))
 
                 # buff
                 buff_bg = Image.new("RGBA", (100, 100), (255, 255, 255, 0))
@@ -300,9 +326,10 @@ async def draw_slash_img(ev: Event, uid: str, user_id: str) -> bytes | str:
                     [0, 95, 100, 100],
                     fill=buff_color,
                 )
-                buff_pic = await pic_download_from_url(SLASH_PATH, slash_half.buffIcon)
-                buff_pic = buff_pic.resize((100, 100))
-                buff_bg.paste(buff_pic, (0, 0), buff_pic)
+                if slash_half.buffIcon:
+                    buff_pic = await pic_download_from_url(SLASH_PATH, slash_half.buffIcon)
+                    buff_pic = buff_pic.resize((100, 100))
+                    buff_bg.paste(buff_pic, (0, 0), buff_pic)
 
                 role_hang_bg.alpha_composite(buff_bg, (870, 20))
 
@@ -349,7 +376,8 @@ async def draw_slash_img(ev: Event, uid: str, user_id: str) -> bytes | str:
             )
             index += 1
 
-    await upload_slash_record(is_self_ck, uid, slash_detail)
+    if not from_local:
+        await upload_slash_record(is_self_ck, uid, slash_detail)
 
     card_img = add_footer(card_img, 600, 20)
     card_img = await convert_img(card_img)
@@ -410,9 +438,10 @@ async def save_to_group_rank(
                     }
                 )
 
+            buff_name = half.buffIcon.split("/")[-1].split(".")[0] if half.buffIcon else ""
             half_list.append(
                 {
-                    "buff_id": int(half.buffIcon.split("/")[-1].split(".")[0]),
+                    "buff_id": buff_name,
                     "buff_quality": half.buffQuality,
                     "score": half.score,
                     "roleList": roles,
