@@ -9,7 +9,7 @@ BUFF_DATA = {
 
 
 class BuffModel(BaseModel):
-    id: int
+    id: int | str
     name: str
     qualityId: int
     icon: str

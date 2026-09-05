@@ -739,7 +739,7 @@ async def pic_download_from_url(
 ) -> Image.Image:
     path.mkdir(parents=True, exist_ok=True)
 
-    name = pic_url.split("/")[-1]
+    name = pic_url.split("/")[-1].split(".")[0] + ".png"
     _path = path / name
     if not _path.exists():
         from gsuid_core.utils.download_resource.download_file import download

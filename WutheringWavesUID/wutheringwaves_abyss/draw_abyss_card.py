@@ -8,10 +8,12 @@ from ..utils.api.model import (
     AbyssChallenge,
     AbyssFloor,
     AccountBaseInfo,
+    Role,
     RoleDetailData,
     RoleList,
 )
 from ..utils.api.wwapi import ABYSS_TYPE_MAP, AbyssDetail, AbyssItem
+from ..utils.ascension.char import get_char_model
 from ..utils.char_info_utils import get_role_detail_info_with_refresh
 from ..utils.error_reply import WAVES_CODE_102
 from ..utils.fonts.waves_fonts import (
@@ -35,13 +37,13 @@ from ..wutheringwaves_config import PREFIX
 
 TEXT_PATH = Path(__file__).parent / "texture2d"
 
-ABYSS_ERROR_MESSAGE_NO_DATA = "当前暂无深渊数据\n"
-ABYSS_ERROR_MESSAGE_NO_UNLOCK = "深渊暂未解锁\n"
-ABYSS_ERROR_MESSAGE_NO_DEEP = "当前暂无深境区深渊数据\n"
+ABYSS_ERROR_MESSAGE_NO_DATA = f"当前暂无深塔数据, 可考虑【{PREFIX}上传深塔】上传分享图\n"
+ABYSS_ERROR_MESSAGE_NO_UNLOCK = "深塔暂未解锁\n"
+ABYSS_ERROR_MESSAGE_NO_DEEP = "当前暂无深境区深塔数据\n"
 no_login_msg = [
     "[鸣潮]",
     ">您当前为仅绑定鸣潮特征码",
-    f">请使用命令【{PREFIX}登录】后查询详细深渊数据",
+    f">请使用命令【{PREFIX}登录】后查询详细深塔数据",
     "",
 ]
 ABYSS_ERROR_MESSAGE_LOGIN = "\n".join(no_login_msg)
@@ -65,15 +67,130 @@ async def get_abyss_data(uid: str, ck: str, is_self_ck: bool):
         return AbyssChallenge.model_validate(abyss_data)
 
 
-async def draw_abyss_img(ev: Event, uid: str, user_id: str) -> bytes | str:
-    is_self_ck, ck = await waves_api.get_ck_result(uid, user_id, ev.bot_id)
-    if not ck:
-        return error_reply(WAVES_CODE_102)
+async def draw_abyss_img(ev: Event, uid: str, user_id: str, abyss_data: AbyssChallenge | None = None) -> bytes | str:
+    from_local = False
+    if abyss_data is not None:
+        from ..wutheringwaves_analyzecard.user_info_utils import get_user_detail_info
 
-    # succ, game_info = await waves_api.get_game_role_info(ck)
-    # if not succ:
-    #     return game_info
-    # game_info = KuroRoleInfo(**game_info)
+        account_info = await get_user_detail_info(uid)
+        role_ids = {
+            r.roleId
+            for d in abyss_data.difficultyList or []
+            for t in d.towerAreaList
+            for f in (t.floorList or [])
+            for r in (f.roleList or [])
+        }
+        roles: list[Role] = []
+        for rid in role_ids:
+            cm = get_char_model(rid)
+            if cm is None:
+                continue
+            roles.append(
+                Role.model_validate(
+                    {
+                        "roleId": rid,
+                        "level": 0,
+                        "breach": 0,
+                        "roleName": cm.name,
+                        "roleIconUrl": "",
+                        "rolePicUrl": "",
+                        "starLevel": cm.starLevel,
+                        "attributeId": cm.attributeId,
+                        "attributeName": None,
+                        "weaponTypeId": cm.weaponTypeId,
+                        "weaponTypeName": None,
+                        "acronym": "",
+                    }
+                )
+            )
+        role_info = RoleList.model_validate({"roleList": roles, "showToGuest": True})
+        is_self_ck = False
+        from_local = True
+    else:
+        # 尝试 CK 获取，失败则回退本地
+        from ..wutheringwaves_analyzeabyss.abyss_data_utils import get_abyss_detail_local
+        from ..wutheringwaves_analyzecard.user_info_utils import get_user_detail_info
+
+        async def _try_ck():
+            ck_res = await waves_api.get_ck_result(uid, user_id, ev.bot_id)
+            is_self_ck, ck = ck_res
+            if not ck:
+                return None, error_reply(WAVES_CODE_102)
+            account_resp = await waves_api.get_base_info(uid, ck)
+            if not account_resp.success:
+                return None, account_resp.throw_msg()
+            account_info = AccountBaseInfo.model_validate(account_resp.data)
+            role_resp = await waves_api.get_role_info(uid, ck)
+            if not role_resp.success:
+                return None, role_resp.throw_msg()
+            role_info = RoleList.model_validate(role_resp.data)
+            abyss = await get_abyss_data(uid, ck, is_self_ck)
+            if isinstance(abyss, str) or not abyss:
+                return None, abyss
+            if not abyss.isUnlock:
+                return None, ABYSS_ERROR_MESSAGE_NO_UNLOCK
+            return (account_info, role_info, abyss, is_self_ck), None
+
+        async def _try_local():
+            local_abyss = await get_abyss_detail_local(uid)
+            if local_abyss is None:
+                return None
+            if not local_abyss.difficultyList:
+                return None
+            account_info = await get_user_detail_info(uid)
+            # 从本地深塔数据中构建角色信息（用于显示角色头像和名称）
+            role_ids = {
+                r.roleId
+                for d in local_abyss.difficultyList or []
+                for t in d.towerAreaList
+                for f in (t.floorList or [])
+                for r in (f.roleList or [])
+            }
+            roles: list[Role] = []
+            for rid in role_ids:
+                cm = get_char_model(rid)
+                if cm is None:
+                    continue
+                roles.append(
+                    Role.model_validate(
+                        {
+                            "roleId": rid,
+                            "level": 0,
+                            "breach": 0,
+                            "roleName": cm.name,
+                            "roleIconUrl": "",
+                            "rolePicUrl": "",
+                            "starLevel": cm.starLevel,
+                            "attributeId": cm.attributeId,
+                            "attributeName": None,
+                            "weaponTypeId": cm.weaponTypeId,
+                            "weaponTypeName": None,
+                            "acronym": "",
+                        }
+                    )
+                )
+            role_info = RoleList.model_validate({"roleList": roles, "showToGuest": True})
+            return (account_info, role_info, local_abyss, False)
+
+        if waves_api.is_net(uid):
+            # 国际服，直接本地
+            local_result = await _try_local()
+            if local_result is None:
+                return ABYSS_ERROR_MESSAGE_NO_DATA
+            account_info, role_info, abyss_data, is_self_ck = local_result
+            from_local = True
+        else:
+            # 国服，先 CK，失败则本地
+            ck_result, err = await _try_ck()
+            if ck_result is not None:
+                account_info, role_info, abyss_data, is_self_ck = ck_result
+            else:
+                local_result = await _try_local()
+                if local_result is not None:
+                    account_info, role_info, abyss_data, is_self_ck = local_result
+                    from_local = True
+                else:
+                    return err if isinstance(err, str) else ABYSS_ERROR_MESSAGE_NO_DATA
 
     command = ev.command
     text = ev.text.strip()
@@ -84,26 +201,6 @@ async def draw_abyss_img(ev: Event, uid: str, user_id: str) -> bytes | str:
         difficultyName = "稳定区"
     elif "实验" in text or "实验" in command:
         difficultyName = "实验区"
-
-    # 账户数据
-    account_info = await waves_api.get_base_info(uid, ck)
-    if not account_info.success:
-        return account_info.throw_msg()
-    account_info = AccountBaseInfo.model_validate(account_info.data)
-
-    # 共鸣者信息
-    role_info = await waves_api.get_role_info(uid, ck)
-    if not role_info.success:
-        return role_info.throw_msg()
-
-    role_info = RoleList.model_validate(role_info.data)
-
-    # 深渊
-    abyss_data = await get_abyss_data(uid, ck, is_self_ck)
-    if isinstance(abyss_data, str) or not abyss_data:
-        return abyss_data
-    if not abyss_data.isUnlock:
-        return ABYSS_ERROR_MESSAGE_NO_UNLOCK
 
     if not abyss_data.difficultyList:
         return ABYSS_ERROR_MESSAGE_NO_DEEP
@@ -183,7 +280,7 @@ async def draw_abyss_img(ev: Event, uid: str, user_id: str) -> bytes | str:
                 waves_font_36,
                 "lm",
             )
-            if is_self_ck:
+            if is_self_ck or from_local:
                 tower_name_bg_draw.text(
                     (500, 60),
                     f"{tower.star}/{tower.maxStar}",
@@ -257,12 +354,13 @@ async def draw_abyss_img(ev: Event, uid: str, user_id: str) -> bytes | str:
             yset += 50
         break
     else:
-        if not is_self_ck:
+        if not is_self_ck and not from_local:
             return ABYSS_ERROR_MESSAGE_LOGIN
         return ABYSS_ERROR_MESSAGE_NO_DATA
 
-    # 上传深渊记录
-    await upload_abyss_record(is_self_ck, uid, difficultyName, abyss_data)
+    # 上传深渊记录（本地数据不上传总排行）
+    if not from_local:
+        await upload_abyss_record(is_self_ck, uid, difficultyName, abyss_data)
 
     card_img.paste(frame, (0, 210), frame)
 
