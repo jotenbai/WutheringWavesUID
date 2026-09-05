@@ -5,6 +5,7 @@ from .download_github import download_all_file
 from .RESOURCE_PATH import (
     ALL_SKIN_PATH,
     AVATAR_PATH,
+    CIRCLE_AVATAR_PATH,
     GUIDE_PATH,
     MATERIAL_PATH,
     MONSTER_PATH,
@@ -25,6 +26,7 @@ async def download_all_resource():
         "WutheringWavesUID",
         {
             "resource/waves_avatar": AVATAR_PATH,
+            "resource/waves_circle_avatar": CIRCLE_AVATAR_PATH,
             "resource/waves_weapon": WEAPON_PATH,
             "resource/role_pile": ROLE_PILE_PATH,
             "resource/role_detail": ROLE_DETAIL_PATH,

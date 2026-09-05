@@ -19,6 +19,7 @@ PHANTOM_PATH = RESOURCE_PATH / "phantom"
 MATERIAL_PATH = RESOURCE_PATH / "material"
 FETTER_PATH = RESOURCE_PATH / "fetter"
 AVATAR_PATH = RESOURCE_PATH / "waves_avatar"
+CIRCLE_AVATAR_PATH = RESOURCE_PATH / "waves_circle_avatar"
 WEAPON_PATH = RESOURCE_PATH / "waves_weapon"
 ROLE_PILE_PATH = RESOURCE_PATH / "role_pile"
 ROLE_DETAIL_PATH = RESOURCE_PATH / "role_detail"
@@ -82,6 +83,7 @@ def init_dir():
         MATERIAL_PATH,
         FETTER_PATH,
         AVATAR_PATH,
+        CIRCLE_AVATAR_PATH,
         WEAPON_PATH,
         ROLE_PILE_PATH,
         ROLE_DETAIL_PATH,

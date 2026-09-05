@@ -2,7 +2,7 @@
 
 3 种挑战 key 与 abyss 模块/wwapi 对齐:
   slash (海墟/无尽/禁忌/湍渊/冥海)  - 已实现
-  abyss (深塔)  - 预留
+  abyss (深塔)  - 已实现 (识别+星级+入库+绘图)
   matrix (矩阵) - 预留
 """
 
@@ -24,6 +24,7 @@ from .abyss_data_utils import (
     set_challenge_data,
 )
 from .slash_processor import run_full_slash_recognize
+from .toa_processor import run_toa_recognize
 
 sv_waves_upload_haixu = SV("waves上传海墟分享图", priority=4)
 sv_waves_upload_abyss = SV("waves上传深塔分享图", priority=4)
@@ -81,18 +82,44 @@ async def _process_slash_image(bot: Bot, ev: Event, imgs):
     return await bot.send(result)
 
 
+async def _process_toa_image(bot: Bot, ev: Event, imgs):
+    at = _at(ev)
+    if not imgs:
+        return await bot.send(f"[鸣潮]获取{ctype_label(TYPE_ABYSS)}分享图失败，请重新发命令并发图。\n", at)
+    img = imgs[0]
+    user_id = ruser_id(ev)
+    bound_uid = await WavesBind.get_uid_by_game(user_id, ev.bot_id)
+    save_uid = str(bound_uid) if bound_uid else None
+    if not save_uid:
+        return await bot.send(
+            error_reply(WAVES_CODE_103) + "（请先在机器人处绑定特征码再重试）\n",
+            at,
+        )
+    if ev.group_id:
+        try:
+            await WavesBind.insert_waves_uid(user_id, ev.bot_id, save_uid, ev.group_id)
+        except Exception as e:
+            logger.warning(f"[ww-upload-toa] 关联群组失败: {e}")
+    logger.info(f"[鸣潮][上传{ctype_label(TYPE_ABYSS)}] 开始识别, 特征码: {save_uid}")
+    result = await run_toa_recognize(bot, ev, img, save_uid, user_id)
+    if isinstance(result, str):
+        return await bot.send(result, at)
+    return await bot.send(result)
+
+
 async def _upload_entry(bot: Bot, ev: Event, ctype: str):
     at = _at(ev)
     if ctype not in IMPLEMENTED_TYPES:
         return await bot.send(_NOT_IMPL.format(ctype_label(ctype)), at)
     ok, imgs = await _get_imgs(ev)
+    processor = _process_toa_image if ctype == TYPE_ABYSS else _process_slash_image
     if ok and imgs:
-        return await _process_slash_image(bot, ev, imgs)
-    await bot.send(
-        f"[鸣潮][上传{ctype_label(ctype)}] 请在30秒内发送一张海墟分享截图（第12层/无尽湍渊）。\n"
-        "参考分辨率约 1747×983，过低可能导致识别失败。\n",
-        at,
+        return await processor(bot, ev, imgs)
+    hint = (
+        f"[鸣潮][上传{ctype_label(ctype)}] 请在30秒内发送一张{ctype_label(ctype)}分享截图。\n"
+        "参考分辨率约 1747×983，过低可能导致识别失败。\n"
     )
+    await bot.send(hint, at)
     resp = await bot.receive_resp(timeout=30)
     if resp is None:
         return await bot.send(f"[鸣潮]等待超时，上传{ctype_label(ctype)}已关闭。\n", at)
@@ -102,7 +129,7 @@ async def _upload_entry(bot: Bot, ev: Event, ctype: str):
             f"[鸣潮]未检测到图片，请重新使用「上传{ctype_label(ctype)}」命令并发送图片。\n",
             at,
         )
-    await _process_slash_image(bot, ev, imgs2)
+    await processor(bot, ev, imgs2)
 
 
 @sv_waves_upload_haixu.on_command(
@@ -132,7 +159,7 @@ async def upload_haixu_cmd(bot: Bot, ev: Event) -> None:
     block=True,
 )
 async def upload_abyss_cmd(bot: Bot, ev: Event) -> None:
-    logger.info("[鸣潮][上传深塔] 触发 (预留, 暂未开放)")
+    logger.info("[鸣潮][上传深塔] 开始处理")
     await _upload_entry(bot, ev, TYPE_ABYSS)
 
 

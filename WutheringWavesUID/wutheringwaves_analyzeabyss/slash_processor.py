@@ -10,7 +10,7 @@ from PIL import Image
 
 from ..wutheringwaves_abyss.draw_slash_info import get_slash_schedule
 from .abyss_data_utils import build_slash_detail_model
-from .share_match import ReadWhiWaShare_image, ShareMatchResult, init
+from .slash_match import ReadWhiWaShare_image, ShareMatchResult, init
 
 _RE_LONG = re.compile(r"\b(\d{6,15})\b")
 _RE_SHORT = re.compile(r"(\d{1,6})")
@@ -27,19 +27,21 @@ def _s2d(text: str) -> str:
 
 
 def _parse_uid(text: str) -> str | None:
+    """从 OCR 文本中提取 9 位 UID, 非 9 位视为未识别."""
     raw = _s2d(text or "")
-    only = "".join(c for c in raw if c.isdigit())
     cand: list[str] = []
     cand.extend(_RE_LONG.findall(raw))
     merged = re.sub(r"[\s\-_.,;:|/\\()\[\]]+", "", raw)
     cand.extend(_RE_LONG.findall(merged))
-    if 6 <= len(only) <= 15:
+    only = "".join(c for c in raw if c.isdigit())
+    if len(only) >= 6:
         cand.append(only)
     if not cand:
         return None
     u = list(dict.fromkeys(cand))
+    # 严格要求 9 位
     pref9 = [c for c in u if len(c) == 9]
-    return pref9[0] if pref9 else sorted(u, key=len, reverse=True)[0]
+    return pref9[0] if pref9 else None
 
 
 def _parse_score(text: str) -> int | None:

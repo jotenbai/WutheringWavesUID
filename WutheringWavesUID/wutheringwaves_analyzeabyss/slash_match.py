@@ -8,6 +8,12 @@ import numpy as np
 from PIL import Image
 
 from ..utils.resource.RESOURCE_PATH import AVATAR_PATH, SLASH_PATH
+from .match_core import (
+    match_slot_best,
+    pil_to_rgb_on_black,
+    rgb_to_luma_np_uint8,
+    safe_crop,
+)
 
 AVATAR_FOLDER_PATH = AVATAR_PATH
 TOKEN_FOLDER_PATH = SLASH_PATH
@@ -34,12 +40,6 @@ REF_SCORE2_BOX = (1060, 612, 1205, 640)
 AVATAR_COMPARE_SIZE = (48, 48)
 TOKEN_COMPARE_SIZE = (48, 48)
 
-STRUCT_WEIGHT = 0.70
-COLOR_WEIGHT = 0.30
-PIXEL_RGB_RATIO = 0.7
-PIXEL_RGB_THRESHOLD = 30
-PIXEL_RGB_BG_THRESHOLD = 60
-
 RESO_THRESHOLD = 0.10
 TOKEN_THRESHOLD = 0.10
 
@@ -47,49 +47,6 @@ image_files: list[str] = []
 img_data: list[tuple[Image.Image, np.ndarray, np.ndarray]] = []
 token_files: list[str] = []
 token_img: list[tuple[Image.Image, np.ndarray, np.ndarray]] = []
-
-
-def _pil_to_rgb_on_black(img: Image.Image) -> Image.Image:
-    if img.mode not in ("RGBA", "RGB", "LA", "P", "L"):
-        img = img.convert("RGBA")
-    if img.mode == "P":
-        img = img.convert("RGBA")
-    if img.mode == "LA":
-        img = img.convert("RGBA")
-    if img.mode == "L":
-        return img.convert("RGB")
-    if img.mode == "RGBA":
-        bg = Image.new("RGB", img.size, (0, 0, 0))
-        bg.paste(img, mask=img.split()[3])
-        return bg
-    return img.convert("RGB")
-
-
-def _rgb_to_luma_np_uint8(rgb_pil: Image.Image) -> np.ndarray:
-    arr = np.array(rgb_pil, dtype=np.float64)
-    luma = arr[..., 0] * 0.2989 + arr[..., 1] * 0.5870 + arr[..., 2] * 0.1140
-    return np.clip(luma, 0, 255).astype(np.uint8)
-
-
-def _safe_crop(img_arr: np.ndarray, x: int, y: int, w: int, h: int):
-    ih, iw = img_arr.shape[0], img_arr.shape[1]
-    x0, y0 = max(0, x), max(0, y)
-    x1, y1 = min(iw, x + w), min(ih, y + h)
-    if x1 <= x0 or y1 <= y0:
-        if len(img_arr.shape) == 3:
-            return np.zeros((max(1, h), max(1, w), img_arr.shape[2]), dtype=img_arr.dtype)
-        return np.zeros((max(1, h), max(1, w)), dtype=img_arr.dtype)
-    crop = img_arr[y0:y1, x0:x1]
-    if crop.shape[0] != h or crop.shape[1] != w:
-        pad_y0 = y0 - y
-        pad_x0 = x0 - x
-        if len(img_arr.shape) == 3:
-            full = np.zeros((h, w, img_arr.shape[2]), dtype=img_arr.dtype)
-        else:
-            full = np.zeros((h, w), dtype=img_arr.dtype)
-        full[pad_y0 : pad_y0 + crop.shape[0], pad_x0 : pad_x0 + crop.shape[1]] = crop
-        return full
-    return crop
 
 
 def _scale_box(ref_box: tuple[int, int, int, int], img_w: int, img_h: int):
@@ -105,13 +62,13 @@ def _scale_box(ref_box: tuple[int, int, int, int], img_w: int, img_h: int):
 
 def crop_number_rois_from_image(pil_src: Image.Image) -> dict[str, Image.Image]:
     if pil_src.mode != "RGB":
-        pil_src = _pil_to_rgb_on_black(pil_src)
+        pil_src = pil_to_rgb_on_black(pil_src)
     img_arr = np.array(pil_src)
     ih, iw = img_arr.shape[0], img_arr.shape[1]
 
     def _crop(ref_box) -> Image.Image:
         x, y, w, h = _scale_box(ref_box, iw, ih)
-        return Image.fromarray(_safe_crop(img_arr, x, y, w, h))
+        return Image.fromarray(safe_crop(img_arr, x, y, w, h))
 
     return {"uid": _crop(REF_UID_BOX), "score1": _crop(REF_SCORE1_BOX), "score2": _crop(REF_SCORE2_BOX)}
 
@@ -130,9 +87,9 @@ def init() -> None:
     for img_name in sorted(f for f in os.listdir(AVATAR_FOLDER_PATH) if f.lower().endswith(".png")):
         try:
             img = Image.open(os.path.join(AVATAR_FOLDER_PATH, img_name))
-            rgb = _pil_to_rgb_on_black(img).resize(AVATAR_COMPARE_SIZE, Image.Resampling.LANCZOS)
+            rgb = pil_to_rgb_on_black(img).resize(AVATAR_COMPARE_SIZE, Image.Resampling.LANCZOS)
             arr = np.array(rgb)
-            luma_np = _rgb_to_luma_np_uint8(rgb)
+            luma_np = rgb_to_luma_np_uint8(rgb)
             mean_rgb = arr.reshape(-1, 3).mean(axis=0).astype(np.float64)
             image_files.append(img_name)
             img_data.append((rgb, luma_np, mean_rgb))
@@ -141,94 +98,14 @@ def init() -> None:
     for img_name in sorted(f for f in os.listdir(TOKEN_FOLDER_PATH) if f.lower().endswith(".png")):
         try:
             img = Image.open(os.path.join(TOKEN_FOLDER_PATH, img_name))
-            rgb = _pil_to_rgb_on_black(img).resize(TOKEN_COMPARE_SIZE, Image.Resampling.LANCZOS)
+            rgb = pil_to_rgb_on_black(img).resize(TOKEN_COMPARE_SIZE, Image.Resampling.LANCZOS)
             arr = np.array(rgb)
-            luma_np = _rgb_to_luma_np_uint8(rgb)
+            luma_np = rgb_to_luma_np_uint8(rgb)
             mean_rgb = arr.reshape(-1, 3).mean(axis=0).astype(np.float64)
             token_files.append(img_name)
             token_img.append((rgb, luma_np, mean_rgb))
         except Exception as e:
             logger.warning(f"[share-match] 加载信物模板失败 {img_name}: {e}")
-
-
-def _is_slot_empty(rgb_arr: np.ndarray, black_thr: int = 50, empty_pct_thr: int = 80) -> bool:
-    is_black = np.all(rgb_arr < black_thr, axis=2)
-    tot = rgb_arr.shape[0] * rgb_arr.shape[1]
-    return 100.0 * float(np.sum(is_black)) / float(tot) > empty_pct_thr
-
-
-def _ncc_uint8(a: np.ndarray, b: np.ndarray) -> float:
-    af = a.astype(np.float64)
-    bf = b.astype(np.float64)
-    am = af - af.mean()
-    bm = bf - bf.mean()
-    denom_a = np.sqrt(np.sum(am * am))
-    denom_b = np.sqrt(np.sum(bm * bm))
-    if denom_a < 1e-9 or denom_b < 1e-9:
-        return 0.0
-    return max(-1.0, min(1.0, float(np.sum(am * bm) / (denom_a * denom_b))))
-
-
-def _align_shapes_uint8(a_np: np.ndarray, b_np: np.ndarray, target_size_wh: tuple[int, int]):
-    tw, th = target_size_wh
-
-    def _to_size(src: np.ndarray) -> np.ndarray:
-        if src.shape == (th, tw):
-            return src
-        return np.array(Image.fromarray(src).resize((tw, th), Image.Resampling.LANCZOS), dtype=np.uint8)
-
-    return _to_size(a_np), _to_size(b_np)
-
-
-def _diff_int(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    return np.abs(a.astype(np.int32) - b.astype(np.int32))
-
-
-def _pixel_rgb_similarity(arr1: np.ndarray, arr2: np.ndarray) -> float:
-    r1, g1, b1 = arr1[:, :, 0], arr1[:, :, 1], arr1[:, :, 2]
-    bg_mask = (r1 < PIXEL_RGB_BG_THRESHOLD) & (g1 < PIXEL_RGB_BG_THRESHOLD) & (b1 < PIXEL_RGB_BG_THRESHOLD)
-    fg_mask = ~bg_mask
-    if not np.any(fg_mask):
-        return 0.0
-    r2, g2, b2 = arr2[:, :, 0], arr2[:, :, 1], arr2[:, :, 2]
-    dr = _diff_int(r1, r2)
-    dg = _diff_int(g1, g2)
-    db = _diff_int(b1, b2)
-    matches = (dr < PIXEL_RGB_THRESHOLD) & (dg < PIXEL_RGB_THRESHOLD) & (db < PIXEL_RGB_THRESHOLD)
-    n_match = int(np.sum(matches & fg_mask))
-    n_tot = int(np.sum(fg_mask))
-    return float(n_match) / float(n_tot) if n_tot else 0.0
-
-
-def _avg_rgb_similarity(mean1: np.ndarray, mean2: np.ndarray) -> float:
-    diff_norm = float(np.mean(np.abs(mean1 - mean2))) / 255.0
-    return float(np.exp(-diff_norm * 4.0))
-
-
-def _compare_slot(
-    sub_rgb_pil: Image.Image,
-    template_tuple: tuple[Image.Image, np.ndarray, np.ndarray],
-    target_size_wh: tuple[int, int],
-) -> tuple[float, float, float, float]:
-    tpl_rgb_pil, tpl_luma_np, tpl_mean_rgb = template_tuple
-
-    if sub_rgb_pil.size != target_size_wh:
-        sub_rgb_pil = sub_rgb_pil.resize(target_size_wh, Image.Resampling.LANCZOS)
-    sub_rgb_arr = np.array(sub_rgb_pil)
-    sub_luma_np = _rgb_to_luma_np_uint8(sub_rgb_pil)
-    sub_mean_rgb = sub_rgb_arr.reshape(-1, 3).mean(axis=0).astype(np.float64)
-    tpl_rgb_arr = np.array(tpl_rgb_pil)
-
-    sub_luma_al, tpl_luma_al = _align_shapes_uint8(sub_luma_np, tpl_luma_np, target_size_wh)
-    ncc_raw = _ncc_uint8(sub_luma_al, tpl_luma_al)
-    ncc_01 = 0.5 * (ncc_raw + 1.0)
-
-    color_pixel = _pixel_rgb_similarity(sub_rgb_arr, tpl_rgb_arr)
-    color_avg = _avg_rgb_similarity(sub_mean_rgb, tpl_mean_rgb)
-    color_score = PIXEL_RGB_RATIO * color_pixel + (1.0 - PIXEL_RGB_RATIO) * color_avg
-
-    final = STRUCT_WEIGHT * ncc_01 + COLOR_WEIGHT * color_score
-    return float(final), ncc_raw, color_pixel, color_avg
 
 
 def _parse_role_file(fname: str) -> tuple[str, str]:
@@ -249,29 +126,8 @@ def _scale_ref_coords(img_w: int, img_h: int):
     return resonators, tokens, slot_w, slot_h
 
 
-def _match_slot_best(
-    sub_rgb: Image.Image,
-    templates: list,
-    compare_size: tuple[int, int],
-    empty_threshold: float,
-) -> tuple[int, float]:
-    probe_arr = np.array(sub_rgb.resize(compare_size, Image.Resampling.LANCZOS))
-    if _is_slot_empty(probe_arr):
-        return -1, 0.0
-    best_score = -1.0
-    best_idx = 0
-    for idx, tpl in enumerate(templates):
-        final, _, _, _ = _compare_slot(sub_rgb, tpl, compare_size)
-        if final > best_score:
-            best_score = final
-            best_idx = idx
-    if best_score < empty_threshold:
-        return -1, float(best_score)
-    return best_idx, float(best_score)
-
-
 def _match_resonator(sub_rgb: Image.Image) -> tuple[str, str, float]:
-    best_idx, best_score = _match_slot_best(sub_rgb, img_data, AVATAR_COMPARE_SIZE, RESO_THRESHOLD)
+    best_idx, best_score = match_slot_best(sub_rgb, img_data, AVATAR_COMPARE_SIZE, RESO_THRESHOLD)
     if best_idx < 0:
         return "", "EMPTY_SLOT", best_score
     cid, display = _parse_role_file(image_files[best_idx])
@@ -279,7 +135,7 @@ def _match_resonator(sub_rgb: Image.Image) -> tuple[str, str, float]:
 
 
 def _match_token(sub_rgb: Image.Image) -> tuple[str, float]:
-    best_idx, best_score = _match_slot_best(sub_rgb, token_img, TOKEN_COMPARE_SIZE, TOKEN_THRESHOLD)
+    best_idx, best_score = match_slot_best(sub_rgb, token_img, TOKEN_COMPARE_SIZE, TOKEN_THRESHOLD)
     if best_idx < 0:
         return "EMPTY_SLOT", best_score
     return token_files[best_idx], best_score
@@ -323,7 +179,7 @@ class ShareMatchResult:
 def ReadWhiWaShare_image(pil_src: Image.Image) -> ShareMatchResult:
     if not img_data and not token_img:
         init()
-    src_rgb = _pil_to_rgb_on_black(pil_src)
+    src_rgb = pil_to_rgb_on_black(pil_src)
     img_arr = np.array(src_rgb)
     ih, iw = img_arr.shape[0], img_arr.shape[1]
 
@@ -331,7 +187,7 @@ def ReadWhiWaShare_image(pil_src: Image.Image) -> ShareMatchResult:
 
     role_results: list[tuple[str | None, str, float]] = []
     for x, y in resonators:
-        sub_rgb = Image.fromarray(_safe_crop(img_arr, x, y, w, h))
+        sub_rgb = Image.fromarray(safe_crop(img_arr, x, y, w, h))
         cid, display, score = _match_resonator(sub_rgb)
         role_results.append((cid or None, display, score))
 
@@ -340,7 +196,7 @@ def ReadWhiWaShare_image(pil_src: Image.Image) -> ShareMatchResult:
 
     res_token_raw: list[str] = []
     for x, y in tokens:
-        sub_rgb = Image.fromarray(_safe_crop(img_arr, x, y, w, h))
+        sub_rgb = Image.fromarray(safe_crop(img_arr, x, y, w, h))
         fname, _s = _match_token(sub_rgb)
         res_token_raw.append(fname)
     half_1_token = res_token_raw[0] if len(res_token_raw) > 0 else "EMPTY_SLOT"
