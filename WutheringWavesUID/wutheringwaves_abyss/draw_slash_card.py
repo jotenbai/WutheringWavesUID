@@ -403,6 +403,7 @@ async def save_to_group_rank(
 ):
     """保存无尽数据到群排行"""
     from gsuid_core.logger import logger
+
     try:
         # 查找无尽挑战 (ID 12)
         target_challenge = None
