@@ -14,6 +14,8 @@
 | **邀请到你的服** | 用 [邀请链接](https://discord.com/oauth2/authorize?client_id=1482666240140116099) 把「守岸人」加进你的服务器。别服数据会进同一套维护者服务器，详见隐私政策 |
 | **自己部署**     | 按下文在 VPS 上部署本仓库，在 Discord 开发者门户**新建自己的 Bot**，使用你自己的 Token 与配置（数据与维护者实例互不相通）                                  |
 
+**邀请到你的服 · 免 @ 频道：** 默认其它频道仍须真正 `@守岸人`。若希望某一频道免 @（例如「鸣潮 bot 专用」），请先加入上面的支持服联系维护者，提供该**频道雪花 ID**，由维护者加入白名单后再生效。自建实例则自行配置 `DISCORD_NO_MENTION_CHANNELS`（见 [§2.5](#25-免--频道白名单推荐)）。
+
 个人兴趣维护，非官方、非商业；**不保证**长期可用。  
 [服务条款](discord_bot/docs/terms-of-service.md) · [隐私政策](discord_bot/docs/privacy-policy.md)
 
@@ -254,7 +256,7 @@ python3.12 -m venv .venv
 **步骤：**
 
 1. Discord 里建专用频道（建议命名如 `鸣潮bot专用`），右键 → **复制频道 ID**（需开开发者模式）。
-2. [开发者门户](https://discord.com/developers/applications) → Bot → 打开 **Message Content Intent** → Save。  
+2. [开发者门户](https://discord.com/developers/applications) → Bot → 打开 **Message Content Intent** → Save。
    Intent 一重连即对已邀请的服务器生效，**一般不必重新邀请** bot。
 3. 编辑运行目录 `~/discord_bot/.env`（与门户一致）：
 
