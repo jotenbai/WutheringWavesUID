@@ -8,6 +8,7 @@ from gsuid_core.utils.image.convert import convert_img
 import httpx
 from PIL import Image, ImageDraw
 
+from ..utils.api.requests import waves_api
 from ..utils.api.wwapi import GET_HOLD_RATE_URL
 from ..utils.ascension.char import get_char_model
 from ..utils.char_info_utils import get_all_role_detail_info_list
@@ -34,6 +35,7 @@ from ..utils.resource.constant import (
     SPECIAL_CHAR_NAME,
 )
 from ..utils.util import timed_async_cache
+from ..wutheringwaves_pcap import exist_pcap_data
 
 TEXT_PATH = Path(__file__).parent / "texture2d"
 bar1 = Image.open(TEXT_PATH / "bar1.png")
@@ -166,11 +168,13 @@ async def draw_char_chain_hold_rate(ev: Event, data, group_id: str = "") -> byte
     title_mask_draw.text((300, 430), title_text, "white", waves_font_42, "lm")
 
     # count
-    title = (
-        f"样本数量: {data.get('total_player_count', 0)} 人 | 共 {total_items} 种共鸣链"
-        if group_id
-        else f"近期活跃人数: {data.get('total_player_count', 0)} | 共 {total_items} 种共鸣链"
-    )
+    _n = data.get("total_player_count", 0)
+    if group_id:
+        title = f"样本数量: {_n} 人 | 共 {total_items} 种共鸣链"
+        if data.get("sample_note") == "intl_pcap":
+            title = f"样本: {_n}（国际服计pcap）| {total_items} 链种"
+    else:
+        title = f"近期活跃人数: {_n} | 共 {total_items} 种共鸣链"
     title_mask_draw.text(
         (300, 500),
         title,
@@ -307,6 +311,8 @@ async def get_group_or_bot_char_hold_rate_data(group_id: str) -> dict:
         role_details = await get_all_role_detail_info_list(uid)
         if role_details is None:
             return None
+        if waves_api.is_net(uid) and not await exist_pcap_data(uid):
+            return None
 
         uid_data = {}
         for role_detail in role_details:
@@ -385,13 +391,13 @@ async def get_group_or_bot_char_hold_rate_data(group_id: str) -> dict:
         char_hold_rate.append(char_data)
 
     # 构建最终结果
-    res = {"total_player_count": total_player_count, "char_hold_rate": char_hold_rate}
+    res = {
+        "total_player_count": total_player_count,
+        "char_hold_rate": char_hold_rate,
+        "sample_note": "intl_pcap",
+    }
 
     return res
-
-
-# 主入口函数
-async def get_char_chain_hold_rate_img(ev: Event, group_id: str = "") -> bytes | str:
     """获取角色共鸣链持有率图像"""
     if group_id:
         data = await get_group_or_bot_char_hold_rate_data(group_id)

@@ -49,6 +49,30 @@ class WavesBind(Bind, table=True):
         return result.all()
 
     @classmethod
+    async def append_group_id(
+        cls: type[T_WavesBind],
+        user_id: str,
+        bot_id: str,
+        group_id: str | None,
+    ) -> None:
+        """将 group_id 并入绑定记录（多群/多 Discord 服可并存）。无 不存在绑定则忽略。"""
+        if not group_id:
+            return
+        result = await cls.select_data(user_id, bot_id)
+        if not result:
+            return
+        group_list = result.group_id.split("_") if result.group_id else []
+        group_list = [i for i in group_list if i]
+        if group_id in group_list:
+            return
+        group_list.append(group_id)
+        await cls.update_data(
+            user_id=user_id,
+            bot_id=bot_id,
+            **{"group_id": "_".join(group_list)},
+        )
+
+    @classmethod
     async def insert_waves_uid(
         cls: type[T_WavesBind],
         user_id: str,

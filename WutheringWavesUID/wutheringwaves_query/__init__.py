@@ -5,6 +5,7 @@ from gsuid_core.models import Event
 from gsuid_core.sv import SV
 
 from ..utils.button import WavesButton
+from ..utils.waves_group import get_waves_group_id, is_in_waves_group, touch_waves_group
 from ..wutheringwaves_config import WutheringWavesConfig
 from .draw_char_chain_hold_rate import get_char_chain_hold_rate_img
 from .draw_char_hold_rate import get_char_hold_rate_img
@@ -33,9 +34,10 @@ sv_slash_appear_rate = SV("waves冥想出场率", priority=1)
 )
 async def handle_char_hold_rate(bot: Bot, ev: Event):
     if "群" in ev.command:
-        if not ev.group_id:
-            return await bot.send("请在群聊中使用")
-        img = await get_char_hold_rate_img(ev, ev.group_id)
+        await touch_waves_group(ev)
+        if not is_in_waves_group(ev):
+            return await bot.send("请在群聊/服务器频道中使用")
+        img = await get_char_hold_rate_img(ev, get_waves_group_id(ev) or "")
     elif "bot" in ev.command:
         botData = WutheringWavesConfig.get_config("botData").data
         if not botData:
@@ -72,9 +74,10 @@ async def handle_char_hold_rate(bot: Bot, ev: Event):
 )
 async def handle_char_chain_hold_rate(bot: Bot, ev: Event):
     if "群" in ev.command:
-        if not ev.group_id:
-            return await bot.send("请在群聊中使用")
-        img = await get_char_chain_hold_rate_img(ev, ev.group_id)
+        await touch_waves_group(ev)
+        if not is_in_waves_group(ev):
+            return await bot.send("请在群聊/服务器频道中使用")
+        img = await get_char_chain_hold_rate_img(ev, get_waves_group_id(ev) or "")
     elif "bot" in ev.command:
         botData = WutheringWavesConfig.get_config("botData").data
         if not botData:

@@ -11,6 +11,7 @@ from gsuid_core.sv import SV
 from ..utils.button import WavesButton
 from ..utils.database.models import WavesBind, WavesUser
 from ..utils.image import sync_non_onebot_user_avatar
+from ..utils.waves_group import get_waves_group_id
 from ..wutheringwaves_config import PREFIX, WutheringWavesConfig
 from ..wutheringwaves_user.login_succ import login_success_msg
 from .deal import add_cookie, delete_cookie, get_cookie
@@ -156,7 +157,9 @@ async def send_waves_bind_uid_msg(bot: Bot, ev: Event):
             if len(difference_uid_list) >= max_bind_num:
                 return await bot.send("[鸣潮] 绑定特征码达到上限\n", at_sender)
 
-        code = await WavesBind.insert_waves_uid(qid, ev.bot_id, uid, ev.group_id, lenth_limit=9)
+        code = await WavesBind.insert_waves_uid(
+            qid, ev.bot_id, uid, get_waves_group_id(ev), lenth_limit=9
+        )
         if code == 0 or code == -2:
             retcode = await WavesBind.switch_uid_by_game(qid, ev.bot_id, uid)
         return await send_diff_msg(

@@ -20,6 +20,7 @@ from ..utils.cache import TimedCache
 from ..utils.database.models import WavesBind, WavesUser
 from ..utils.resource.RESOURCE_PATH import waves_templates
 from ..utils.waves_api import waves_api
+from ..utils.waves_group import get_waves_group_id
 from ..wutheringwaves_analyzecard.user_info_utils import save_user_info
 from ..wutheringwaves_config import PREFIX, WutheringWavesConfig
 from ..wutheringwaves_user import deal
@@ -259,7 +260,9 @@ async def add_cookie(ev, token, did) -> WavesUser | str | None:
     if "成功" in ck_res:
         user = await WavesUser.get_user_by_attr(ev.user_id, ev.bot_id, "cookie", token)
         if user:
-            data = await WavesBind.insert_waves_uid(ev.user_id, ev.bot_id, user.uid, ev.group_id, lenth_limit=9)
+            data = await WavesBind.insert_waves_uid(
+                ev.user_id, ev.bot_id, user.uid, get_waves_group_id(ev), lenth_limit=9
+            )
             if data == 0 or data == -2:
                 await WavesBind.switch_uid_by_game(ev.user_id, ev.bot_id, user.uid)
         return user
@@ -318,7 +321,7 @@ async def add_oversea_user(bot: Bot, ev: Event, data: dict):
             ev.user_id,
             ev.bot_id,
             uid,
-            ev.group_id,
+            get_waves_group_id(ev),
             lenth_limit=9,
         )  # 更新綁定信息
 

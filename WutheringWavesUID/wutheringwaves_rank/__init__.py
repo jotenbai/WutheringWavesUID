@@ -5,6 +5,7 @@ from gsuid_core.models import Event
 from gsuid_core.sv import SV
 
 from ..utils.name_convert import CHAR_NAME_PATTERN, get_event_command_text
+from ..utils.waves_group import is_in_waves_group, touch_waves_group
 from ..wutheringwaves_config import WutheringWavesConfig
 from .darw_rank_card import draw_rank_img
 from .draw_all_rank_card import draw_all_rank_card
@@ -13,6 +14,7 @@ from .draw_gacha_server_rank import draw_gacha_server_rank_img
 from .draw_local_total_rank_card import draw_local_total_rank
 from .draw_total_rank_card import draw_total_rank
 from .matrix_rank import draw_all_matrix_rank_card
+
 
 sv_waves_rank_list = SV("ww角色排行")
 sv_waves_rank_all_list = SV("ww角色总排行", priority=1)
@@ -30,9 +32,6 @@ async def send_rank_card(bot: Bot, ev: Event):
         return
     ev.regex_dict = match.groupdict()
     char = match.group("char")
-
-    if not ev.group_id:
-        return await bot.send("请在群聊中使用")
 
     if not char:
         return
@@ -53,6 +52,9 @@ async def send_rank_card(bot: Bot, ev: Event):
         else:
             im = await draw_bot_rank_img(bot, ev, char, rank_type)
     else:
+        await touch_waves_group(ev)
+        if not is_in_waves_group(ev):
+            return await bot.send("请在群聊/服务器频道中使用（私聊请用 bot排行）")
         if "练度" in char:
             im = await draw_local_total_rank(bot, ev)
         else:

@@ -166,6 +166,7 @@ python3.12 -m venv .venv
 ~/discord_bot/.venv/bin/python patches/apply_discord_button_patch.py
 ~/discord_bot/.venv/bin/python patches/apply_discord_reply_patch.py
 ~/discord_bot/.venv/bin/python patches/apply_discord_no_mention_channel_patch.py
+~/discord_bot/.venv/bin/python patches/apply_discord_guild_as_group_patch.py
 
 ~/discord_bot/.venv/bin/nb run
 # 或：~/discord_bot/.venv/bin/python bot.py
@@ -183,8 +184,9 @@ python3.12 -m venv .venv
 | [`apply_discord_button_patch.py`](discord_bot/patches/apply_discord_button_patch.py) | 修复帮助页按钮 ACK        | 点按钮「该交互失败」                                |
 | [`apply_discord_reply_patch.py`](discord_bot/patches/apply_discord_reply_patch.py)   | 回复引用原指令，不 @ 用户 | 无灰色引用条；多人同时发指令难区分                  |
 | [`apply_discord_no_mention_channel_patch.py`](discord_bot/patches/apply_discord_no_mention_channel_patch.py) | 白名单频道免 @；其它频道仍须 @；忽略「只 @ 了别的 bot」的消息 | 开 Intent 后全频道误触发；或免 @ 无响应；与纳西妲等抢答 |
+| [`apply_discord_guild_as_group_patch.py`](discord_bot/patches/apply_discord_guild_as_group_patch.py) | `sender.discord_guild_id`：Discord 服务器≈QQ 群 | 群排行/群持有率仍按频道隔离或私聊误计入群 |
 
-打完补丁需 **重启 discordbot**。升级 / 重建 venv 后四个补丁都要重跑。
+打完补丁需 **重启 discordbot**。升级 / 重建 venv 后**五个**补丁都要重跑。
 
 ### 2.5 免 @ 频道（白名单，推荐）
 
@@ -284,11 +286,16 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 
 指令详情见插件内 `帮助` 图、本仓库 [国际服指令使用说明](discord_bot/command-guide/manual.md)，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
 
-**Discord 与 `group_id`：** 桥接里 Discord 的 `group_id` = **频道 ID**（不是服务器 ID）。
-绑定 / 登录 / 刷新面板等会把当前频道记入用户的绑定列表。
-- **不受影响：** `角色面板`、`分析`、`练度统计`、`体力`、全服 `总排行` 等按用户 UID / 本地库，换频道或私聊一般照常。
-- **群排行（Discord）：** `角色名排行` / 群练度排行会统计本 bot 下已绑定且本地有面板的用户（**私聊录入也算**），不再按频道隔离。
-- **仍可能按频道隔离：** 部分群配置、其它群统计类指令；以实际行为为准。
+**Discord 与群归属：**
+
+- 桥接回信用的 `group_id` 仍是**频道 ID**（发消息必需）。
+- **逻辑群**（`群排行` / `群持有率` / WavesBind 归属）= **Discord 服务器 ID（guild）**，与 QQ 群对齐；经 `sender.discord_guild_id` + 补丁 `apply_discord_guild_as_group_patch.py`。
+- **bot 层**：本机全部绑定用户（跨服务器 + 私聊录入）。
+- **私聊**：不计入任何「群*」；可用 `bot排行` / `bot持有率`。
+- **多服**：同一 Discord 用户在 A、B 两服都用过，可同时属于两服的群统计（与 QQ 多群相同）。
+- **国际服群/bot 持有率**：仅统计有 **pcap** 的 UID（避免只「分析」热门角造成虚高）；伤害/评分排行仍可用本地面板（含分析）。
+
+旧绑定里可能残留历史**频道** ID；用户在服务器频道再发一次会触发的指令（绑定 / 群排行 / 群持有率等）会把 **guild** 写入归属。
 
 **国际服说明：** 体力、先约电台、结晶波片等数据由 `kuro-py` 从 Kuro 国际服接口拉取，**并非**国服「库街区便笺」同一套 API。登录成功后应能出图；若只绑定 UID、未 `登录`，或 token 过期，会提示重新登录。周度游历等国际服暂无的字段会显示「国际服暂无数据」。
 
@@ -308,7 +315,7 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 | 按钮「该交互失败」                                        | 运行 `apply_discord_button_patch.py`，重启 discordbot                                   |
 | 重启 core 后 Discord 无响应                               | `systemctl --user restart discordbot`                                                   |
 | VPS 重启后 bot 全挂、网页打不开                           | 确认已 `sudo loginctl enable-linger $USER`；`systemctl --user status gscore discordbot` |
-| `pip install -U` 或重建 venv 后问题复发                   | 重新运行**四个**补丁脚本（含免 @）                                                      |
+| `pip install -U` 或重建 venv 后问题复发                   | 重新运行**五个**补丁脚本（含免 @、guild 归属）                                          |
 | 免 @ 频道仍必须 @ / 开 Intent 后乱触发                    | 查 §2.5：门户与 `.env` 的 `message_content`、白名单 ID、是否重跑免 @ 补丁并重启        |
 | 免 @ 频道里 @纳西妲 也被守岸人回                          | 确认已打免 @ 补丁 **v3+**（忽略只 @ 其它 bot）；频道建议专用于鸣潮                      |
 | 私聊 / 另一频道 `莫宁排行` 人很少或只有自己               | 确认对方是否已绑定并录入该角色面板（`分析` / `刷新面板`）；全服用 `总排行` |
