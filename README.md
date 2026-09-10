@@ -6,7 +6,15 @@
 
 私聊或 `@机器人` 发送「帮助」「练度统计」等指令，体验可参考 [nahida-examples](https://github.com/gamer-mitsuha/nahida-examples) 一类无前缀用法。
 
-自用小服：试用机器人或联系维护者可加入 [Discord](https://discord.com/invite/eWnWyGqEXM)。Bot 已关闭 Public，不能自行邀请至其他服务器；纯属个人兴趣，仅供小范围使用。
+### 怎么用（三选一）
+
+| 方式             | 说明                                                                                                                                                       |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **加入支持服**   | 进入维护者的 [Discord 服务器](https://discord.com/invite/eWnWyGqEXM)，在频道内（或完成归属后私聊）使用「守岸人」                                           |
+| **邀请到你的服** | 用 [邀请链接](https://discord.com/oauth2/authorize?client_id=1482666240140116099) 把「守岸人」加进你的服务器。别服数据会进同一套维护者服务器，详见隐私政策 |
+| **自己部署**     | 按下文在 VPS 上部署本仓库，在 Discord 开发者门户**新建自己的 Bot**，使用你自己的 Token 与配置（数据与维护者实例互不相通）                                  |
+
+个人兴趣维护，非官方、非商业；**不保证**长期可用。  
 [服务条款](discord_bot/docs/terms-of-service.md) · [隐私政策](discord_bot/docs/privacy-policy.md)
 
 ## 架构
@@ -25,9 +33,37 @@ Discord
 | `WutheringWavesUID/`                                     | 鸣潮业务逻辑（角色面板、练度、OCR 等）                                   |
 | `discord_bot/`                                           | Discord 桥接、补丁、systemd 模板与法务文档（本 fork 相对上游的额外内容） |
 
+上表是**消息链路**，不是 VPS 上的文件夹树。本仓库里 `discord_bot/` 只是文档与模板的存放位置；**真正跑桥接时**，应单独建一个与 gsuid_core **平级**的运行目录（常见为 `~/discord_bot`），把模板拷进去再配 `.env`，不要指望在「插件仓内部的 `discord_bot/`」里直接当生产进程目录。
+
+### VPS 目录参考（与本仓库布局不同）
+
+```text
+~/                          # 例：/home/admin
+├── gsuid_core/             # 独立安装的 gsuid_core（systemd: gscore）
+│   ├── .venv/
+│   └── gsuid_core/
+│       └── plugins/
+│           └── WutheringWavesUID/   # 本仓库整仓 clone（插件入口在仓根 __init__.py）
+│               ├── WutheringWavesUID/   # Python 业务包
+│               ├── discord_bot/         # 模板 / 文档 / 补丁脚本（随仓；不是运行目录）
+│               ├── README.md
+│               └── ...
+└── discord_bot/            # 另建的桥接运行目录（systemd: discordbot）
+    ├── .venv/
+    ├── .env                # Bot Token、Intent、免 @ 频道等（勿提交）
+    ├── patches/            # 从本仓 discord_bot/patches 拷来并 apply
+    └── ...
+```
+
+要点：
+
+- **插件**跟 gsuid_core 走：更新 = 在 `plugins/WutheringWavesUID` 里 `git pull`，再 `restart gscore`。
+- **桥接**跟 `~/discord_bot` 走：`.env` 只放这里；改补丁后 `restart discordbot`。
+- 仓库内的 `discord_bot/` ≠ VPS 上的 `~/discord_bot`：前者是随插件仓的模板；后者是独立运行的桥接副本。
+
 ## 前置要求
 
-- 一台可公网访问的 Linux VPS（或本机长期在线环境）
+- 一台可公网访问的 Linux VPS（或云服务器）
 - Python 3.12+（`discord_bot`）与 Python 3.13（`gsuid_core`，以官方文档为准）
 - [uv](https://github.com/astral-sh/uv) 或 venv + pip
 - Discord 开发者账号与 Bot Token
@@ -52,21 +88,44 @@ cd ~/gsuid_core
 python3.13 -m uv run core --host 0.0.0.0
 ```
 
-在 Web 控制台（默认 `http://<你的主机>:8765/app`，若已用域名反代则为 `https://core.你的域名/app/`）中配置 **WutheringWavesUID**：
+Web 控制台默认 `http://<主机>:8765/app`（域名反代则为 `https://core.你的域名/app/`）。改完配置后多数项需 **重启 gsuid_core**（Discord 发 `core重启`，或 `systemctl --user restart gscore`）才生效。
 
-- **禁用强制前缀** → `disable_force_prefix: true`
-- **允许空命令前缀** → `allow_empty_prefix: true`
-- **OCRspace API Key**（国际服 `分析` / DC 卡片识别需要，见下文）
-- **鸣潮登录 url（`WavesLoginUrl`）**（可选）：填公网可访问的站点根，如 `https://core.jotenbai.moe`（不要带末尾 `/`）。留空则机器人会拼 `http://公网IP:8765`，易暴露 IP。配置后 `登录` / `上传pcap` 等链接会使用该域名。
+### 网页控制台推荐设置
 
-修改插件配置后需 **重启 gsuid_core**（Discord 发 `core重启`，或 `systemctl --user restart gscore`）。
+配置分两处，国际服 Discord 自用建议如下（**推荐**列按本 fork 小服场景；你自己改过的以实际为准）。
 
-### 网页控制台小建议（可选）
+#### A. 插件配置 → WutheringWavesUID
 
-路径：**管理核心** → **框架配置** → **自动更新**。
+前缀两项一般在该插件的「插件 / 前缀」相关页；其余在插件业务配置里。
 
-- 若已开启「自动更新 Core / 插件」，建议同时开启 **「自动重启 Core」**（默认约 4:40）。前两项只拉代码、不重启进程，不重启则更新不会真正生效。
-- **「自动更新 Core/插件时将内容通知主人」** 可关闭，避免凌晨更新后向主人 Discord 私聊推送日志。
+| 变量名 / 控制台名                                   | 功能简述                                                                                         | 推荐                                 |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------ |
+| `disable_force_prefix`（禁用强制前缀）              | 不用 `ww` 等前缀也能触发指令                                                                     | **开**                               |
+| `allow_empty_prefix`（允许空命令前缀）              | 允许无前缀匹配                                                                                   | **开**                               |
+| `WavesLoginUrl`（鸣潮登录 url）                     | `登录` / `上传pcap` 等网页根地址；填如 `https://core.你的域名`（勿尾斜杠）。空则易拼成 `IP:8765` | **必填域名**                         |
+| `OCRspaceApiKeyList`                                | 国际服 `分析` / DC 角色卡 OCR                                                                    | **填**（要用分析时）                 |
+| `botData`（bot排行查询开关）                        | 是否开放 `bot排行` / `bot持有率` 等「本机器人全体绑定用户」层                                    | **开**（Discord 分层需要）           |
+| `WavesRankUrl` / `WavesToken`（全排行 url / token） | `角色名总排行` 远端榜；`刷新面板` 上传也依赖                                                     | 要用总排行再填；勿公开               |
+| `CharCardRefresh`（角色面板自动刷新）               | 国服查面板时自动刷；国际服主要靠 pcap/`分析`                                                     | 可保持默认开                         |
+| `AtCheck`（开启可以艾特查询）                       | 允许 @某人 查对方数据                                                                            | 按需，默认开                         |
+| `HideUid`（隐藏 uid）                               | 出图是否隐藏特征码                                                                               | 按需                                 |
+| `WavesQRLogin` / `WavesLoginForward`                | 登录链变二维码 / 转发消息                                                                        | Discord 建议**关**（直接发链接更稳） |
+| `StaminaPush`（体力推送）                           | 体力到阈值私聊/群推送                                                                            | 小服可**关**，省打扰                 |
+| `MaxBindNum`                                        | 未登录时可绑定特征码上限                                                                         | 默认即可                             |
+| `RankUseToken`（有 token 才能进排行）               | 收紧进本地排行条件                                                                               | 自用一般**关**                       |
+| `AllowImportGachaLogs`                              | 允许用户直接导入抽卡记录                                                                         | 一般**关**                           |
+| `CardImgCheck`（国际服 dc 卡片声骸图标识别）        | 分析卡片时额外认声骸图标                                                                         | 按需                                 |
+
+#### B. 管理核心 → 框架配置
+
+| 控制台项（常见归在「自动更新」等） | 功能简述                         | 推荐                                 |
+| ---------------------------------- | -------------------------------- | ------------------------------------ |
+| 自动更新 Core / 自动更新插件       | 定时 `git pull` 代码             | 自用可开；开则务必配下面「自动重启」 |
+| 自动重启 Core（约 4:40）           | 更新后重启进程，否则新代码不生效 | 若开了自动更新 → **开**              |
+| 自动更新时通知主人                 | 凌晨把更新日志私聊推给主人       | **关**（免 Discord 刷屏）            |
+| 主人 / masters                     | 主人 Discord 雪花 ID（权限最高） | **填你的 ID**；改后须重启 core       |
+
+主人 ID、黑名单等若在「权限 / 用户」页，以控制台实际菜单为准；改 masters 后必须重启 gscore。
 
 ### 1.1 插件 Python 依赖（重要）
 
@@ -74,10 +133,10 @@ gsuid_core 启动时会尝试安装插件 `requirements.txt` 中的依赖，但�
 
 插件根目录 [`requirements.txt`](requirements.txt) 当前包含：
 
-| 包名      | 用途                                         | 未安装时的典型现象                                  |
-| --------- | -------------------------------------------- | --------------------------------------------------- |
+| 包名      | 用途                                               | 未安装时的典型现象                                    |
+| --------- | -------------------------------------------------- | ----------------------------------------------------- |
 | `opencc`  | 指令/OCR 繁体转简体（`zh_convert`、`analyzecard`） | `尤诺面板`、`练度统计` 等无触发；繁体指令无法自动转简 |
-| `kuro-py` | 国际服登录与体力等 API（`kuro` 模块）        | 网页登录「登入失敗」；`体力` / `mr` 无数据或报错    |
+| `kuro-py` | 国际服登录与体力等 API（`kuro` 模块）              | 网页登录「登入失敗」；`体力` / `mr` 无数据或报错      |
 
 在 VPS 上进入 **gsuid_core 的 venv** 手动安装（路径以你的部署为准）：
 
@@ -178,13 +237,13 @@ python3.12 -m venv .venv
 
 `nonebot-plugin-genshinuid` 对 Discord 有几处已知问题，补丁脚本会修改 **venv 内已安装的 GenshinUID**：
 
-| 脚本                                                                                 | 作用                      | 典型现象（未打补丁时）                              |
-| ------------------------------------------------------------------------------------ | ------------------------- | --------------------------------------------------- |
-| [`apply_snowflake_patch.py`](discord_bot/patches/apply_snowflake_patch.py)           | 修复附件 Snowflake 序列化 | `Encoding objects of type Snowflake is unsupported` |
-| [`apply_discord_button_patch.py`](discord_bot/patches/apply_discord_button_patch.py) | 修复帮助页按钮 ACK        | 点按钮「该交互失败」                                |
-| [`apply_discord_reply_patch.py`](discord_bot/patches/apply_discord_reply_patch.py)   | 回复引用原指令，不 @ 用户 | 无灰色引用条；多人同时发指令难区分                  |
+| 脚本                                                                                                         | 作用                                                          | 典型现象（未打补丁时）                                  |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------- |
+| [`apply_snowflake_patch.py`](discord_bot/patches/apply_snowflake_patch.py)                                   | 修复附件 Snowflake 序列化                                     | `Encoding objects of type Snowflake is unsupported`     |
+| [`apply_discord_button_patch.py`](discord_bot/patches/apply_discord_button_patch.py)                         | 修复帮助页按钮 ACK                                            | 点按钮「该交互失败」                                    |
+| [`apply_discord_reply_patch.py`](discord_bot/patches/apply_discord_reply_patch.py)                           | 回复引用原指令，不 @ 用户                                     | 无灰色引用条；多人同时发指令难区分                      |
 | [`apply_discord_no_mention_channel_patch.py`](discord_bot/patches/apply_discord_no_mention_channel_patch.py) | 白名单频道免 @；其它频道仍须 @；忽略「只 @ 了别的 bot」的消息 | 开 Intent 后全频道误触发；或免 @ 无响应；与纳西妲等抢答 |
-| [`apply_discord_guild_as_group_patch.py`](discord_bot/patches/apply_discord_guild_as_group_patch.py) | `sender.discord_guild_id`：Discord 服务器≈QQ 群 | 群排行/群持有率仍按频道隔离或私聊误计入群 |
+| [`apply_discord_guild_as_group_patch.py`](discord_bot/patches/apply_discord_guild_as_group_patch.py)         | `sender.discord_guild_id`：Discord 服务器≈QQ 群               | 群排行/群持有率仍按频道隔离或私聊误计入群               |
 
 打完补丁需 **重启 discordbot**。升级 / 重建 venv 后**五个**补丁都要重跑。
 
@@ -291,7 +350,7 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 - 桥接回信用的 `group_id` 仍是**频道 ID**（发消息必需）。
 - **逻辑群**（`群排行` / `群持有率` / WavesBind 归属）= **Discord 服务器 ID（guild）**，与 QQ 群对齐；经 `sender.discord_guild_id` + 补丁 `apply_discord_guild_as_group_patch.py`。
 - **bot 层**：本机全部绑定用户（跨服务器 + 私聊录入）。
-- **私聊**：不计入任何「群*」；可用 `bot排行` / `bot持有率`。
+- **私聊**：不计入任何「群\*」；可用 `bot排行` / `bot持有率`。
 - **多服**：同一 Discord 用户在 A、B 两服都用过，可同时属于两服的群统计（与 QQ 多群相同）。
 - **国际服群/bot 持有率**：仅统计有 **pcap** 的 UID（避免只「分析」热门角造成虚高）；伤害/评分排行仍可用本地面板（含分析）。
 
@@ -316,9 +375,9 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 | 重启 core 后 Discord 无响应                               | `systemctl --user restart discordbot`                                                   |
 | VPS 重启后 bot 全挂、网页打不开                           | 确认已 `sudo loginctl enable-linger $USER`；`systemctl --user status gscore discordbot` |
 | `pip install -U` 或重建 venv 后问题复发                   | 重新运行**五个**补丁脚本（含免 @、guild 归属）                                          |
-| 免 @ 频道仍必须 @ / 开 Intent 后乱触发                    | 查 §2.5：门户与 `.env` 的 `message_content`、白名单 ID、是否重跑免 @ 补丁并重启        |
+| 免 @ 频道仍必须 @ / 开 Intent 后乱触发                    | 查 §2.5：门户与 `.env` 的 `message_content`、白名单 ID、是否重跑免 @ 补丁并重启         |
 | 免 @ 频道里 @纳西妲 也被守岸人回                          | 确认已打免 @ 补丁 **v3+**（忽略只 @ 其它 bot）；频道建议专用于鸣潮                      |
-| 私聊 / 另一频道 `莫宁排行` 人很少或只有自己               | 确认对方是否已绑定并录入该角色面板（`分析` / `刷新面板`）；全服用 `总排行` |
+| 私聊 / 另一频道 `莫宁排行` 人很少或只有自己               | 确认对方是否已绑定并录入该角色面板（`分析` / `刷新面板`）；全服用 `总排行`              |
 
 ---
 
