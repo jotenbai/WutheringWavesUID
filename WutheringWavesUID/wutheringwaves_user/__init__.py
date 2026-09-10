@@ -11,7 +11,7 @@ from gsuid_core.sv import SV
 from ..utils.button import WavesButton
 from ..utils.database.models import WavesBind, WavesUser
 from ..utils.image import sync_non_onebot_user_avatar
-from ..utils.waves_group import ensure_discord_guild_affiliation, get_waves_group_id
+from ..utils.waves_group import get_waves_group_id
 from ..wutheringwaves_config import PREFIX, WutheringWavesConfig
 from ..wutheringwaves_user.login_succ import login_success_msg
 from .deal import add_cookie, delete_cookie, get_cookie
@@ -147,8 +147,6 @@ async def send_waves_bind_uid_msg(bot: Bot, ev: Event):
     at_sender = True if ev.group_id else False
 
     if "绑定" in ev.command:
-        if not await ensure_discord_guild_affiliation(bot, ev):
-            return
         if not uid:
             return await bot.send(f"该命令需要带上正确的uid!参考示例:\n{PREFIX}绑定uid\n{PREFIX}绑定1234\n", at_sender)
         uid_list = await WavesBind.get_uid_list_by_game(qid, ev.bot_id)

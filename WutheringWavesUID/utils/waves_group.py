@@ -9,7 +9,6 @@ WavesBind.group_id 中 Discord 服务器记为 ``dg:<guild_snowflake>``，
 
 from __future__ import annotations
 
-from gsuid_core.bot import Bot
 from gsuid_core.models import Event
 
 from .database.models import WavesBind
@@ -17,8 +16,8 @@ from .database.models import WavesBind
 DISCORD_GUILD_PREFIX = "dg:"
 
 DISCORD_AFFILIATION_HINT = (
-    "[鸣潮] 请先到服务器的 bot 频道发一条指令（例如「帮助」或「绑定xxx」），"
-    "完成服务器归属后再使用私聊。\n"
+    "[鸣潮] 请先到服务器频道里和机器人对话一次（例如发「帮助」或「绑定你的UID」），"
+    "完成群归属后再使用私聊。\n"
     "这样你才会出现在本服的群排行 / 群持有率中。"
 )
 
@@ -56,16 +55,46 @@ def _bind_group_tokens(group_id: str | None) -> list[str]:
     return [i for i in group_id.split("_") if i]
 
 
-async def discord_bind_has_guild(user_id: str, bot_id: str = "discord") -> bool:
-    """该 Discord 用户是否已写入至少一个服务器归属（dg:…）。"""
+async def list_discord_guild_affiliations(user_id: str, bot_id: str = "discord") -> list[str]:
+    """绑定记录中的全部 ``dg:…`` 服务器归属（顺序与 group_id 一致，末尾为最近 touch）。"""
     row = await WavesBind.select_data(user_id, bot_id)
     if not row:
-        return False
-    return any(t.startswith(DISCORD_GUILD_PREFIX) for t in _bind_group_tokens(row.group_id))
+        return []
+    return [t for t in _bind_group_tokens(row.group_id) if t.startswith(DISCORD_GUILD_PREFIX)]
+
+
+async def discord_bind_has_guild(user_id: str, bot_id: str = "discord") -> bool:
+    """该 Discord 用户是否已写入至少一个服务器归属（dg:…）。"""
+    return bool(await list_discord_guild_affiliations(user_id, bot_id))
+
+
+async def resolve_waves_group_id(ev: Event) -> tuple[str | None, str | None]:
+    """解析「群*」用的逻辑群 ID。
+
+    Returns:
+        ``(group_id, error_msg)``：成功时 error 为 None；失败时 group_id 为 None。
+
+    Discord 私聊：用绑定里最近一次在频道 touch 过的 ``dg:``（多服并存时取末尾）。
+    """
+    gid = get_waves_group_id(ev)
+    if gid:
+        return gid, None
+
+    if _bot_id(ev) != "discord":
+        return None, "请在群聊中使用"
+
+    user_type = getattr(ev, "user_type", None)
+    if user_type != "direct":
+        return None, "请在服务器频道中使用"
+
+    affiliations = await list_discord_guild_affiliations(str(ev.user_id), "discord")
+    if not affiliations:
+        return None, DISCORD_AFFILIATION_HINT
+    return affiliations[-1], None
 
 
 async def touch_waves_group(ev: Event) -> None:
-    """若在 Discord 服务器频道，把当前 guild 记入 WavesBind.group_id（可多服并存）。"""
+    """若在 Discord 服务器频道，把当前 guild 记入 WavesBind（已存在则挪到末尾=最近）。"""
     group_id = get_waves_group_id(ev)
     if not group_id:
         return
@@ -74,30 +103,3 @@ async def touch_waves_group(ev: Event) -> None:
     if not bot_id or not user_id:
         return
     await WavesBind.append_group_id(str(user_id), bot_id, group_id)
-
-
-async def ensure_discord_guild_affiliation(bot: Bot, ev: Event) -> bool:
-    """Discord 私聊且尚未有 dg: 服务器归属时提示先去频道；返回 False 表示应中止当前指令。
-
-    已在服务器频道：自动 touch 写入归属并放行。
-    非 Discord：直接放行。
-    """
-    if _bot_id(ev) != "discord":
-        return True
-
-    if is_in_waves_group(ev):
-        await touch_waves_group(ev)
-        return True
-
-    # 私聊或其它无 guild 的场景
-    user_type = getattr(ev, "user_type", None)
-    if user_type != "direct":
-        # 理论上 guild 频道应已有 discord_guild_id；若缺失则仍放行以免卡死
-        return True
-
-    if await discord_bind_has_guild(str(ev.user_id), "discord"):
-        return True
-
-    at_sender = bool(ev.group_id)
-    await bot.send(DISCORD_AFFILIATION_HINT, at_sender)
-    return False

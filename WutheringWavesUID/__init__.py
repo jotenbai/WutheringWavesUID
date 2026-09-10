@@ -11,3 +11,11 @@ try:
     install_msg_process_t2s()
 except Exception:
     pass
+
+# Discord 私聊：未完成服务器归属时一律提示去频道（须在繁简转换之后）
+try:
+    from .utils.discord_dm_gate import install_discord_dm_affiliation_gate
+
+    install_discord_dm_affiliation_gate()
+except Exception:
+    pass

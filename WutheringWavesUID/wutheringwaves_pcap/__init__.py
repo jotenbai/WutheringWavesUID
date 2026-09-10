@@ -11,7 +11,6 @@ from gsuid_core.sv import SV
 from ..utils.database.models import WavesBind
 from ..utils.error_reply import WAVES_CODE_097, WAVES_CODE_103
 from ..utils.hint import error_reply
-from ..utils.waves_group import ensure_discord_guild_affiliation
 from ..wutheringwaves_config import PREFIX, WutheringWavesConfig
 from .pcap_api import pcap_api
 from .pcap_file_handler import PcapFileHandler
@@ -27,8 +26,6 @@ sv_pcap_help = SV("pcap帮助")
 @sv_pcap_upload.on_fullmatch(("上传pcap", "pcap上传", "upload pcap"), block=True)
 async def pcap_upload(bot: Bot, ev: Event):
     """pcap 上传"""
-    if not await ensure_discord_guild_affiliation(bot, ev):
-        return
     return await page_upload(bot, ev)
 
 
@@ -36,8 +33,6 @@ async def pcap_upload(bot: Bot, ev: Event):
 @sv_pcap_file.on_file("pcap")
 async def pcap_file_handler(bot: Bot, ev: Event):
     """pcap 文件處理指令 - 使用優化處理器"""
-    if not await ensure_discord_guild_affiliation(bot, ev):
-        return
     at_sender = True if ev.group_id else False
 
     pcap_handler = PcapFileHandler()
@@ -56,8 +51,6 @@ async def pcap_file_handler(bot: Bot, ev: Event):
 )
 async def pcap_parse(bot: Bot, ev: Event):
     """pcap 解析指令"""
-    if not await ensure_discord_guild_affiliation(bot, ev):
-        return
     at_sender = True if ev.group_id else False
     uid = await WavesBind.get_uid_by_game(ev.user_id, ev.bot_id)
 

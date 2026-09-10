@@ -5,7 +5,6 @@ from gsuid_core.models import Event
 from gsuid_core.sv import SV
 
 from ..utils.name_convert import CHAR_NAME_PATTERN, get_event_command_text
-from ..utils.waves_group import ensure_discord_guild_affiliation
 from .cardOCR import async_ocr
 from .changeEcho import change_echo, change_weapon_resonLevel
 from .ScoreQuery import phantom_score_ocr, phantom_score_ocr_to_char
@@ -24,8 +23,6 @@ _PHANTOM_OCR_PARSE_PATTERN = rf"({CHAR_NAME_PATTERN})\s*(?:(\d)\s*[cC]|[cC]\s*(\
 @waves_discord_bot_card_analyze.on_command(("分析卡片", "卡片分析", "dc卡片", "fx", "分析"), block=True)
 async def analyze_card(bot: Bot, ev: Event):
     """处理 Discord 上的图片分析请求。"""
-    if not await ensure_discord_guild_affiliation(bot, ev):
-        return
     # 指令与图片或图片链接同时发送时
     if ev.image or ev.text.strip():
         await async_ocr(bot, ev)
@@ -49,8 +46,6 @@ async def analyze_card(bot: Bot, ev: Event):
 @waves_phantom_score_ocr_query.on_regex(_PHANTOM_OCR_CMD_PATTERN, block=True)
 async def phantom_score_ocr_query(bot: Bot, ev: Event):
     """声骸OCR查分"""
-    if not await ensure_discord_guild_affiliation(bot, ev):
-        return
     match = re.search(_PHANTOM_OCR_PARSE_PATTERN, get_event_command_text(ev))
     if not match:
         return
@@ -64,8 +59,6 @@ async def phantom_score_ocr_query(bot: Bot, ev: Event):
 @waves_char_score_ocr_query.on_regex(rf"^{CHAR_NAME_PATTERN}评分\s*(?:$|换|http)", block=True)
 async def char_score_ocr_query(bot: Bot, ev: Event):
     """声骸OCR构造角色面板"""
-    if not await ensure_discord_guild_affiliation(bot, ev):
-        return
     command_text = get_event_command_text(ev)
     match = re.search(rf"({CHAR_NAME_PATTERN})评分(?P<extra>.*)", command_text)
     if not match:

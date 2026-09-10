@@ -5,7 +5,6 @@ from gsuid_core.models import Event
 from gsuid_core.sv import SV
 
 from ..wutheringwaves_config import PREFIX
-from ..utils.waves_group import ensure_discord_guild_affiliation
 from .login import code_login, page_login
 
 sv_kuro_login = SV("库洛登录")
@@ -14,8 +13,6 @@ sv_kuro_login_help = SV("库洛登录帮助", pm=0, priority=4)
 
 @sv_kuro_login.on_command(("登录", "登陆", "登入", "登龙", "login"))
 async def get_login_msg(bot: Bot, ev: Event):
-    if not await ensure_discord_guild_affiliation(bot, ev):
-        return
     game_title = "[鸣潮]"
 
     # uid_list = await WavesBind.get_uid_list_by_game(ev.user_id, ev.bot_id)

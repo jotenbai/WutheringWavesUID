@@ -63,8 +63,9 @@ class WavesBind(Bind, table=True):
             return
         group_list = result.group_id.split("_") if result.group_id else []
         group_list = [i for i in group_list if i]
+        # 已存在则挪到末尾，表示「最近使用」；私聊多服时取最后一个 dg:
         if group_id in group_list:
-            return
+            group_list = [i for i in group_list if i != group_id]
         group_list.append(group_id)
         await cls.update_data(
             user_id=user_id,

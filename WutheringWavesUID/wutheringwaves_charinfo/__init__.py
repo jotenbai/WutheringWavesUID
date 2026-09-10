@@ -15,7 +15,6 @@ from ..utils.name_convert import CHAR_NAME_PATTERN, char_name_to_char_id, get_ev
 from ..utils.resource.constant import SPECIAL_CHAR
 from ..utils.trad_ui import disable_traditional_ui, enable_traditional_ui
 from ..utils.waves_api import waves_api
-from ..utils.waves_group import ensure_discord_guild_affiliation
 from ..wutheringwaves_config import WutheringWavesConfig
 from .draw_char_card import draw_char_detail_img, draw_char_score_img
 from .upload_card import (
@@ -91,8 +90,6 @@ async def send_delete_char_detail_msg(bot: Bot, ev: Event):
     block=True,
 )
 async def send_card_info(bot: Bot, ev: Event):
-    if not await ensure_discord_guild_affiliation(bot, ev):
-        return
     user_id = ruser_id(ev)
     uid = await WavesBind.get_uid_by_game(user_id, ev.bot_id)
     if not uid:
@@ -120,8 +117,6 @@ async def send_card_info(bot: Bot, ev: Event):
     block=True,
 )
 async def send_one_char_detail_msg(bot: Bot, ev: Event):
-    if not await ensure_discord_guild_affiliation(bot, ev):
-        return
     logger.debug(f"[鸣潮] [角色面板] RAW_TEXT: {ev.raw_text}")
     match = re.search(
         rf"(?P<is_refresh>刷新|更新)(?P<char>{CHAR_NAME_PATTERN})(?P<query_type>面板|面包)",
@@ -191,8 +186,6 @@ async def send_char_detail_msg(bot: Bot, ev: Event):
     block=True,
 )
 async def send_char_detail_msg2(bot: Bot, ev: Event):
-    if not await ensure_discord_guild_affiliation(bot, ev):
-        return
     match = re.search(
         rf"(?P<trad>繁)?(?P<waves_id>\d+)?(?P<char>{CHAR_NAME_PATTERN})(?P<query_type>面板|面包|伤害(?P<damage>(\d+)?))(?P<is_pk>pk|对比|PK|比|比较)?(\s*)?(?P<change_list>((换[^换]*)*)?)",
         get_event_command_text(ev),

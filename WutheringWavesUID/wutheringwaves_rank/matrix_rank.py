@@ -204,12 +204,13 @@ async def draw_all_matrix_rank_card(bot: Bot, ev: Event):
             group_binds = await WavesBind.get_all_data()
             title = "bot"
         else:
-            from ..utils.waves_group import get_waves_group_id, is_in_waves_group, touch_waves_group
+            from ..utils.waves_group import resolve_waves_group_id, touch_waves_group
 
             await touch_waves_group(ev)
-            if not is_in_waves_group(ev):
-                return "请在群聊/服务器频道中使用"
-            group_binds = await WavesBind.get_group_all_uid(group_id=get_waves_group_id(ev))
+            waves_gid, err = await resolve_waves_group_id(ev)
+            if err:
+                return err
+            group_binds = await WavesBind.get_group_all_uid(group_id=waves_gid)
             title = "群"
         if group_binds:
             uid_set = set()

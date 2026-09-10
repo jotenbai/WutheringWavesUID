@@ -4,7 +4,7 @@ from gsuid_core.models import Event
 from gsuid_core.sv import SV
 
 from ..utils.database.models import WavesBind
-from ..utils.waves_group import get_waves_group_id, is_in_waves_group, touch_waves_group
+from ..utils.waves_group import resolve_waves_group_id, touch_waves_group
 from .endless_group_rank import draw_group_rank_card
 from .models import GroupRankRecord
 
@@ -68,15 +68,16 @@ async def _handle_rank_request(bot: Bot, ev: Event, rank_type: str, season_id: i
         param = ev.text.strip().lower()
         if "bot" in param:
             users = await WavesBind.get_all_data()
+            waves_gid = None
         else:
             await touch_waves_group(ev)
-            if not is_in_waves_group(ev):
-                return await bot.send("请在群聊/服务器频道中使用")
-            waves_gid = get_waves_group_id(ev)
+            waves_gid, err = await resolve_waves_group_id(ev)
+            if err:
+                return await bot.send(err)
             users = await WavesBind.get_group_all_uid(waves_gid)
 
         if not users:
-            scope = "Bot" if "bot" in param else f"群【{get_waves_group_id(ev) or ev.group_id}】"
+            scope = "Bot" if "bot" in param else f"群【{waves_gid or ev.group_id}】"
             return await bot.send(f"[鸣潮] {scope}暂无用户。")
 
         # 3. 准备数据库查询所需的用户ID和游戏UID对
@@ -90,7 +91,7 @@ async def _handle_rank_request(bot: Bot, ev: Event, rank_type: str, season_id: i
                     uid_lists.add(uid)
 
         if not uid_lists:
-            scope = "Bot" if "bot" in param else f"群【{get_waves_group_id(ev) or ev.group_id}】"
+            scope = "Bot" if "bot" in param else f"群【{waves_gid or ev.group_id}】"
             return await bot.send(f"[鸣潮] {scope}暂无用户。")
 
         # 4. 从数据库获取排行记录

@@ -10,7 +10,6 @@ from ..utils.error_reply import WAVES_CODE_103
 from ..utils.hint import error_reply
 from ..utils.name_convert import get_event_command_text
 from ..utils.trad_ui import disable_traditional_ui, enable_traditional_ui
-from ..utils.waves_group import ensure_discord_guild_affiliation
 from .draw_char_list import draw_char_list_img
 
 sv_waves_char_list = SV("ww角色练度统计")
@@ -21,8 +20,6 @@ sv_waves_char_list = SV("ww角色练度统计")
     block=True,
 )
 async def send_char_list_msg_new(bot: Bot, ev: Event):
-    if not await ensure_discord_guild_affiliation(bot, ev):
-        return
     cmd = get_event_command_text(ev)
     match = re.search(
         r"(?P<trad>繁)?(?P<waves_id>\d+)?(?P<query_type>练度统计|刷新练度统计|练度|刷新练度|角色列表|刷新角色列表)(?P<num>\d+)?",
