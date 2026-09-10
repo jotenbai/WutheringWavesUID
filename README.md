@@ -115,9 +115,10 @@ VPS 推荐目录：`~/discord_bot`
 
 在 [Discord 开发者门户](https://discord.com/developers/applications) 创建应用并添加 Bot：
 
-- **Message Content Intent 建议关闭**（私聊、@ 机器人、回复机器人消息仍可收到内容；开启后会监听频道全部消息，私域小群易误触发）
 - 建议权限：View Channels、Send Messages、Read Message History、Attach Files、Embed Links
 - 用 OAuth2 URL Generator 生成邀请链接
+- **指定频道免 @（可选，推荐）：** 完整步骤见 [§2.5](#25-免--频道白名单推荐)（Message Content Intent + `DISCORD_NO_MENTION_CHANNELS` + 免 @ 补丁）。**不要**只靠服务器「整合 → 频道」限制。
+- 若不用免 @：Portal 与 `.env` 可保持 `message_content: false`（私聊、@、回复机器人仍有正文）
 
 ### 2.2 环境变量
 
@@ -138,17 +139,18 @@ cp .env.example .env
       "intent": {
         "guild_messages": true,
         "direct_messages": true,
-        "message_content": false
+        "message_content": true
       }
     }
   ],
+  "DISCORD_NO_MENTION_CHANNELS": "频道雪花ID",
   "gsuid_core_host": "127.0.0.1",
   "gsuid_core_port": 8765,
   "gsuid_core_ws_token": ""
 }
 ```
 
-门户与 `.env` 中 `message_content` 设置须一致。
+门户与 `.env` 中 `message_content` 设置须一致。免 @ 频道 ID 填入 `DISCORD_NO_MENTION_CHANNELS`（可多个，逗号分隔）。
 
 ### 2.3 安装与启动
 
@@ -163,6 +165,7 @@ python3.12 -m venv .venv
 ~/discord_bot/.venv/bin/python patches/apply_snowflake_patch.py
 ~/discord_bot/.venv/bin/python patches/apply_discord_button_patch.py
 ~/discord_bot/.venv/bin/python patches/apply_discord_reply_patch.py
+~/discord_bot/.venv/bin/python patches/apply_discord_no_mention_channel_patch.py
 
 ~/discord_bot/.venv/bin/nb run
 # 或：~/discord_bot/.venv/bin/python bot.py
@@ -179,10 +182,47 @@ python3.12 -m venv .venv
 | [`apply_snowflake_patch.py`](discord_bot/patches/apply_snowflake_patch.py)           | 修复附件 Snowflake 序列化 | `Encoding objects of type Snowflake is unsupported` |
 | [`apply_discord_button_patch.py`](discord_bot/patches/apply_discord_button_patch.py) | 修复帮助页按钮 ACK        | 点按钮「该交互失败」                                |
 | [`apply_discord_reply_patch.py`](discord_bot/patches/apply_discord_reply_patch.py)   | 回复引用原指令，不 @ 用户 | 无灰色引用条；多人同时发指令难区分                  |
+| [`apply_discord_no_mention_channel_patch.py`](discord_bot/patches/apply_discord_no_mention_channel_patch.py) | 白名单频道免 @；其它频道仍须 @；忽略「只 @ 了别的 bot」的消息 | 开 Intent 后全频道误触发；或免 @ 无响应；与纳西妲等抢答 |
 
-打完补丁需 **重启 discordbot**。
+打完补丁需 **重启 discordbot**。升级 / 重建 venv 后四个补丁都要重跑。
 
-### 2.5 OCR.space（国际服 Discord 卡片识别）
+### 2.5 免 @ 频道（白名单，推荐）
+
+默认频道里必须真正 `@机器人` 才有正文（Message Content Intent 关闭时）。若希望某个频道像私聊一样直接发 `帮助`、`分析`，按下面做——**Intent 全局开启 + 代码白名单**，其它频道仍须 @。
+
+**步骤：**
+
+1. Discord 里建专用频道（建议命名如 `鸣潮bot专用`），右键 → **复制频道 ID**（需开开发者模式）。
+2. [开发者门户](https://discord.com/developers/applications) → Bot → 打开 **Message Content Intent** → Save。  
+   Intent 一重连即对已邀请的服务器生效，**一般不必重新邀请** bot。
+3. 编辑运行目录 `~/discord_bot/.env`（与门户一致）：
+
+```env
+# DISCORD_BOTS 的 JSON 里：
+# "message_content": true
+
+# 免 @ 频道雪花，多个用英文逗号分隔
+DISCORD_NO_MENTION_CHANNELS=123456789012345678
+```
+
+4. 打补丁并重启桥接：
+
+```bash
+cd ~/discord_bot
+.venv/bin/python patches/apply_discord_no_mention_channel_patch.py
+systemctl --user restart discordbot   # 或你的启动方式
+```
+
+5. 在该频道**不 @** 发 `帮助` 应有回复；其它频道不 @ 应无响应，`@机器人 帮助` 仍正常。
+
+**注意：**
+
+- **不要**用服务器「整合 → 频道」把 bot 限制成只能进一个频道——那主要管斜杠命令；踢出其它频道会导致那里连 `@` 也不能用。
+- 免 @ 频道里机器人会处理该频道普通文字；已忽略「只 @ 了其它机器人」的消息，减少与纳西妲等抢答。仍建议频道名写清用途，原神指令放别的频道。
+- 补丁改的是 **venv 里的 GenshinUID**，不是本仓插件业务代码；`pip install -U nonebot-plugin-genshinuid` 后须重跑补丁。
+- 改 Intent / 白名单 **不用**踢服重邀；只有缺具体权限（发图等）时才在该服补权限或换带权限的邀请链接。
+
+### 2.6 OCR.space（国际服 Discord 卡片识别）
 
 国际服缺少库街区，**角色面板截图识别**（如 `分析` / `ww分析`）依赖 [OCR.space](https://ocr.space/OCRAPI) API。
 
@@ -195,7 +235,7 @@ python3.12 -m venv .venv
 - 可选 `CardImgCheck`：声骸图标额外校验（默认 `False`）
 - 私聊或频道 @ 机器人后，发角色详情截图 + 指令
 
-### 2.6 后台常驻（systemd，推荐）
+### 2.7 后台常驻（systemd，推荐）
 
 `screen` 在 VPS **内核更新重启后不会自动恢复**，长期运行请用 systemd。本仓库提供用户级 unit 模板：[`discord_bot/deploy/systemd/`](discord_bot/deploy/systemd/)。
 
@@ -237,6 +277,7 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 | ---------- | ------------------------------------------------------------- |
 | 私聊       | `帮助`、`练度统计`、`绑定<特征码>`                            |
 | 服务器频道 | `@机器人 帮助`                                                |
+| 免 @ 频道  | 配置见 [§2.5](#25-免--频道白名单推荐)；频道内可直接 `帮助`    |
 | 国际服数据 | 绑定 UID → 发送官方 DC 卡片图 `分析` → `角色面板`             |
 | 国际服登录 | `登录` → 浏览器（默认已选国际服）→ 邮箱密码（可能需 Geetest） |
 | 国际服体力 | 登录成功后发 `体力` 或 `mr`（走 `kuro-py`，非国服库街区 API） |
@@ -267,7 +308,9 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 | 按钮「该交互失败」                                        | 运行 `apply_discord_button_patch.py`，重启 discordbot                                   |
 | 重启 core 后 Discord 无响应                               | `systemctl --user restart discordbot`                                                   |
 | VPS 重启后 bot 全挂、网页打不开                           | 确认已 `sudo loginctl enable-linger $USER`；`systemctl --user status gscore discordbot` |
-| `pip install -U` 或重建 venv 后问题复发                   | 重新运行三个补丁脚本                                                                    |
+| `pip install -U` 或重建 venv 后问题复发                   | 重新运行**四个**补丁脚本（含免 @）                                                      |
+| 免 @ 频道仍必须 @ / 开 Intent 后乱触发                    | 查 §2.5：门户与 `.env` 的 `message_content`、白名单 ID、是否重跑免 @ 补丁并重启        |
+| 免 @ 频道里 @纳西妲 也被守岸人回                          | 确认已打免 @ 补丁 **v3+**（忽略只 @ 其它 bot）；频道建议专用于鸣潮                      |
 | 私聊 / 另一频道 `莫宁排行` 人很少或只有自己               | 确认对方是否已绑定并录入该角色面板（`分析` / `刷新面板`）；全服用 `总排行` |
 
 ---
