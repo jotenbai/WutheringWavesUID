@@ -7,6 +7,7 @@ from gsuid_core.sv import SV
 from PIL import Image
 
 from ..utils.button import WavesButton
+from ..utils.waves_group import touch_waves_group
 from ..wutheringwaves_config import PREFIX
 from .change_help import get_change_help
 from .get_help import ICON, get_help
@@ -22,6 +23,7 @@ MANUAL_URL = (
 
 @sv_waves_help.on_fullmatch("帮助")
 async def send_help_img(bot: Bot, ev: Event):
+    await touch_waves_group(ev)
     buttons: list[Any] = [
         WavesButton("登录", "登录"),
         WavesButton("查看特征码", "查看"),
