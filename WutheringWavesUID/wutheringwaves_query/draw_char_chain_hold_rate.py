@@ -398,6 +398,9 @@ async def get_group_or_bot_char_hold_rate_data(group_id: str) -> dict:
     }
 
     return res
+
+
+async def get_char_chain_hold_rate_img(ev: Event, group_id: str = "") -> bytes | str:
     """获取角色共鸣链持有率图像"""
     if group_id:
         data = await get_group_or_bot_char_hold_rate_data(group_id)
