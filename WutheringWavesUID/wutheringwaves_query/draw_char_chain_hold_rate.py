@@ -8,7 +8,6 @@ from gsuid_core.utils.image.convert import convert_img
 import httpx
 from PIL import Image, ImageDraw
 
-from ..utils.api.requests import waves_api
 from ..utils.api.wwapi import GET_HOLD_RATE_URL
 from ..utils.ascension.char import get_char_model
 from ..utils.char_info_utils import get_all_role_detail_info_list
@@ -35,6 +34,7 @@ from ..utils.resource.constant import (
     SPECIAL_CHAR_NAME,
 )
 from ..utils.util import timed_async_cache
+from ..utils.waves_api import waves_api
 from ..wutheringwaves_pcap import exist_pcap_data
 
 TEXT_PATH = Path(__file__).parent / "texture2d"
