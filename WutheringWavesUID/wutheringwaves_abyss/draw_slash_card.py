@@ -14,6 +14,7 @@ from ..utils.api.wwapi import SlashDetailRequest
 from ..utils.ascension.char import get_char_model
 from ..utils.char_info_utils import get_role_detail_info_with_refresh
 from ..utils.database.models import WavesBind
+from ..utils.error_reply import WAVES_CODE_102
 from ..utils.fonts.waves_fonts import (
     waves_font_18,
     waves_font_25,
@@ -22,6 +23,7 @@ from ..utils.fonts.waves_fonts import (
     waves_font_40,
     waves_font_42,
 )
+from ..utils.hint import error_reply
 from ..utils.image import (
     GOLD,
     GREY,
@@ -123,6 +125,8 @@ async def draw_slash_img(ev: Event, uid: str, user_id: str) -> bytes | str:
     async def _try_ck(
         uid, ck, is_self_ck, challengeIds
     ) -> tuple[bool, str | tuple[AccountBaseInfo, RoleList, SlashDetail, list[int]]]:
+        if not ck:
+            return False, waves_api.last_error or error_reply(WAVES_CODE_102)
         # 获取冥海数据
         slash_detail = await get_slash_data(uid, ck, is_self_ck)
         if isinstance(slash_detail, str):
