@@ -71,7 +71,7 @@ CONFIG_DEFAULT: dict[str, GSC] = {
     ),
     "GallerySyncOnStart": GsBoolConfig(
         "启动时同步图集",
-        "gscore 启动时后台将网页图集同步到 custom_role_pile（未自建图集站请关闭）",
+        "gscore 启动时后台同步图集到 custom_role_pile；指向可达 API（自建或维护者公网）时可开，未配置且本机无图集服务时请关",
         False,
     ),
     "WavesLoginUrlSelf": GsBoolConfig(

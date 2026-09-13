@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import asyncio
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
+from .admin_remind import admin_remind_loop
 from .auth import router as auth_router
 from .config import ASSET_VERSION, PUBLIC_PREFIX, SESSION_HTTPS_ONLY, SESSION_SECRET, STATIC_DIR, ensure_dirs
 from .routes import files_router, router as api_router
@@ -12,7 +16,21 @@ from .submit_routes import router as submit_router
 
 ensure_dirs()
 
-app = FastAPI(title="Shorekeeper Gallery", version="0.3.0")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    task = asyncio.create_task(admin_remind_loop(), name="gallery-admin-remind")
+    try:
+        yield
+    finally:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+
+app = FastAPI(title="Shorekeeper Gallery", version="0.3.0", lifespan=lifespan)
 app.add_middleware(
     SessionMiddleware,
     secret_key=SESSION_SECRET,

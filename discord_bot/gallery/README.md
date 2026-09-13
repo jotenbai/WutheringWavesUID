@@ -23,3 +23,5 @@ uvicorn app.main:app --host 127.0.0.1 --port 8787
 权威本图：`data/published/{char_id}-{名}/0001.jpg` 等；待审：`data/pending/`。本图规范见仓库规则 `gallery-pile.mdc`。
 
 管理员 = gscore `masters` + `superusers`；覆盖已有图号仅 `masters`。
+
+待审积压提醒（可选）：配置 `GALLERY_DISCORD_BOT_TOKEN` 后，默认每天 **UTC+9 20:00** 在待审 > 0 时只私信**一位**管理员（`masters` → `superusers` 轮换）；无人积压则不发也不跳号。`GALLERY_ADMIN_REMIND=0` 关闭；小时/时区见 `.env.example`。

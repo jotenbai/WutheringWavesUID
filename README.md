@@ -119,7 +119,7 @@ Web 控制台默认 `http://<主机>:8765/app`（域名反代则为 `https://cor
 | `AllowImportGachaLogs`                              | 允许用户直接导入抽卡记录                                                                         | 一般**关**                           |
 | `CardImgCheck`（国际服 dc 卡片声骸图标识别）        | 分析卡片时额外认声骸图标                                                                         | 按需                                 |
 | `GalleryApiUrl`（图集 API 根地址）                  | 插件 sync / `更新图集` 拉取图集的根 URL（未自建图集可留空或忽略）                        | 自建本机常用 `http://127.0.0.1:8787`；也可填维护者公网 API |
-| `GallerySyncOnStart`（启动时同步图集）              | gscore 启动时后台同步图集到 `custom_role_pile`                                           | **未自建图集站请关**；自用可开           |
+| `GallerySyncOnStart`（启动时同步图集）              | gscore 启动时后台同步图集到 `custom_role_pile`                                           | 指向可达的图集 API（自建或维护者公网）时可开；未配置、仍指向本机且无服务时请关 |
 
 #### B. 管理核心 → 框架配置
 

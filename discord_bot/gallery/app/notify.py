@@ -1,4 +1,4 @@
-"""审核结果私信投稿者（可选 Bot Token）。"""
+"""Discord 私信：审核结果、管理员待审提醒（可选 Bot Token）。"""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from .config import PUBLIC_PREFIX
 BOT_TOKEN = (os.getenv("GALLERY_DISCORD_BOT_TOKEN") or "").strip()
 
 
-async def notify_submitter(discord_user_id: str, content: str) -> str | None:
+async def notify_discord_user(discord_user_id: str, content: str) -> str | None:
     """成功返回 None；失败返回错误摘要。未配置 token 则跳过。"""
     if not BOT_TOKEN:
         return "未配置 GALLERY_DISCORD_BOT_TOKEN，跳过私信（可在「我的投稿」查看结果）"
@@ -38,6 +38,10 @@ async def notify_submitter(discord_user_id: str, content: str) -> str | None:
         if msg.status_code not in (200, 201):
             return f"发送失败 HTTP {msg.status_code}"
     return None
+
+
+async def notify_submitter(discord_user_id: str, content: str) -> str | None:
+    return await notify_discord_user(discord_user_id, content)
 
 
 def format_review_message(meta: dict) -> str:
