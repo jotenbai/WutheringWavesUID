@@ -71,8 +71,8 @@ CONFIG_DEFAULT: dict[str, GSC] = {
     ),
     "GallerySyncOnStart": GsBoolConfig(
         "启动时同步图集",
-        "gscore 启动时后台将网页图集同步到 custom_role_pile",
-        True,
+        "gscore 启动时后台将网页图集同步到 custom_role_pile（未自建图集站请关闭）",
+        False,
     ),
     "WavesLoginUrlSelf": GsBoolConfig(
         "强制【鸣潮登录url】为自己的域名（开关已经架空，必定为本地解析登录）",
