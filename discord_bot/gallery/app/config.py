@@ -34,7 +34,7 @@ PUBLIC_PREFIX = os.getenv("GALLERY_PUBLIC_PREFIX", "").rstrip("/") or ""
 
 DEFAULT_SUBMITTER = os.getenv("GALLERY_DEFAULT_SUBMITTER", "jotenbai")
 DEFAULT_REVIEWER = os.getenv("GALLERY_DEFAULT_REVIEWER", "jotenbai")
-ASSET_VERSION = os.getenv("GALLERY_ASSET_VERSION", "31")
+ASSET_VERSION = os.getenv("GALLERY_ASSET_VERSION", "32")
 
 _DEFAULT_OFFICIAL = Path.home() / "gsuid_core/data/WutheringWavesUID/resource/role_pile"
 OFFICIAL_PILE_DIR = _path("GALLERY_OFFICIAL_PILE_DIR", _DEFAULT_OFFICIAL)

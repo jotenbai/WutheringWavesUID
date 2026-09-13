@@ -572,7 +572,9 @@ async function renderMySubmissions() {
                 note ? `<br />说明：${note}` : ""
               }</div>`
             : s.status === "approved"
-              ? `<div class="sub-extra">图号 ${escapeHtml(s.image_id || "")} · 指令 ${(s.char_name || s.char_id)}面板${escapeHtml(s.image_id || "")}</div>`
+              ? `<div class="sub-extra">图号：${escapeHtml(s.image_id || "")}<br />指令：${escapeHtml(
+                  `${s.char_name || s.char_id}面板${s.image_id || ""}`
+                )}</div>`
               : "";
         return `
           <article class="sub-card status-${escapeHtml(s.status)}">
