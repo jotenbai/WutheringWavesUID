@@ -19,3 +19,9 @@ try:
     install_discord_dm_affiliation_gate()
 except Exception:
     pass
+
+# 图集同步指令（更新图集）
+try:
+    from . import wutheringwaves_gallery as _ww_gallery  # noqa: F401
+except Exception:
+    pass

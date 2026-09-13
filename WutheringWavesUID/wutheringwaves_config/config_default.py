@@ -64,6 +64,16 @@ CONFIG_DEFAULT: dict[str, GSC] = {
         "用于设置WutheringWavesUID登录界面的配置",
         "",
     ),
+    "GalleryApiUrl": GsStrConfig(
+        "图集 API 根地址",
+        "图集服务根 URL（本机建议 http://127.0.0.1:8787；公网含 /gallery 前缀）",
+        "http://127.0.0.1:8787",
+    ),
+    "GallerySyncOnStart": GsBoolConfig(
+        "启动时同步图集",
+        "gscore 启动时后台将网页图集同步到 custom_role_pile",
+        True,
+    ),
     "WavesLoginUrlSelf": GsBoolConfig(
         "强制【鸣潮登录url】为自己的域名（开关已经架空，必定为本地解析登录）",
         "强制【鸣潮登录url】为自己的域名（开关已经架空，必定为本地解析登录）",

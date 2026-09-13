@@ -1,0 +1,24 @@
+# Gallery 本地运行产物（勿提交密钥与权威图库本图）
+# 根目录 .gitignore 也会匹配其中一部分；此处相对本目录，双份均可生效。
+
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+
+# 同步/打包临时产物
+_published_sync.tar
+
+# 待审投稿（仅 VPS 运行时存在）
+data/pending/**
+!data/pending/.gitkeep
+
+# 已通过本图：权威在 VPS ~/gallery/data/published/，勿把大图推进 Git
+#（可保留各角色目录下的 0000原图URL.txt 与 .gitkeep）
+data/published/**/*.jpg
+data/published/**/*.jpeg
+data/published/**/*.png
+data/published/**/*.webp
+data/published/**/*orig*

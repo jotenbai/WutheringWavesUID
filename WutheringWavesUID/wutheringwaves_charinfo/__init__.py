@@ -11,6 +11,7 @@ from ..utils.at_help import is_valid_at, ruser_id
 from ..utils.database.models import WavesBind
 from ..utils.error_reply import WAVES_CODE_103
 from ..utils.hint import error_reply
+from ..utils.image import consume_role_pile_notice
 from ..utils.name_convert import CHAR_NAME_PATTERN, char_name_to_char_id, get_event_command_text
 from ..utils.resource.constant import SPECIAL_CHAR
 from ..utils.trad_ui import disable_traditional_ui, enable_traditional_ui
@@ -182,12 +183,12 @@ async def send_char_detail_msg(bot: Bot, ev: Event):
 
 
 @waves_new_char_detail.on_regex(
-    rf"^(?P<trad>繁)?(\d+)?{CHAR_NAME_PATTERN}(面板|面包|伤害(\d+)?)(pk|对比|PK|比|比较)?(?:\s*)((换[^换]*)*)?$",
+    rf"^(?P<trad>繁)?(\d+)?{CHAR_NAME_PATTERN}(?:(?:面板|面包)(\d{{4}})?|伤害(\d+)?)(pk|对比|PK|比|比较)?(?:\s*)((换[^换]*)*)?$",
     block=True,
 )
 async def send_char_detail_msg2(bot: Bot, ev: Event):
     match = re.search(
-        rf"(?P<trad>繁)?(?P<waves_id>\d+)?(?P<char>{CHAR_NAME_PATTERN})(?P<query_type>面板|面包|伤害(?P<damage>(\d+)?))(?P<is_pk>pk|对比|PK|比|比较)?(\s*)?(?P<change_list>((换[^换]*)*)?)",
+        rf"(?P<trad>繁)?(?P<waves_id>\d+)?(?P<char>{CHAR_NAME_PATTERN})(?:(?:(?P<query_type>面板|面包)(?P<pile_id>\d{{4}})?)|(?:(?P<query_type_dmg>伤害)(?P<damage>\d*)))(?P<is_pk>pk|对比|PK|比|比较)?(\s*)?(?P<change_list>((换[^换]*)*)?)",
         get_event_command_text(ev),
     )
     if not match:
@@ -199,7 +200,8 @@ async def send_char_detail_msg2(bot: Bot, ev: Event):
         waves_id = ev.regex_dict.get("waves_id")
         char = ev.regex_dict.get("char")
         damage = ev.regex_dict.get("damage")
-        query_type = ev.regex_dict.get("query_type")
+        pile_id = ev.regex_dict.get("pile_id")
+        query_type = ev.regex_dict.get("query_type") or ev.regex_dict.get("query_type_dmg")
         is_pk = ev.regex_dict.get("is_pk") is not None
         change_list_regex = ev.regex_dict.get("change_list")
 
@@ -226,8 +228,17 @@ async def send_char_detail_msg2(bot: Bot, ev: Event):
 
         if is_limit_query:
             im = await draw_char_detail_img(
-                ev, "1", char, ev.user_id, is_limit_query=is_limit_query, change_list_regex=change_list_regex
+                ev,
+                "1",
+                char,
+                ev.user_id,
+                is_limit_query=is_limit_query,
+                change_list_regex=change_list_regex,
+                pile_id=pile_id,
             )
+            notice = consume_role_pile_notice()
+            if notice:
+                await bot.send(notice)
             if isinstance(im, str) or isinstance(im, bytes):
                 return await bot.send(im)
             else:
@@ -251,7 +262,9 @@ async def send_char_detail_msg2(bot: Bot, ev: Event):
                 need_convert_img=False,
                 is_force_avatar=True,
                 change_list_regex=change_list_regex,
+                pile_id=pile_id,
             )
+            notice = consume_role_pile_notice()
             if isinstance(im1, str):
                 return await bot.send(im1, at_sender)
 
@@ -262,7 +275,9 @@ async def send_char_detail_msg2(bot: Bot, ev: Event):
             uid = await WavesBind.get_uid_by_game(user_id, ev.bot_id)
             if not uid:
                 return await bot.send(error_reply(WAVES_CODE_103))
-            im2 = await draw_char_detail_img(ev, uid, char, user_id, waves_id, need_convert_img=False)
+            im2 = await draw_char_detail_img(
+                ev, uid, char, user_id, waves_id, need_convert_img=False, pile_id=pile_id
+            )
             if isinstance(im2, str):
                 return await bot.send(im2, at_sender)
 
@@ -276,6 +291,8 @@ async def send_char_detail_msg2(bot: Bot, ev: Event):
             new_im.paste(im1, (0, 0))
             new_im.paste(im2, (im1.size[0], 0))
             new_im = await convert_img(new_im)
+            if notice:
+                await bot.send(notice)
             return await bot.send(new_im)
         else:
             user_id = ruser_id(ev)
@@ -289,6 +306,7 @@ async def send_char_detail_msg2(bot: Bot, ev: Event):
                 not waves_id
                 and not waves_api.is_net(uid)
                 and not change_list_regex
+                and not pile_id
                 and not re.search(r"\d", char)
                 and WutheringWavesConfig.get_config("CharCardRefresh").data
             ):
@@ -310,8 +328,18 @@ async def send_char_detail_msg2(bot: Bot, ev: Event):
                 logger.warning(msg)
 
             im = await draw_char_detail_img(
-                ev, uid, char, user_id, waves_id, change_list_regex=change_list_regex, is_refresh=is_refresh
+                ev,
+                uid,
+                char,
+                user_id,
+                waves_id,
+                change_list_regex=change_list_regex,
+                is_refresh=is_refresh,
+                pile_id=pile_id,
             )
+            notice = consume_role_pile_notice()
+            if notice:
+                await bot.send(notice)
             if isinstance(im, bytes):
                 return await bot.send(im)
             if isinstance(im, str) and isinstance(msg, str):

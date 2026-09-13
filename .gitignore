@@ -698,3 +698,17 @@ discord_bot/store/
 
 ### Cursor private (never commit)
 .cursor/
+
+### gallery（discord_bot/gallery — 密钥、venv、运行数据；权威本图在 VPS）
+discord_bot/gallery/.env
+discord_bot/gallery/.env.*
+!discord_bot/gallery/.env.example
+discord_bot/gallery/.venv/
+discord_bot/gallery/_published_sync.tar
+discord_bot/gallery/data/pending/**
+!discord_bot/gallery/data/pending/.gitkeep
+discord_bot/gallery/data/published/**/*.jpg
+discord_bot/gallery/data/published/**/*.jpeg
+discord_bot/gallery/data/published/**/*.png
+discord_bot/gallery/data/published/**/*.webp
+discord_bot/gallery/data/published/**/*orig*

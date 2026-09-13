@@ -32,8 +32,9 @@ Discord
 | 组件                                                     | 说明                                                                     |
 | -------------------------------------------------------- | ------------------------------------------------------------------------ |
 | [gsuid_core](https://github.com/Genshin-bots/gsuid_core) | 核心，负责加载插件与 Web 控制台                                          |
-| `WutheringWavesUID/`                                     | 鸣潮业务逻辑（角色面板、练度、OCR 等）                                   |
-| `discord_bot/`                                           | Discord 桥接、补丁、systemd 模板与法务文档（本 fork 相对上游的额外内容） |
+| `WutheringWavesUID/`                                     | 鸣潮业务逻辑（角色面板、练度、OCR、图集 sync 等）                        |
+| `discord_bot/`                                           | Discord 桥接、补丁、systemd / Nginx 模板与法务文档（本 fork 相对上游的额外内容） |
+| `discord_bot/gallery/`                                   | 角色面板图集投稿站**模板**（代码 / 静态页；生产跑在 VPS `~/gallery`）    |
 
 上表是**消息链路**，不是 VPS 上的文件夹树。本仓库里 `discord_bot/` 只是文档与模板的存放位置；**真正跑桥接时**，应单独建一个与 gsuid_core **平级**的运行目录（常见为 `~/discord_bot`），把模板拷进去再配 `.env`，不要指望在「插件仓内部的 `discord_bot/`」里直接当生产进程目录。
 
@@ -50,18 +51,25 @@ Discord
 │               ├── discord_bot/         # 模板 / 文档 / 补丁脚本（随仓；不是运行目录）
 │               ├── README.md
 │               └── ...
-└── discord_bot/            # 另建的桥接运行目录（systemd: discordbot）
+├── discord_bot/            # 另建的桥接运行目录（systemd: discordbot）
+│   ├── .venv/
+│   ├── .env                # Bot Token、Intent、免 @ 频道等（勿提交）
+│   ├── patches/            # 从本仓 discord_bot/patches 拷来并 apply
+│   └── ...
+└── gallery/                # 另建的图集站运行目录（systemd: gallery；端口 8787）
     ├── .venv/
-    ├── .env                # Bot Token、Intent、免 @ 频道等（勿提交）
-    ├── patches/            # 从本仓 discord_bot/patches 拷来并 apply
-    └── ...
+    ├── .env                # OAuth / Session 等（勿提交；见 .env.example）
+    ├── data/published/     # 权威已通过本图（公网 /gallery）
+    └── ...                 # 代码可从本仓 discord_bot/gallery/ 同步
 ```
 
 要点：
 
 - **插件**跟 gsuid_core 走：更新 = 在 `plugins/WutheringWavesUID` 里 `git pull`，再 `restart gscore`。
 - **桥接**跟 `~/discord_bot` 走：`.env` 只放这里；改补丁后 `restart discordbot`。
+- **图集**跟 `~/gallery` 走：权威图在 `~/gallery/data/published/`；公网常见为 `https://你的域名/gallery/`（Nginx 反代到 `127.0.0.1:8787`）。部署说明见 [`discord_bot/gallery/README.md`](discord_bot/gallery/README.md)。
 - 仓库内的 `discord_bot/` ≠ VPS 上的 `~/discord_bot`：前者是随插件仓的模板；后者是独立运行的桥接副本。
+- 同理，仓库内的 `discord_bot/gallery/` ≠ VPS 上的 `~/gallery`：前者是图集代码模板；后者是独立运行的图集服务与权威数据。
 
 ## 前置要求
 
@@ -117,6 +125,8 @@ Web 控制台默认 `http://<主机>:8765/app`（域名反代则为 `https://cor
 | `RankUseToken`（有 token 才能进排行）               | 收紧进本地排行条件                                                                               | 自用一般**关**                       |
 | `AllowImportGachaLogs`                              | 允许用户直接导入抽卡记录                                                                         | 一般**关**                           |
 | `CardImgCheck`（国际服 dc 卡片声骸图标识别）        | 分析卡片时额外认声骸图标                                                                         | 按需                                 |
+| `GalleryApiUrl`（图集 API 根地址）                  | 插件 sync / `更新图集` 拉取图集的根 URL                                                          | 本机 **`http://127.0.0.1:8787`**（公网路径另见 Nginx `/gallery`） |
+| `GallerySyncOnStart`（启动时同步图集）              | gscore 启动时后台把网页 `published` 同步到 `custom_role_pile`                                    | 自用可**开**                         |
 
 #### B. 管理核心 → 框架配置
 
@@ -344,8 +354,16 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 | 国际服数据 | 绑定 UID → 发送官方 DC 卡片图 `分析` → `角色面板`             |
 | 国际服登录 | `登录` → 浏览器（默认已选国际服）→ 邮箱密码（可能需 Geetest） |
 | 国际服体力 | 登录成功后发 `体力` 或 `mr`（走 `kuro-py`，非国服库街区 API） |
+| 面板图集   | 浏览 / 投稿：[图集站](https://core.jotenbai.moe/gallery/)；出图如 `莫宁面板0001`；主人可发 `更新图集` |
 
 指令详情见插件内 `帮助` 图、本仓库 [国际服指令使用说明](discord_bot/command-guide/manual.md)，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
+
+**角色面板图集（自选立绘）：**
+
+- 公网页：[https://core.jotenbai.moe/gallery/](https://core.jotenbai.moe/gallery/)（游客可浏览已通过图；绑定过 UID 的「守岸人」用户可投稿；管理员审核）。
+- Discord 出图：`角色名面板` 随机/默认自定义立绘；`角色名面板1234` 指定图号（四位，如 `守岸人面板0001`）。图号不存在时回退官方立绘并提示。
+- 主人 / 超级用户：频道发 `更新图集`（或 `同步图集`）可立刻从网页权威库同步到本机；也可依赖启动时后台 sync（`GallerySyncOnStart`）。
+- 自建部署：把仓内 [`discord_bot/gallery/`](discord_bot/gallery/) 部署到 VPS `~/gallery`，详见该目录 README 与 Nginx / systemd 模板。
 
 **Discord 与群归属：**
 
@@ -378,7 +396,7 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 | VPS 重启后 bot 全挂、网页打不开                           | 确认已 `sudo loginctl enable-linger $USER`；`systemctl --user status gscore discordbot` |
 | `pip install -U` 或重建 venv 后问题复发                   | 重新运行**五个**补丁脚本（含免 @、guild 归属）                                          |
 | 免 @ 频道仍必须 @ / 开 Intent 后乱触发                    | 查 §2.5：门户与 `.env` 的 `message_content`、白名单 ID、是否重跑免 @ 补丁并重启         |
-| 免 @ 频道里 @纳西妲 也被守岸人回                          | 确认已打免 @ 补丁 **v3+**（忽略只 @ 其它 bot）；频道建议专用于鸣潮                      |
+| 免 @ 频道里 @纳西妲 也被「守岸人」回                          | 确认已打免 @ 补丁 **v3+**（忽略只 @ 其它 bot）；频道建议专用于鸣潮                      |
 | 私聊 / 另一频道 `莫宁排行` 人很少或只有自己               | 确认对方是否已绑定并录入该角色面板（`分析` / `刷新面板`）；全服用 `总排行`              |
 
 ---

@@ -1,0 +1,2 @@
+# 每行：四位图号 + 空格 + 原图URL
+# 例如：0001 https://example.com/photo.jpg

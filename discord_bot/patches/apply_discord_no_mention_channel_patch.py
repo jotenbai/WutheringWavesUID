@@ -3,7 +3,7 @@
 
 Other guild channels: drop message unless the bot was mentioned / replied-to.
 In whitelist channels: ignore messages that @ another bot (not us), so e.g.
-@纳西妲 … does not trigger 守岸人.
+@纳西妲 … does not trigger 「守岸人」.
 Does NOT change user_type to direct (group_id stays channel id).
 
 Run on VPS:

@@ -490,7 +490,7 @@ async def get_role_need(
     return avatar, role_detail
 
 
-async def draw_fixed_img(img, avatar, account_info, role_detail):
+async def draw_fixed_img(img, avatar, account_info, role_detail, pile_id: str | None = None):
     # 头像部分
     avatar_ring = Image.open(TEXT_PATH / "avatar_ring.png")
 
@@ -518,7 +518,7 @@ async def draw_fixed_img(img, avatar, account_info, role_detail):
         img.paste(title_bar, (200, 15), title_bar)
 
     # 左侧pile部分
-    is_custom, role_pile = await get_role_pile(role_detail.role.roleId, True)
+    is_custom, role_pile = await get_role_pile(role_detail.role.roleId, True, pile_id=pile_id)
     char_mask = Image.open(TEXT_PATH / "char_mask.png")
     char_fg = Image.open(TEXT_PATH / "char_fg.png")
 
@@ -611,6 +611,7 @@ async def draw_char_detail_img(
     is_limit_query=False,
     is_refresh: int = 0,
     override_equip_phantom_list: list[EquipPhantom | None] | None = None,
+    pile_id: str | None = None,
 ):
     char, damageId = parse_text_and_number(char)
 
@@ -797,7 +798,7 @@ async def draw_char_detail_img(
     # 创建背景
     img = await get_card_bg(1200, 1250 + echo_list + ph_sum_value + jineng_len + dd_len, "bg3")
     # 固定位置
-    await draw_fixed_img(img, avatar, account_info, role_detail)
+    await draw_fixed_img(img, avatar, account_info, role_detail, pile_id=pile_id)
 
     # 声骸
     img.paste(phantom_temp, (0, 1320 + jineng_len), phantom_temp)

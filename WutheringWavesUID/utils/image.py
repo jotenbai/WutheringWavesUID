@@ -1,8 +1,10 @@
+from contextvars import ContextVar
 from functools import lru_cache
 from io import BytesIO
 import os
 from pathlib import Path
 import random
+import re
 import threading
 from typing import Literal
 
@@ -154,11 +156,85 @@ async def get_random_waves_role_pile(char_id: str | None = None):
     return Image.open(f"{ROLE_PILE_PATH}/{path}").convert("RGBA")
 
 
-def get_role_pile_path(resource_id: int | str, custom: bool = False) -> tuple[bool, Path]:
+_PILE_FILE_RE = re.compile(r"^(\d{4})\.(jpg|jpeg|png|webp)$", re.I)
+_role_pile_notice: ContextVar[str | None] = ContextVar("ww_role_pile_notice", default=None)
+
+
+def consume_role_pile_notice() -> str | None:
+    """取出并清除「指定图号不存在」等提示（出图后由指令侧发送）。"""
+    notice = _role_pile_notice.get()
+    _role_pile_notice.set(None)
+    return notice
+
+
+def _iter_custom_role_dirs(resource_id: int | str) -> list[Path]:
+    rid = str(resource_id)
+    root = Path(CUSTOM_CARD_PATH)
+    if not root.is_dir():
+        return []
+    out: list[Path] = []
+    exact = root / rid
+    if exact.is_dir():
+        out.append(exact)
+    try:
+        for p in root.iterdir():
+            if p.is_dir() and p.name.startswith(f"{rid}-"):
+                out.append(p)
+    except OSError:
+        pass
+    return out
+
+
+def _is_custom_pile_file(path: Path) -> bool:
+    if not path.is_file():
+        return False
+    name = path.name
+    if ".orig." in name.lower():
+        return False
+    if name.startswith("0000"):
+        return False
+    return bool(_PILE_FILE_RE.match(name)) or path.suffix.lower() in {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+    }
+
+
+def _find_pile_by_id(dirs: list[Path], pile_id: str) -> Path | None:
+    pid = pile_id.zfill(4) if pile_id.isdigit() else pile_id
+    for d in dirs:
+        for ext in (".jpg", ".jpeg", ".png", ".webp"):
+            cand = d / f"{pid}{ext}"
+            if cand.is_file():
+                return cand
+        # 兼容主人上传的非四位文件名：精确 stem
+        for path in d.iterdir():
+            if path.is_file() and path.stem == pid and _is_custom_pile_file(path):
+                return path
+    return None
+
+
+def get_role_pile_path(
+    resource_id: int | str,
+    custom: bool = False,
+    pile_id: str | None = None,
+) -> tuple[bool, Path]:
+    _role_pile_notice.set(None)
     if custom:
-        custom_dir = Path(CUSTOM_CARD_PATH) / str(resource_id)
-        if custom_dir.is_dir():
-            paths = [path for path in custom_dir.iterdir() if path.is_file()]
+        dirs = _iter_custom_role_dirs(resource_id)
+        if pile_id:
+            found = _find_pile_by_id(dirs, str(pile_id))
+            if found:
+                return True, found
+            _role_pile_notice.set(f"[鸣潮] 图号{str(pile_id).zfill(4)}不存在，已使用官方立绘。")
+        else:
+            paths: list[Path] = []
+            for d in dirs:
+                try:
+                    paths.extend(p for p in d.iterdir() if _is_custom_pile_file(p))
+                except OSError:
+                    continue
             if paths:
                 return True, random.choice(paths)
 
@@ -168,13 +244,21 @@ def get_role_pile_path(resource_id: int | str, custom: bool = False) -> tuple[bo
     return False, TEXT_PATH / "缺失.png"
 
 
-def get_role_pile_sync(resource_id: int | str, custom: bool = False) -> tuple[bool, Image.Image]:
-    is_custom, path = get_role_pile_path(resource_id, custom)
+def get_role_pile_sync(
+    resource_id: int | str,
+    custom: bool = False,
+    pile_id: str | None = None,
+) -> tuple[bool, Image.Image]:
+    is_custom, path = get_role_pile_path(resource_id, custom, pile_id=pile_id)
     return is_custom, load_asset(path)
 
 
-async def get_role_pile(resource_id: int | str, custom: bool = False) -> tuple[bool, Image.Image]:
-    return get_role_pile_sync(resource_id, custom)
+async def get_role_pile(
+    resource_id: int | str,
+    custom: bool = False,
+    pile_id: str | None = None,
+) -> tuple[bool, Image.Image]:
+    return get_role_pile_sync(resource_id, custom, pile_id=pile_id)
 
 
 async def get_role_pile_old(resource_id: int | str, custom: bool = False) -> Image.Image:
