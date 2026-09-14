@@ -32,8 +32,8 @@ HOST = os.getenv("GALLERY_HOST", "127.0.0.1")
 PORT = int(os.getenv("GALLERY_PORT", "8787"))
 PUBLIC_PREFIX = os.getenv("GALLERY_PUBLIC_PREFIX", "").rstrip("/") or ""
 
-DEFAULT_SUBMITTER = os.getenv("GALLERY_DEFAULT_SUBMITTER", "jotenbai")
-DEFAULT_REVIEWER = os.getenv("GALLERY_DEFAULT_REVIEWER", "jotenbai")
+DEFAULT_SUBMITTER = os.getenv("GALLERY_DEFAULT_SUBMITTER", "jo")
+DEFAULT_REVIEWER = os.getenv("GALLERY_DEFAULT_REVIEWER", "jo")
 ASSET_VERSION = os.getenv("GALLERY_ASSET_VERSION", "32")
 
 _DEFAULT_OFFICIAL = Path.home() / "gsuid_core/data/WutheringWavesUID/resource/role_pile"
