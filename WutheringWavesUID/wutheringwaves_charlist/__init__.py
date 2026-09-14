@@ -10,6 +10,7 @@ from ..utils.error_reply import WAVES_CODE_103
 from ..utils.hint import error_reply
 from ..utils.name_convert import get_event_command_text
 from ..utils.trad_ui import disable_traditional_ui, enable_traditional_ui
+from ..utils.waves_group import get_waves_group_id
 from .draw_char_list import draw_char_list_img
 
 sv_waves_char_list = SV("ww角色练度统计")
@@ -54,7 +55,9 @@ async def send_char_list_msg_new(bot: Bot, ev: Event):
 
         if not is_peek:
             # 更新groupid
-            await WavesBind.insert_waves_uid(user_id, ev.bot_id, query_waves_id, ev.group_id, lenth_limit=9)
+            await WavesBind.insert_waves_uid(
+                user_id, ev.bot_id, query_waves_id, get_waves_group_id(ev), lenth_limit=9
+            )
 
         im = await draw_char_list_img(
             query_waves_id,

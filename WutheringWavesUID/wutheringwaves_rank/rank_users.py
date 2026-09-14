@@ -9,7 +9,7 @@ from ..utils.waves_group import resolve_waves_group_id, touch_waves_group
 async def get_users_for_group_rank(ev: Event):
     """群排行候选人。
 
-    Discord：当前服务器，或私聊且绑定里仅一个 ``dg:`` 归属时用该服。
+    Discord：当前服务器 ``dg:…``；私聊则用绑定里最近 touch 的 ``dg:`` 归属服。
     其它平台：按当前群号隔离。
     """
     await touch_waves_group(ev)

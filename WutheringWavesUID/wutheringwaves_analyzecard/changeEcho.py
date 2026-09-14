@@ -14,6 +14,7 @@ from ..utils.name_convert import alias_to_char_name, alias_to_sonata_name, phant
 from ..utils.refresh_char_detail import save_card_info
 from ..utils.resource.RESOURCE_PATH import PLAYER_PATH
 from ..utils.waves_api import waves_api
+from ..utils.waves_group import get_waves_group_id
 from ..wutheringwaves_config import PREFIX
 from .char_fetterDetail import get_fetterDetail_from_sonata, get_first_echo_id_list
 
@@ -27,7 +28,7 @@ async def change_echo(bot: Bot, ev: Event):
         return await bot.send(error_reply(WAVES_CODE_103))
 
     # 更新groupid
-    await WavesBind.insert_waves_uid(user_id, ev.bot_id, uid, ev.group_id, lenth_limit=9)
+    await WavesBind.insert_waves_uid(user_id, ev.bot_id, uid, get_waves_group_id(ev), lenth_limit=9)
 
     if not waves_api.is_net(uid):
         return await bot.send("[鸣潮] 国服用户不支持修改角色数据\n", at_sender)

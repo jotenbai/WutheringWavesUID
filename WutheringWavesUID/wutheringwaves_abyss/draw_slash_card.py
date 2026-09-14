@@ -15,6 +15,7 @@ from ..utils.ascension.char import get_char_model
 from ..utils.char_info_utils import get_role_detail_info_with_refresh
 from ..utils.database.models import WavesBind
 from ..utils.error_reply import WAVES_CODE_102
+from ..utils.waves_group import get_waves_group_id
 from ..utils.fonts.waves_fonts import (
     waves_font_18,
     waves_font_25,
@@ -101,9 +102,12 @@ async def get_slash_data(uid: str, ck: str, is_self_ck: bool) -> SlashDetail | s
 async def draw_slash_img(ev: Event, uid: str, user_id: str) -> bytes | str:
     is_self_ck, ck = await waves_api.get_ck_result(uid, user_id, ev.bot_id)
 
-    # 自动关联群组
-    if ev.group_id:
-        await WavesBind.insert_waves_uid(user_id=user_id, bot_id=ev.bot_id, uid=uid, group_id=ev.group_id)
+    # 自动关联逻辑群（Discord=dg:guild）
+    waves_gid = get_waves_group_id(ev)
+    if waves_gid:
+        await WavesBind.insert_waves_uid(
+            user_id=user_id, bot_id=ev.bot_id, uid=uid, group_id=waves_gid
+        )
 
     command = ev.command
     text = ev.text.strip()

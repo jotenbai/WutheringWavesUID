@@ -4,9 +4,10 @@ from gsuid_core.models import Event
 from ..utils.api.api import GAME_ID
 from ..utils.api.model import KuroWavesUserInfo
 from ..utils.api.request_util import PLATFORM_SOURCE
-from ..utils.database.models import WavesBind, WavesUser
+from ..utils.database.models import WavesBind
 from ..utils.error_reply import ERROR_CODE, WAVES_CODE_103
 from ..utils.waves_api import waves_api
+from ..utils.waves_group import get_waves_group_id
 
 
 async def add_cookie(ev: Event, ck: str, did: str) -> str:
@@ -66,7 +67,9 @@ async def add_cookie(ev: Event, ck: str, did: str) -> str:
             update_data={"bat": bat, "did": did},
         )
 
-        res = await WavesBind.insert_waves_uid(ev.user_id, ev.bot_id, data.roleId, ev.group_id, lenth_limit=9)
+        res = await WavesBind.insert_waves_uid(
+            ev.user_id, ev.bot_id, data.roleId, get_waves_group_id(ev), lenth_limit=9
+        )
         if res == 0 or res == -2:
             await WavesBind.switch_uid_by_game(ev.user_id, ev.bot_id, data.roleId)
 

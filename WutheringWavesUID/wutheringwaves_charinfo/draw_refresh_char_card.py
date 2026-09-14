@@ -218,8 +218,12 @@ async def draw_refresh_char_detail_img(
                 account_info = await get_user_detail_info(uid)
             else:
                 account_info = AccountBaseInfo.model_validate(account_info.data)
-            # 更新group id
-            await WavesBind.insert_waves_uid(user_id, ev.bot_id, uid, ev.group_id, lenth_limit=9)
+            # 更新逻辑群归属（Discord 须 dg:guild，勿写频道雪花）
+            from ..utils.waves_group import get_waves_group_id
+
+            await WavesBind.insert_waves_uid(
+                user_id, ev.bot_id, uid, get_waves_group_id(ev), lenth_limit=9
+            )
 
             waves_map = {"refresh_update": {}, "refresh_unchanged": {}}
             waves_datas = await refresh_char(

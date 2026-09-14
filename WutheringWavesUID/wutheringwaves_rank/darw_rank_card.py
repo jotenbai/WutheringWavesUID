@@ -541,7 +541,7 @@ async def draw_rank_img(bot: Bot, ev: Event, char: str, rank_type: str) -> str |
 
     # 备注
     rank_row_title = "入榜条件"
-    rank_row = f"1.本服务器内绑定并录入该角色面板的用户（Discord 私聊仅计 bot排行）"
+    rank_row = "1.本服务器内绑定并录入该角色面板的用户（含已完成群归属后的 Discord 私聊）"
     title_draw.text((20, 420), f"{rank_row_title}", SPECIAL_GOLD, waves_font_16, "lm")
     title_draw.text((90, 420), f"{rank_row}", GREY, waves_font_16, "lm")
     if tokenLimitFlag:

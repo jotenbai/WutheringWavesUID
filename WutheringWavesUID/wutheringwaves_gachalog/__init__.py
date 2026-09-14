@@ -10,6 +10,7 @@ from ..utils.bot_url import get_url
 from ..utils.button import WavesButton
 from ..utils.database.models import WavesBind
 from ..utils.error_reply import ERROR_CODE, WAVES_CODE_103
+from ..utils.waves_group import get_waves_group_id
 from ..wutheringwaves_config import PREFIX, WutheringWavesConfig
 from .draw_gachalogs import draw_card, draw_card_help
 from .edit_gachalogs import send_edit_link
@@ -85,9 +86,12 @@ async def send_gacha_log_card_info(bot: Bot, ev: Event):
     uid = await WavesBind.get_uid_by_game(ev.user_id, ev.bot_id)  # 影响后面总排行上传
     if not uid:
         return await bot.send(ERROR_CODE[WAVES_CODE_103])
-    # 自动关联群组
-    if ev.group_id:
-        await WavesBind.insert_waves_uid(user_id=ev.user_id, bot_id=ev.bot_id, uid=uid, group_id=ev.group_id)
+    # 自动关联逻辑群（Discord=dg:guild）
+    waves_gid = get_waves_group_id(ev)
+    if waves_gid:
+        await WavesBind.insert_waves_uid(
+            user_id=ev.user_id, bot_id=ev.bot_id, uid=uid, group_id=waves_gid
+        )
 
     im = await draw_card(uid, ev)
     await bot.send(im)

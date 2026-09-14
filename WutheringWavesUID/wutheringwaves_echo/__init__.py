@@ -8,6 +8,7 @@ from ..utils.at_help import ruser_id
 from ..utils.database.models import WavesBind
 from ..utils.error_reply import WAVES_CODE_103
 from ..utils.hint import error_reply
+from ..utils.waves_group import get_waves_group_id
 from .draw_echo_list import get_draw_list
 
 sv_waves_echo_list = SV("声骸展示")
@@ -27,7 +28,7 @@ async def send_echo_list_msg(bot: Bot, ev: Event):
         return await bot.send(error_reply(WAVES_CODE_103))
 
     # 更新groupid
-    await WavesBind.insert_waves_uid(user_id, ev.bot_id, uid, ev.group_id, lenth_limit=9)
+    await WavesBind.insert_waves_uid(user_id, ev.bot_id, uid, get_waves_group_id(ev), lenth_limit=9)
 
     #
     im = await get_draw_list(ev, uid, user_id, index)
