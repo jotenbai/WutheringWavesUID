@@ -29,10 +29,10 @@ Discord
   → WutheringWavesUID（本仓库插件）
 ```
 
-| 组件                                                     | 说明                                                                     |
-| -------------------------------------------------------- | ------------------------------------------------------------------------ |
-| [gsuid_core](https://github.com/Genshin-bots/gsuid_core) | 核心，负责加载插件与 Web 控制台                                          |
-| `WutheringWavesUID/`                                     | 鸣潮业务逻辑（角色面板、练度、OCR 等）                                   |
+| 组件                                                     | 说明                                                                             |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [gsuid_core](https://github.com/Genshin-bots/gsuid_core) | 核心，负责加载插件与 Web 控制台                                                  |
+| `WutheringWavesUID/`                                     | 鸣潮业务逻辑（角色面板、练度、OCR 等）                                           |
 | `discord_bot/`                                           | Discord 桥接、补丁、systemd / Nginx 模板与法务文档（本 fork 相对上游的额外内容） |
 
 上表是**消息链路**，不是 VPS 上的文件夹树。本仓库里 `discord_bot/` 只是文档与模板的存放位置；**真正跑桥接时**，应单独建一个与 gsuid_core **平级**的运行目录（常见为 `~/discord_bot`），把模板拷进去再配 `.env`，不要指望在「插件仓内部的 `discord_bot/`」里直接当生产进程目录。
@@ -101,25 +101,25 @@ Web 控制台默认 `http://<主机>:8765/app`（域名反代则为 `https://cor
 
 前缀两项一般在该插件的「插件 / 前缀」相关页；其余在插件业务配置里。
 
-| 变量名 / 控制台名                                   | 功能简述                                                                                         | 推荐                                 |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------ |
-| `disable_force_prefix`（禁用强制前缀）              | 不用 `ww` 等前缀也能触发指令                                                                     | **开**                               |
-| `allow_empty_prefix`（允许空命令前缀）              | 允许无前缀匹配                                                                                   | **开**                               |
-| `WavesLoginUrl`（鸣潮登录 url）                     | `登录` / `上传pcap` 等网页根地址；填如 `https://core.你的域名`（勿尾斜杠）。空则易拼成 `IP:8765` | **必填域名**                         |
-| `OCRspaceApiKeyList`                                | 国际服 `分析` / DC 角色卡 OCR                                                                    | **填**（要用分析时）                 |
-| `botData`（bot排行查询开关）                        | 是否开放 `bot排行` / `bot持有率` 等「本机器人全体绑定用户」层                                    | **开**（Discord 分层需要）           |
-| `WavesRankUrl` / `WavesToken`（全排行 url / token） | `角色名总排行` 远端榜；`刷新面板` 上传也依赖                                                     | 要用总排行再填；勿公开               |
-| `CharCardRefresh`（角色面板自动刷新）               | 国服查面板时自动刷；国际服主要靠 pcap/`分析`                                                     | 可保持默认开                         |
-| `AtCheck`（开启可以艾特查询）                       | 允许 @某人 查对方数据                                                                            | 按需，默认开                         |
-| `HideUid`（隐藏 uid）                               | 出图是否隐藏特征码                                                                               | 按需                                 |
-| `WavesQRLogin` / `WavesLoginForward`                | 登录链变二维码 / 转发消息                                                                        | Discord 建议**关**（直接发链接更稳） |
-| `StaminaPush`（体力推送）                           | 体力到阈值私聊/群推送                                                                            | 小服可**关**，省打扰                 |
-| `MaxBindNum`                                        | 未登录时可绑定特征码上限                                                                         | 默认即可                             |
-| `RankUseToken`（有 token 才能进排行）               | 收紧进本地排行条件                                                                               | 自用一般**关**                       |
-| `AllowImportGachaLogs`                              | 允许用户直接导入抽卡记录                                                                         | 一般**关**                           |
-| `CardImgCheck`（国际服 dc 卡片声骸图标识别）        | 分析卡片时额外认声骸图标                                                                         | 按需                                 |
-| `GalleryApiUrl`（图集 API 根地址）                  | 插件 sync / `更新图集` 拉取图集的根 URL（未自建图集可留空或忽略）                        | 自建本机常用 `http://127.0.0.1:8787`；也可填维护者公网 API |
-| `GallerySyncOnStart`（启动时同步图集）              | gscore 启动时后台同步图集到 `custom_role_pile`                                           | 指向可达的图集 API（自建或维护者公网）时可开；未配置、仍指向本机且无服务时请关 |
+| 变量名 / 控制台名                                   | 功能简述                                                                                         | 推荐                                                                           |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| `disable_force_prefix`（禁用强制前缀）              | 不用 `ww` 等前缀也能触发指令                                                                     | **开**                                                                         |
+| `allow_empty_prefix`（允许空命令前缀）              | 允许无前缀匹配                                                                                   | **开**                                                                         |
+| `WavesLoginUrl`（鸣潮登录 url）                     | `登录` / `上传pcap` 等网页根地址；填如 `https://core.你的域名`（勿尾斜杠）。空则易拼成 `IP:8765` | **必填域名**                                                                   |
+| `OCRspaceApiKeyList`                                | 国际服 `分析` / DC 角色卡 OCR                                                                    | **填**（要用分析时）                                                           |
+| `botData`（bot排行查询开关）                        | 是否开放 `bot排行` / `bot持有率` 等「本机器人全体绑定用户」层                                    | **开**（Discord 分层需要）                                                     |
+| `WavesRankUrl` / `WavesToken`（全排行 url / token） | `角色名总排行` 远端榜；`刷新面板` 上传也依赖                                                     | 要用总排行再填；勿公开                                                         |
+| `CharCardRefresh`（角色面板自动刷新）               | 国服查面板时自动刷；国际服主要靠 pcap/`分析`                                                     | 可保持默认开                                                                   |
+| `AtCheck`（开启可以艾特查询）                       | 允许 @某人 查对方数据                                                                            | 按需，默认开                                                                   |
+| `HideUid`（隐藏 uid）                               | 出图是否隐藏特征码                                                                               | 按需                                                                           |
+| `WavesQRLogin` / `WavesLoginForward`                | 登录链变二维码 / 转发消息                                                                        | Discord 建议**关**（直接发链接更稳）                                           |
+| `StaminaPush`（体力推送）                           | 体力到阈值私聊/群推送                                                                            | 小服可**关**，省打扰                                                           |
+| `MaxBindNum`                                        | 未登录时可绑定特征码上限                                                                         | 默认即可                                                                       |
+| `RankUseToken`（有 token 才能进排行）               | 收紧进本地排行条件                                                                               | 自用一般**关**                                                                 |
+| `AllowImportGachaLogs`                              | 允许用户直接导入抽卡记录                                                                         | 一般**关**                                                                     |
+| `CardImgCheck`（国际服 dc 卡片声骸图标识别）        | 分析卡片时额外认声骸图标                                                                         | 按需                                                                           |
+| `GalleryApiUrl`（图集 API 根地址）                  | 插件 sync / `更新图集` 拉取图集的根 URL（未自建图集可留空或忽略）                                | 自建本机常用 `http://127.0.0.1:8787`；也可填维护者公网 API                     |
+| `GallerySyncOnStart`（启动时同步图集）              | gscore 启动时后台同步图集到 `custom_role_pile`                                                   | 指向可达的图集 API（自建或维护者公网）时可开；未配置、仍指向本机且无服务时请关 |
 
 #### B. 管理核心 → 框架配置
 
@@ -152,7 +152,7 @@ cd ~/gsuid_core
 # .venv/bin/python -m pip install "opencc>=1.1.9" "kuro-py>=0.7.1"
 ```
 
-安装后必须 **重启 gsuid_core**（Discord 发 `gs重启`）。仅重启 discordbot 不够。
+安装后必须 **重启 gsuid_core**（Discord 发 `core重启`）。仅重启 discordbot 不够。
 
 验证（可选）：
 
@@ -166,7 +166,7 @@ cd ~/gsuid_core
 ```bash
 cd ~/gsuid_core/gsuid_core/plugins/WutheringWavesUID
 git pull
-# 然后 gs重启
+# 然后 core重启
 ```
 
 ---
@@ -330,7 +330,7 @@ journalctl --user -u gscore -f           # 跟日志
 journalctl --user -u discordbot -f
 ```
 
-Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会由 `Restart=always` 自动拉起。  
+Discord 发 `core重启` 仍可重启 core；若用了 systemd，core 退出后会由 `Restart=always` 自动拉起。  
 **重启 gscore 后建议再 `systemctl --user restart discordbot`**，避免 WebSocket 断连无响应。
 
 > 不推荐再用 `screen` 长期挂进程；与 systemd 同时跑同一端口会冲突。
@@ -339,14 +339,14 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 
 ## 使用
 
-| 场景       | 示例                                                          |
-| ---------- | ------------------------------------------------------------- |
-| 私聊       | `帮助`、`练度统计`、`绑定<特征码>`                            |
-| 服务器频道 | `@机器人 帮助`                                                |
-| 免 @ 频道  | 配置见 [§2.5](#25-免--频道白名单推荐)；频道内可直接 `帮助`    |
-| 国际服数据 | 绑定 UID → 发送官方 DC 卡片图 `分析` → `角色面板`             |
-| 国际服登录 | `登录` → 浏览器（默认已选国际服）→ 邮箱密码（可能需 Geetest） |
-| 国际服体力 | 登录成功后发 `体力` 或 `mr`（走 `kuro-py`，非国服库街区 API） |
+| 场景       | 示例                                                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 私聊       | `帮助`、`练度统计`、`绑定<特征码>`                                                                                                    |
+| 服务器频道 | `@机器人 帮助`                                                                                                                        |
+| 免 @ 频道  | 配置见 [§2.5](#25-免--频道白名单推荐)；频道内可直接 `帮助`                                                                            |
+| 国际服数据 | 绑定 UID → `pcap` 上传 / 或 DC 卡 `分析` → `角色面板`（持有率样本须 pcap） |
+| 国际服登录 | `登录` → 浏览器（默认已选国际服）→ 邮箱密码（可能需 Geetest）                                                                         |
+| 国际服体力 | 登录成功后发 `体力` 或 `mr`（走 `kuro-py`，非国服库街区 API）                                                                         |
 | 面板图集   | 浏览 / 投稿：[图集站](https://core.jotenbai.moe/gallery/)；出图如 `莫宁面板0001`；详见下节与 [开放 API](#开放-api第三方-bot-同步图集) |
 
 指令详情见插件内 `帮助` 图、本仓库 [国际服指令使用说明](discord_bot/command-guide/manual.md)，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
@@ -363,13 +363,13 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 
 公网根路径：`https://core.jotenbai.moe/gallery/`（下列路径均相对该前缀）。
 
-| 方法 | 路径 | 说明 |
-| ---- | ---- | ---- |
-| GET | `/api/health` | 探活 |
-| GET | `/api/chars` | 角色列表 |
-| GET | `/api/chars/{id}/images` | 某角色已通过图列表 |
-| GET | `/api/manifest` | 含本图 sha256，适合增量 sync |
-| GET | `/files/{id}/{image_id}?variant=pile\|orig` | 取本图 / 原图侧车；`download=1` 作附件下载 |
+| 方法 | 路径                                        | 说明                                       |
+| ---- | ------------------------------------------- | ------------------------------------------ |
+| GET  | `/api/health`                               | 探活                                       |
+| GET  | `/api/chars`                                | 角色列表                                   |
+| GET  | `/api/chars/{id}/images`                    | 某角色已通过图列表                         |
+| GET  | `/api/manifest`                             | 含本图 sha256，适合增量 sync               |
+| GET  | `/files/{id}/{image_id}?variant=pile\|orig` | 取本图 / 原图侧车；`download=1` 作附件下载 |
 
 示例：
 
@@ -379,14 +379,21 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 本仓库插件侧：配置 `GalleryApiUrl` 指向上述 API 根（或自建实例），`更新图集` /（可选）启动同步即可拉到 `custom_role_pile`。  
 若要**自建**整套图集站，可参考仓内可选目录 [`discord_bot/gallery/`](discord_bot/gallery/)（运维说明见该目录 README；与日常 bot 部署相互独立）。
 
+**出图贴图注意（第三方 / 上游画卡逻辑）：**
+
+- 本图均为审核裁好的 **9:16** JPG，选景以「整张进面板可见区」为准。
+- 上游 `WutheringWavesUID` 一类实现常把自定义立绘先铺满整卡槽（如 560×1000）再经 `char_mask` 抠边；若 mask 四周有内缩，会把本图四周多切掉一圈，看起来像无端放大/吃边。
+- **本 fork** 已改为按 mask **可见框 cover 居中**（少吃边）。若你只用本图集 API、仍用上游或自研画卡，请自行把「铺满整槽再 mask」改成「相对可见框 cover/contain」，或接受多切一圈。
+- API 只提供文件；贴图算法在各 Bot 本地，**同步本图不会自动改你的画卡代码**。
+
 **Discord 与群归属：**
 
 - 桥接回信用的 `group_id` 仍是**频道 ID**（发消息必需）。
 - **逻辑群**（`群排行` / `群持有率` / WavesBind 归属）= **Discord 服务器 ID（guild）**，与 QQ 群对齐；经 `sender.discord_guild_id` + 补丁 `apply_discord_guild_as_group_patch.py`。
 - **bot 层**：本机全部绑定用户（跨服务器 + 私聊录入）。
-- **私聊**：不计入任何「群\*」；可用 `bot排行` / `bot持有率`。
+- **私聊**：须先有服务器 `dg:` 归属（否则提示去频道）；查「群\*」时用绑定里**最近 touch** 的那一服；也可用 `bot排行` / `bot持有率`。
 - **多服**：同一 Discord 用户在 A、B 两服都用过，可同时属于两服的群统计（与 QQ 多群相同）。
-- **国际服群/bot 持有率**：仅统计有 **pcap** 的 UID（避免只「分析」热门角造成虚高）；伤害/评分排行仍可用本地面板（含分析）。
+- **国际服群/bot 持有率**：仅统计有 **pcap** 的 UID（避免只「分析」热门角造成虚高）；伤害/评分/练度排行仍用本地面板（含分析）。
 
 旧绑定里可能残留历史**频道** ID；用户在服务器频道再发一次会触发的指令（绑定 / 群排行 / 群持有率等）会把 **guild** 写入归属。
 
@@ -400,9 +407,9 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 
 | 现象                                                      | 处理                                                                                    |
 | --------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `尤诺面板` / `练度统计` 无回复，gscore 只有 `[Receive]`   | 安装 `opencc`（见 [§1.1](#11-插件-python-依赖重要)），`gs重启`                          |
-| 国际服网页登录「登入失敗」                                | 安装 `kuro-py`（见 §1.1），`gs重启`；账号需 Geetest 时在页面上完成验证                  |
-| `体力` / `mr` 无回复或提示 token 失效                     | 确认已 `登录` 国际服账号；安装 `kuro-py` 并 `gs重启`                                    |
+| `尤诺面板` / `练度统计` 无回复，gscore 只有 `[Receive]`   | 安装 `opencc`（见 [§1.1](#11-插件-python-依赖重要)），`core重启`                          |
+| 国际服网页登录「登入失敗」                                | 安装 `kuro-py`（见 §1.1），`core重启`；账号需 Geetest 时在页面上完成验证                  |
+| `体力` / `mr` 无回复或提示 token 失效                     | 确认已 `登录` 国际服账号；安装 `kuro-py` 并 `core重启`                                    |
 | 私聊/频道无回复，discordbot 有 `【发送】` 但无 `【接收】` | 确认 gscore 在监听 8765；**重启 discordbot**                                            |
 | 发图报错 Snowflake                                        | 运行 `apply_snowflake_patch.py`，重启 discordbot                                        |
 | 按钮「该交互失败」                                        | 运行 `apply_discord_button_patch.py`，重启 discordbot                                   |
@@ -410,35 +417,20 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 | VPS 重启后 bot 全挂、网页打不开                           | 确认已 `sudo loginctl enable-linger $USER`；`systemctl --user status gscore discordbot` |
 | `pip install -U` 或重建 venv 后问题复发                   | 重新运行**五个**补丁脚本（含免 @、guild 归属）                                          |
 | 免 @ 频道仍必须 @ / 开 Intent 后乱触发                    | 查 §2.5：门户与 `.env` 的 `message_content`、白名单 ID、是否重跑免 @ 补丁并重启         |
-| 免 @ 频道里 @纳西妲 也被「守岸人」回                          | 确认已打免 @ 补丁 **v3+**（忽略只 @ 其它 bot）；频道建议专用于鸣潮                      |
+| 免 @ 频道里 @纳西妲 也被「守岸人」回                      | 确认已打免 @ 补丁 **v3+**（忽略只 @ 其它 bot）；频道建议专用于鸣潮                      |
 | 私聊 / 另一频道 `莫宁排行` 人很少或只有自己               | 确认对方是否已绑定并录入该角色面板（`分析` / `刷新面板`）；全服用 `总排行`              |
 
 ---
 
 ## 致谢
 
-本仓库业务功能建立在社区长期维护的鸣潮插件之上，特别感谢：
+本 fork 的业务能力建立在上游与国际服相关开源之上，主要感谢：
 
-- **[MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID)** — 唯一 upstream（业务插件主体）
-- **[Wuthery](https://github.com/Wuthery)**（[spectro-pcap-server](https://github.com/Wuthery/spectro-pcap-server)、[kuro.py](https://github.com/Wuthery/kuro.py)）— 国际服 pcap 解析与登录 API
-- **[gsuid_core](https://github.com/Genshin-bots/gsuid_core)** 与 **[nonebot-plugin-genshinuid](https://github.com/Genshin-bots/nonebot-plugin-genshinuid)** — 核心与多平台连接器
-- [Wuyi无疑](https://github.com/KimigaiiWuyi) 和 [ECHO](https://github.com/tyql688)
-- [鸣潮声骸评分工具](http://asfaz.cn/mingchao/rule.html)
-- [waves-plugin](https://github.com/erzaozi/waves-plugin) Yunzai 鸣潮游戏数据查询插件
-- [Yunzai-Kuro-Plugin](https://github.com/TomyJan/Yunzai-Kuro-Plugin) Yunzai 库洛插件
-- [Kuro-API-Collection](https://github.com/TomyJan/Kuro-API-Collection) 库街区 API 文档
-- [ocr.space_code_example](https://github.com/Zaargh/ocr.space_code_example) OCR.space 示例
-- [Wuthery](https://wuthery.com/) 与 [YashajinAlice](https://github.com/YashajinAlice) 的支持
-- [TedIwaArdN](https://github.com/TedIwaArdN) 的支持
-- [ScoreQuery](https://github.com/alone-art/ScoreQuery) 声骸评分
-- 特别鸣谢以下攻略作者（排名无先后顺序）
-  - [Moealkyne](https://www.taptap.cn/user/533395803)
-  - [小沐XMu](https://www.kurobbs.com/person-center?id=10450567)
-  - [金铃子攻略组](https://space.bilibili.com/487275027)
-  - [吃我无痕](https://space.bilibili.com/347744)
-  - [小羊早睡不遭罪](https://space.bilibili.com/37331716)
-  - [結星](https://www.kurobbs.com/person-center?id=10015697)
-  - [轩儿](https://www.kurobbs.com/person-center?id=10525366)
+- **[MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID)** — 唯一业务 upstream
+- **[Wuthery](https://github.com/Wuthery)**（[spectro-pcap-server](https://github.com/Wuthery/spectro-pcap-server)、[kuro.py](https://github.com/Wuthery/kuro.py)）— 国际服 pcap 与登录 API
+- **[gsuid_core](https://github.com/Genshin-bots/gsuid_core)** / **[nonebot-plugin-genshinuid](https://github.com/Genshin-bots/nonebot-plugin-genshinuid)** — 核心与 Discord 连接器
+
+声骸评分、攻略作者等更完整名单见 [upstream README](https://github.com/MoonShadow1976/WutheringWavesUID#readme)。
 
 ## 许可证
 
