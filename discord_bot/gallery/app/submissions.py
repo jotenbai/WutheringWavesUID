@@ -339,6 +339,12 @@ def approve_submission(
     pile_path = dest_dir / f"{iid}.jpg"
     pile_path.write_bytes(pile_bytes)
     append_orig_url_line(dest_dir, iid, str(meta["orig_url"]))
+    submitter_label = (
+        str(meta.get("submitter_name") or "").strip()
+        or str(meta.get("submitter_username") or "").strip()
+        or str(meta.get("submitter_id") or "").strip()
+    )
+    catalog.append_credit_line(dest_dir, iid, submitter_label, reviewer_name)
 
     meta.update(
         {

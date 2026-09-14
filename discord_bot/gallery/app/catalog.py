@@ -18,7 +18,9 @@ _ORIG_RE = re.compile(r"^(\d{4})\.orig\.(jpg|jpeg|png|webp)$", re.I)
 _SAFE_ID = re.compile(r"^\d+$")
 _SAFE_IMG = re.compile(r"^\d{4}$")
 _ORIG_URL_FILE = "0000原图URL.txt"
+_CREDIT_FILE = "0000署名.txt"
 _ORIG_URL_LINE = re.compile(r"^(\d{4})\s+(\S.+)$")
+_CREDIT_LINE = re.compile(r"^(\d{4})\t([^\t\r\n]+)\t([^\t\r\n]+)$")
 
 
 @dataclass(frozen=True)
@@ -131,6 +133,47 @@ def _load_orig_urls(char_dir: Path) -> dict[str, str]:
     return out
 
 
+def _load_credits(char_dir: Path) -> dict[str, tuple[str, str]]:
+    """读 0000署名.txt：每行 `0001\\t投稿人\\t审核人`。"""
+    path = char_dir / _CREDIT_FILE
+    if not path.is_file():
+        return {}
+    out: dict[str, tuple[str, str]] = {}
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return {}
+    for line in text.splitlines():
+        raw = line.strip()
+        if not raw or raw.startswith("#"):
+            continue
+        m = _CREDIT_LINE.match(raw)
+        if m:
+            out[m.group(1)] = (m.group(2).strip(), m.group(3).strip())
+    return out
+
+
+def append_credit_line(char_dir: Path, image_id: str, submitter: str, reviewer: str) -> None:
+    """写入/覆盖某图号的投稿人与审核人。"""
+    submitter = (submitter or "").strip() or DEFAULT_SUBMITTER
+    reviewer = (reviewer or "").strip() or DEFAULT_REVIEWER
+    # 制表符分隔，避免空格名歧义；禁止字段内出现 tab/换行
+    submitter = submitter.replace("\t", " ").replace("\n", " ").replace("\r", "")
+    reviewer = reviewer.replace("\t", " ").replace("\n", " ").replace("\r", "")
+    path = char_dir / _CREDIT_FILE
+    lines: list[str] = []
+    if path.is_file():
+        lines = path.read_text(encoding="utf-8").splitlines()
+    kept: list[str] = []
+    for line in lines:
+        s = line.strip()
+        if s.startswith(f"{image_id}\t") or s.startswith(f"{image_id} "):
+            continue
+        kept.append(line.rstrip("\n"))
+    kept.append(f"{image_id}\t{submitter}\t{reviewer}")
+    path.write_text("\n".join(kept).rstrip() + "\n", encoding="utf-8")
+
+
 def _scan_images(char: CharFolder) -> list[ImageAsset]:
     piles: dict[str, Path] = {}
     origs: dict[str, Path] = {}
@@ -145,8 +188,10 @@ def _scan_images(char: CharFolder) -> list[ImageAsset]:
         if m_pile:
             piles[m_pile.group(1)] = f
     orig_urls = _load_orig_urls(char.path)
+    credits = _load_credits(char.path)
     out: list[ImageAsset] = []
     for image_id in sorted(piles.keys()):
+        submitter, reviewer = credits.get(image_id, (DEFAULT_SUBMITTER, DEFAULT_REVIEWER))
         out.append(
             ImageAsset(
                 char_id=char.char_id,
@@ -156,8 +201,8 @@ def _scan_images(char: CharFolder) -> list[ImageAsset]:
                 pile_path=piles[image_id],
                 orig_path=origs.get(image_id),
                 orig_url=orig_urls.get(image_id),
-                submitter=DEFAULT_SUBMITTER,
-                reviewer=DEFAULT_REVIEWER,
+                submitter=submitter or DEFAULT_SUBMITTER,
+                reviewer=reviewer or DEFAULT_REVIEWER,
             )
         )
     return out

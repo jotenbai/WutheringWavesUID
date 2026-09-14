@@ -20,8 +20,9 @@ uvicorn app.main:app --host 127.0.0.1 --port 8787
 - Nginx 片段：`deploy/nginx-gallery.snippet.conf`（须写在 `location /` **之前**）
 - `.env` 公网前缀示例：`GALLERY_PUBLIC_PREFIX=/gallery`
 
-权威本图：`data/published/{char_id}-{名}/0001.jpg` 等；待审：`data/pending/`。本图规范见仓库规则 `gallery-pile.mdc`。
+权威本图：`data/published/{char_id}-{名}/0001.jpg` 等；待审：`data/pending/`。本图规范见仓库规则 `gallery-pile.mdc`。署名见同目录 `0000署名.txt`（`图号\\t投稿人\\t审核人`）。
 
 管理员 = gscore `masters` + `superusers`；覆盖已有图号仅 `masters`。
 
+历史已通过图若署名缺失，可在图集目录执行：`python scripts/backfill_credits.py`（从 pending meta 回填）。
 待审积压提醒（可选）：配置 `GALLERY_DISCORD_BOT_TOKEN` 后，默认每天 **UTC+9 20:00** 在待审 > 0 时只私信**一位**管理员（`masters` → `superusers` 轮换）；无人积压则不发也不跳号。`GALLERY_ADMIN_REMIND=0` 关闭；小时/时区见 `.env.example`。
