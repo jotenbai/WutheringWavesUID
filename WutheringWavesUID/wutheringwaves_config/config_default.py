@@ -154,7 +154,7 @@ CONFIG_DEFAULT: dict[str, GSC] = {
     ),
     "botData": GsBoolConfig(
         "bot排行查询开关",
-        "相关排行：伤害排行，评分排行，角色持有率排行，共鸣链持有率排行",
+        "相关排行的 bot 层：伤害/评分/练度/角色持有率/共鸣链持有率（另有群层与全服层，见项目规则）",
         False,
     ),
     "RoleListQuery": GsBoolConfig(
