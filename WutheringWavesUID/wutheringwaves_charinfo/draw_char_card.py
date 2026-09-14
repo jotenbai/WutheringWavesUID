@@ -545,7 +545,11 @@ async def draw_fixed_img(img, avatar, account_info, role_detail, pile_id: str | 
 
     role_pile_image = Image.new("RGBA", (560, 1000))
 
-    role_pile = resize_and_center_image(role_pile, is_custom=is_custom)
+    # 自定义本图按 char_mask 可见框 cover，减少金框吃边；官立绘不缩放
+    mask_box = char_mask.getbbox() if is_custom else None
+    role_pile = resize_and_center_image(
+        role_pile, is_custom=is_custom, cover_box=mask_box
+    )
     role_pile_image.paste(
         role_pile,
         ((560 - role_pile.size[0]) // 2, (1000 - role_pile.size[1]) // 2),
@@ -555,28 +559,39 @@ async def draw_fixed_img(img, avatar, account_info, role_detail, pile_id: str | 
     img.paste(char_fg, (25, 170), char_fg)
 
 
-def resize_and_center_image(image, output_size=(560, 1000), background_color=(255, 255, 255, 0), is_custom=False):
+def resize_and_center_image(
+    image,
+    output_size=(560, 1000),
+    background_color=(255, 255, 255, 0),
+    is_custom=False,
+    cover_box=None,
+):
     """
-    根据输入的图片，调整其尺寸以尽量填充目标尺寸，并保持居中。
-    若宽度过长或高度过长，会根据图片的比例自动调整，以保持居中并尽量维持固定尺寸（560x1000）。
-
-    :param image: 原始图片对象
-    :param output_size: 输出图片大小 (宽度, 高度)
-    :param background_color: 填充背景的颜色 (默认为透明)
-    :param is_custom: 是否为自定义面板，决定是否需要调整图片
-    :return: 调整后的图片对象
+    自定义立绘：按 cover_box（通常为 char_mask 不透明 bbox）做 cover 居中，
+    铺满可见框；略超出框的边缘由 mask 裁掉。官立绘（is_custom=False）原样返回。
     """
-    # 如果不需要自定义调整，直接返回原图
     if not is_custom:
         return image
 
-    image = image.copy()
-
-    # 获取原始图片的宽度和高度
+    image = image.convert("RGBA")
     img_width, img_height = image.size
     target_width, target_height = output_size
+    result_image = Image.new("RGBA", output_size, background_color)
 
-    # 如果图片的宽度大于高度，则根据宽度缩放图片
+    if cover_box:
+        x0, y0, x1, y1 = cover_box
+        box_w = max(1, x1 - x0)
+        box_h = max(1, y1 - y0)
+        scale = max(box_w / img_width, box_h / img_height)
+        new_width = max(1, int(round(img_width * scale)))
+        new_height = max(1, int(round(img_height * scale)))
+        image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        paste_x = x0 + (box_w - new_width) // 2
+        paste_y = y0 + (box_h - new_height) // 2
+        result_image.paste(image, (paste_x, paste_y), image)
+        return result_image
+
+    # 无 mask 框时：铺满整槽（旧逻辑兜底）
     if img_width > img_height:
         scale_factor = target_width / img_width
         new_width = target_width
@@ -586,16 +601,10 @@ def resize_and_center_image(image, output_size=(560, 1000), background_color=(25
         new_width = int(img_width * scale_factor)
         new_height = target_height
 
-    image = image.resize((new_width, new_height))
-
-    result_image = Image.new("RGBA", output_size, background_color)
-
-    # 计算粘贴位置，居中对齐
+    image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
     paste_x = (target_width - new_width) // 2
     paste_y = (target_height - new_height) // 2
-
     result_image.paste(image, (paste_x, paste_y), image)
-
     return result_image
 
 

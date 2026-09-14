@@ -210,10 +210,14 @@ def list_submissions(
     return out
 
 
-def list_reviewed_submissions() -> list[dict[str, Any]]:
-    """全部已通过 / 已驳回（含各管理员与主人），按审核时间新→旧。"""
+def list_reviewed_submissions(
+    *,
+    page: int = 1,
+    page_size: int = 10,
+) -> tuple[list[dict[str, Any]], int]:
+    """已通过 / 已驳回（含各管理员与主人），按审核时间新→旧；返回 (本页, 总数)。"""
     if not PENDING_DIR.is_dir():
-        return []
+        return [], 0
     out: list[dict[str, Any]] = []
     for child in PENDING_DIR.iterdir():
         if not child.is_dir():
@@ -228,7 +232,11 @@ def list_reviewed_submissions() -> list[dict[str, Any]]:
         key=lambda m: m.get("reviewed_at") or m.get("created_at") or "",
         reverse=True,
     )
-    return out
+    total = len(out)
+    size = max(1, min(int(page_size) or 10, 100))
+    page_n = max(1, int(page) or 1)
+    start = (page_n - 1) * size
+    return out[start : start + size], total
 
 
 def save_submission(meta: dict[str, Any]) -> None:

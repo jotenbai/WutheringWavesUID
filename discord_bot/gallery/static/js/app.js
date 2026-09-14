@@ -186,14 +186,14 @@ function helpUnbound() {
 
 function helpSubmitter() {
   return `
-    <div class="help-card">
-      <h2>投稿说明</h2>
+    <details class="help-card help-fold">
+      <summary>投稿说明</summary>
       <ul>
-        <li>选择角色，粘贴<strong>原图链接</strong>（尽量最大分辨率，避免审核裁成 9:16 后面板太糊）。</li>
-        <li><strong>Pixiv</strong>请用作品页 <code>https://www.pixiv.net/artworks/…</code>，不要用 <code>i.pximg.net</code> 直链（会 403）。</li>
+        <li>选择角色，粘贴<strong>原图链接</strong>（任意可打开的作品页均可；尽量最大分辨率，避免审核裁成 9:16 后面板太糊）。</li>
+        <li><strong>Pixiv 的情况</strong>：请用作品页 <code>https://www.pixiv.net/artworks/…</code>，不要用 <code>i.pximg.net</code> 直链（会 403）；多图作品在链接后加 <code>#N</code> 标明第几张（从 <strong>1</strong> 起：文件名 <code>_p0</code>→<code>#1</code>，<code>_p1</code>→<code>#2</code>，例如 <code>…/artworks/148785181#8</code>）。</li>
         <li>本图裁剪由管理员完成；通过后可在 Discord 用 <code>角色名面板图号</code> 指定立绘。</li>
       </ul>
-    </div>`;
+    </details>`;
 }
 
 const ZIGZAG_MAP = [
@@ -343,7 +343,7 @@ function helpAdminReview() {
         <li>
           <strong>第一步·下载原图与裁剪 9:16 宽高比</strong>
           <div class="help-desc">
-            打开原图链接并<strong>下载原图</strong>。<br />
+            打开原图链接并<strong>下载原图</strong>。Pixiv 多图若链接带 <code>#N</code>（从 1 起），请翻到对应那一张再下。<br />
             用 Windows 自带「照片」打开进入【编辑】，点击下方的【自由】（宽高比选项）切换为【<strong>9:16</strong>】，调整取景后保存。<br />
             <span class="muted">（注：此步骤仅负责裁剪宽高比，请勿在此缩放；宽度留到下一步调整）</span>
           </div>
@@ -602,11 +602,17 @@ async function renderReviewHistory() {
     appEl.innerHTML = `<div class="empty">需要管理员权限。</div>`;
     return;
   }
+  const pageSize = 10;
+  const rawPage = Number(new URLSearchParams(location.search).get("page") || "1");
+  const page = Number.isFinite(rawPage) && rawPage >= 1 ? Math.floor(rawPage) : 1;
   appEl.innerHTML = `<p class="muted">加载审核历史…</p>`;
   try {
-    const data = await api("/admin/history");
+    const data = await api(`/admin/history?page=${page}&page_size=${pageSize}`);
     const items = data.submissions || [];
-    if (!items.length) {
+    const total = data.total ?? items.length;
+    const pages = data.pages || 1;
+    const cur = data.page || page;
+    if (!total) {
       appEl.innerHTML = `
         <div class="section-head"><h1>审核历史</h1></div>
         <div class="empty">还没有已处理的投稿。</div>`;
@@ -641,10 +647,23 @@ async function renderReviewHistory() {
           </article>`;
       })
       .join("");
+    const prevDisabled = cur <= 1 ? "disabled" : "";
+    const nextDisabled = cur >= pages ? "disabled" : "";
+    const prevHref = appHref(`history?page=${cur - 1}`);
+    const nextHref = appHref(`history?page=${cur + 1}`);
+    const pager =
+      pages > 1
+        ? `<nav class="pager" aria-label="审核历史分页">
+            <a class="btn ghost" href="${prevHref}" data-link ${prevDisabled}>上一页</a>
+            <span class="muted">第 ${cur} / ${pages} 页</span>
+            <a class="btn ghost" href="${nextHref}" data-link ${nextDisabled}>下一页</a>
+          </nav>`
+        : "";
     appEl.innerHTML = `
-      <div class="section-head"><h1>审核历史</h1><span class="muted">${items.length}</span></div>
+      <div class="section-head"><h1>审核历史</h1><span class="muted">${total} 条 · 每页 ${pageSize}</span></div>
       <p class="muted tiny-hint" style="margin-top:0">全体管理员与主人的通过 / 驳回记录（新→旧）。</p>
-      <div class="sub-list">${rows}</div>`;
+      <div class="sub-list">${rows}</div>
+      ${pager}`;
   } catch (e) {
     appEl.innerHTML = `<div class="empty">加载失败：${escapeHtml(e.message)}</div>`;
   }

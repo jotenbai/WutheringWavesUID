@@ -88,10 +88,27 @@ async def admin_pending(request: Request):
 
 
 @router.get("/admin/history")
-async def admin_history(request: Request):
-    """全体管理员可见的审核历史（通过 + 驳回）。"""
+async def admin_history(
+    request: Request,
+    page: int = 1,
+    page_size: int = 10,
+):
+    """全体管理员可见的审核历史（通过 + 驳回），默认每页 10 条。"""
     _require_admin(request)
-    return {"submissions": list_reviewed_submissions()}
+    page = max(1, page)
+    page_size = max(1, min(page_size, 100))
+    items, total = list_reviewed_submissions(page=page, page_size=page_size)
+    pages = max(1, (total + page_size - 1) // page_size) if total else 1
+    if page > pages:
+        page = pages
+        items, total = list_reviewed_submissions(page=page, page_size=page_size)
+    return {
+        "submissions": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "pages": pages,
+    }
 
 
 @router.get("/admin/submissions/{sub_id}/next-image-id")
