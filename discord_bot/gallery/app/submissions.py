@@ -210,6 +210,27 @@ def list_submissions(
     return out
 
 
+def list_reviewed_submissions() -> list[dict[str, Any]]:
+    """全部已通过 / 已驳回（含各管理员与主人），按审核时间新→旧。"""
+    if not PENDING_DIR.is_dir():
+        return []
+    out: list[dict[str, Any]] = []
+    for child in PENDING_DIR.iterdir():
+        if not child.is_dir():
+            continue
+        meta = _read_meta(child)
+        if not meta:
+            continue
+        if meta.get("status") not in ("approved", "rejected"):
+            continue
+        out.append(meta)
+    out.sort(
+        key=lambda m: m.get("reviewed_at") or m.get("created_at") or "",
+        reverse=True,
+    )
+    return out
+
+
 def save_submission(meta: dict[str, Any]) -> None:
     sub_id = str(meta.get("id") or "")
     if not re.fullmatch(r"[a-f0-9]{16}", sub_id):

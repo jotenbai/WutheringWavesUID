@@ -12,6 +12,7 @@ from .submissions import (
     approve_submission,
     create_submission,
     get_submission,
+    list_reviewed_submissions,
     list_submissions,
     next_image_id,
     reject_submission,
@@ -84,6 +85,13 @@ async def my_submissions(request: Request):
 async def admin_pending(request: Request):
     _require_admin(request)
     return {"submissions": list_submissions(status="pending"), "reject_tags": REJECT_TAGS}
+
+
+@router.get("/admin/history")
+async def admin_history(request: Request):
+    """全体管理员可见的审核历史（通过 + 驳回）。"""
+    _require_admin(request)
+    return {"submissions": list_reviewed_submissions()}
 
 
 @router.get("/admin/submissions/{sub_id}/next-image-id")

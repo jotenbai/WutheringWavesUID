@@ -723,9 +723,13 @@ body {
 .help-fold > summary::before {
   content: "▸";
   display: inline-block;
-  width: 1em;
-  margin-right: 0.35rem;
-  color: var(--tide);
+  width: 1.35em;
+  margin-right: 0.4rem;
+  font-size: 1.35rem;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--sand);
+  vertical-align: -0.08em;
   transition: transform 0.15s ease;
 }
 
@@ -803,7 +807,7 @@ body {
   list-style: none;
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 0.5rem 1rem;
   padding: 0.9rem 1.15rem;
@@ -817,9 +821,14 @@ body {
 .review-fold > .review-summary::before {
   content: "▸";
   display: inline-block;
-  width: 1em;
-  margin-right: 0.35rem;
-  color: var(--tide);
+  flex: 0 0 auto;
+  width: 1.35em;
+  margin-right: 0.45rem;
+  font-size: 1.4rem;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--sand);
+  align-self: center;
   transition: transform 0.15s ease;
 }
 
@@ -948,9 +957,57 @@ body {
 
 .review-approve,
 .review-reject {
+  margin: 0;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.review-branches {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
   margin-top: 0.85rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--line);
+  align-items: stretch;
+}
+
+.review-branch-title {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.review-approve .review-branch-title {
+  color: var(--tide);
+}
+
+.review-reject .review-branch-title {
+  color: #f0a8a8;
+}
+
+.review-approve .btn,
+.review-reject .btn {
+  margin-top: auto;
+  width: 100%;
+}
+
+.review-approve {
+  border-color: rgba(94, 184, 170, 0.45);
+}
+
+.review-reject {
+  border-color: rgba(239, 120, 120, 0.35);
+}
+
+@media (max-width: 720px) {
+  .review-branches {
+    grid-template-columns: 1fr;
+  }
 }
 
 .file-check-result {

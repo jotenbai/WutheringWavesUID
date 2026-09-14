@@ -79,5 +79,6 @@ def spa_char(char_id: str):
 @app.get("/submit")
 @app.get("/me")
 @app.get("/review")
+@app.get("/history")
 def spa_app_pages():
     return HTMLResponse(_index_html())

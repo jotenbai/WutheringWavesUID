@@ -89,6 +89,7 @@ function renderNav() {
   ];
   if (currentUser?.is_admin) {
     links.push({ href: appHref("review"), label: "审核", match: (p) => p[0] === "review" });
+    links.push({ href: appHref("history"), label: "审核历史", match: (p) => p[0] === "history" });
   }
   const parts = pathParts();
   navEl.innerHTML = links
@@ -162,6 +163,7 @@ function route() {
   if (parts[0] === "submit") return renderSubmit();
   if (parts[0] === "me") return renderMySubmissions();
   if (parts[0] === "review") return renderReview();
+  if (parts[0] === "history") return renderReviewHistory();
   return renderHome();
 }
 
@@ -595,6 +597,59 @@ async function renderMySubmissions() {
   }
 }
 
+async function renderReviewHistory() {
+  if (!currentUser?.is_admin) {
+    appEl.innerHTML = `<div class="empty">需要管理员权限。</div>`;
+    return;
+  }
+  appEl.innerHTML = `<p class="muted">加载审核历史…</p>`;
+  try {
+    const data = await api("/admin/history");
+    const items = data.submissions || [];
+    if (!items.length) {
+      appEl.innerHTML = `
+        <div class="section-head"><h1>审核历史</h1></div>
+        <div class="empty">还没有已处理的投稿。</div>`;
+      return;
+    }
+    const rows = items
+      .map((s) => {
+        const tags = (s.reject_tags || []).join("、");
+        const note = s.reject_note ? escapeHtml(s.reject_note) : "";
+        const reviewer = escapeHtml(s.reviewer_name || s.reviewer_id || "—");
+        const submitter = escapeHtml(s.submitter_name || s.submitter_id || "—");
+        const reviewed = escapeHtml(formatLocalTime(s.reviewed_at || s.created_at));
+        let extra = "";
+        if (s.status === "rejected") {
+          extra = `<div class="sub-extra">原因：${escapeHtml(tags || "—")}${
+            note ? `<br />说明：${note}` : ""
+          }</div>`;
+        } else if (s.status === "approved") {
+          extra = `<div class="sub-extra">图号：${escapeHtml(s.image_id || "")}<br />指令：${escapeHtml(
+            `${s.char_name || s.char_id}面板${s.image_id || ""}`
+          )}</div>`;
+        }
+        return `
+          <article class="sub-card status-${escapeHtml(s.status)}">
+            <div class="sub-top">
+              <strong>${escapeHtml(s.char_name || s.char_id)}</strong>
+              <span class="badge">${statusLabel(s.status)}</span>
+            </div>
+            <div class="muted">投稿人 ${submitter} · 审核人 ${reviewer} · ${reviewed}</div>
+            <div class="muted"><a href="${escapeHtml(s.orig_url)}" target="_blank" rel="noopener">原图链接</a></div>
+            ${extra}
+          </article>`;
+      })
+      .join("");
+    appEl.innerHTML = `
+      <div class="section-head"><h1>审核历史</h1><span class="muted">${items.length}</span></div>
+      <p class="muted tiny-hint" style="margin-top:0">全体管理员与主人的通过 / 驳回记录（新→旧）。</p>
+      <div class="sub-list">${rows}</div>`;
+  } catch (e) {
+    appEl.innerHTML = `<div class="empty">加载失败：${escapeHtml(e.message)}</div>`;
+  }
+}
+
 async function renderReview() {
   if (!currentUser?.is_admin) {
     appEl.innerHTML = `<div class="empty">需要管理员权限。</div>`;
@@ -627,23 +682,27 @@ async function renderReview() {
             </summary>
             <div class="review-body">
               <p><a href="${escapeHtml(s.orig_url)}" target="_blank" rel="noopener">打开原图链接</a></p>
-              <div class="review-approve">
-                <label>本图（裁好的 JPG）<input type="file" accept=".jpg,image/jpeg" data-pile /></label>
-                <label>图号（推荐留空=自动顺延）
-                  <input type="text" maxlength="4" placeholder="例如 0009" data-iid />
-                </label>
-                <p class="muted tiny-hint">${
-                  currentUser?.is_master
-                    ? "留空将自动分配下一个空号（推荐）。填已有图号会<strong>覆盖</strong>该号本图与原图链接（仅主人可覆盖）。"
-                    : "留空将自动分配下一个空号（推荐）。填已有图号会被拒绝；覆盖已有图仅主人可操作。"
-                }</p>
-                <button type="button" class="btn" data-approve>通过并上传</button>
-                <div class="file-check-result" data-file-status></div>
-              </div>
-              <div class="review-reject">
-                <div class="tag-grid">${tagChecks}</div>
-                <label>补充说明<textarea rows="2" data-note placeholder="可选"></textarea></label>
-                <button type="button" class="btn ghost" data-reject>驳回</button>
+              <div class="review-branches">
+                <div class="review-approve">
+                  <p class="review-branch-title">通过</p>
+                  <label>本图（裁好的 JPG）<input type="file" accept=".jpg,image/jpeg" data-pile /></label>
+                  <label>图号（推荐留空=自动顺延）
+                    <input type="text" maxlength="4" placeholder="例如 0009" data-iid />
+                  </label>
+                  <p class="muted tiny-hint">${
+                    currentUser?.is_master
+                      ? "留空将自动分配下一个空号（推荐）。填已有图号会<strong>覆盖</strong>该号本图与原图链接（仅主人可覆盖）。"
+                      : "留空将自动分配下一个空号（推荐）。填已有图号会被拒绝；覆盖已有图仅主人可操作。"
+                  }</p>
+                  <div class="file-check-result" data-file-status></div>
+                  <button type="button" class="btn" data-approve>通过并上传</button>
+                </div>
+                <div class="review-reject">
+                  <p class="review-branch-title">驳回</p>
+                  <div class="tag-grid">${tagChecks}</div>
+                  <label>补充说明<textarea rows="2" data-note placeholder="可选"></textarea></label>
+                  <button type="button" class="btn ghost" data-reject>驳回</button>
+                </div>
               </div>
               <p class="form-msg muted" data-msg></p>
             </div>
