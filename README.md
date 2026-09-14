@@ -422,7 +422,23 @@ Discord 发 `gs重启` 仍可重启 core；若用了 systemd，core 退出后会
 - **[MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID)** — 唯一 upstream（业务插件主体）
 - **[Wuthery](https://github.com/Wuthery)**（[spectro-pcap-server](https://github.com/Wuthery/spectro-pcap-server)、[kuro.py](https://github.com/Wuthery/kuro.py)）— 国际服 pcap 解析与登录 API
 - **[gsuid_core](https://github.com/Genshin-bots/gsuid_core)** 与 **[nonebot-plugin-genshinuid](https://github.com/Genshin-bots/nonebot-plugin-genshinuid)** — 核心与多平台连接器
-- 以及各攻略作者、数据与 OCR 相关开源项目（详见 upstream 历史贡献）
+- [Wuyi无疑](https://github.com/KimigaiiWuyi) 和 [ECHO](https://github.com/tyql688)
+- [鸣潮声骸评分工具](http://asfaz.cn/mingchao/rule.html)
+- [waves-plugin](https://github.com/erzaozi/waves-plugin) Yunzai 鸣潮游戏数据查询插件
+- [Yunzai-Kuro-Plugin](https://github.com/TomyJan/Yunzai-Kuro-Plugin) Yunzai 库洛插件
+- [Kuro-API-Collection](https://github.com/TomyJan/Kuro-API-Collection) 库街区 API 文档
+- [ocr.space_code_example](https://github.com/Zaargh/ocr.space_code_example) OCR.space 示例
+- [Wuthery](https://wuthery.com/) 与 [YashajinAlice](https://github.com/YashajinAlice) 的支持
+- [TedIwaArdN](https://github.com/TedIwaArdN) 的支持
+- [ScoreQuery](https://github.com/alone-art/ScoreQuery) 声骸评分
+- 特别鸣谢以下攻略作者（排名无先后顺序）
+  - [Moealkyne](https://www.taptap.cn/user/533395803)
+  - [小沐XMu](https://www.kurobbs.com/person-center?id=10450567)
+  - [金铃子攻略组](https://space.bilibili.com/487275027)
+  - [吃我无痕](https://space.bilibili.com/347744)
+  - [小羊早睡不遭罪](https://space.bilibili.com/37331716)
+  - [結星](https://www.kurobbs.com/person-center?id=10015697)
+  - [轩儿](https://www.kurobbs.com/person-center?id=10525366)
 
 ## 许可证
 

@@ -73,7 +73,9 @@ def crop_number_rois_from_image(pil_src: Image.Image) -> dict[str, Image.Image]:
     return {"uid": _crop(REF_UID_BOX), "score1": _crop(REF_SCORE1_BOX), "score2": _crop(REF_SCORE2_BOX)}
 
 
-def init() -> None:
+def init(force: bool = False) -> None:
+    if not force and img_data and token_img:
+        return
     image_files.clear()
     img_data.clear()
     token_files.clear()
@@ -144,14 +146,14 @@ def _match_token(sub_rgb: Image.Image) -> tuple[str, float]:
 class ShareMatchResult:
     def __init__(
         self,
-        half_1_roles: list[tuple[str | None, str]],
-        half_2_roles: list[tuple[str | None, str]],
-        half_1_token: str | None,
-        half_2_token: str | None,
+        half_1_roles: list[tuple[str | None, str]] | None = None,
+        half_2_roles: list[tuple[str | None, str]] | None = None,
+        half_1_token: str | None = None,
+        half_2_token: str | None = None,
         number_rois: dict[str, Image.Image] | None = None,
     ):
-        self.half_1_roles = [r for r in half_1_roles if r[1] != "EMPTY_SLOT"]
-        self.half_2_roles = [r for r in half_2_roles if r[1] != "EMPTY_SLOT"]
+        self.half_1_roles = [r for r in (half_1_roles or []) if r[1] != "EMPTY_SLOT"]
+        self.half_2_roles = [r for r in (half_2_roles or []) if r[1] != "EMPTY_SLOT"]
         self.half_1_token = None if half_1_token == "EMPTY_SLOT" else half_1_token
         self.half_2_token = None if half_2_token == "EMPTY_SLOT" else half_2_token
         self.number_rois: dict[str, Image.Image] | None = number_rois
