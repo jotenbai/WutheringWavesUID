@@ -6,15 +6,16 @@ import io
 import json
 import re
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
+from zoneinfo import ZoneInfo
 
 from PIL import Image
 
 from . import catalog
-from .config import PENDING_DIR, PUBLISHED_DIR
+from .config import DAILY_SUBMIT_LIMIT, PENDING_DIR, PUBLISHED_DIR
 
 REJECT_TAGS = [
     "角色辨识度不够",
@@ -27,6 +28,7 @@ REJECT_TAGS = [
 ]
 
 _META = "meta.json"
+_TZ_UTC9 = ZoneInfo("Asia/Tokyo")
 
 STD_LUMINANCE_QUANT_TBL = [
     16, 11, 10, 16, 24, 40, 51, 61,
@@ -112,6 +114,47 @@ def _utcnow() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def _parse_iso_dt(raw: str | None) -> datetime | None:
+    if not raw:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def _utc9_day_range_utc(now: datetime | None = None) -> tuple[datetime, datetime]:
+    """当前 UTC+9 自然日的 [start, end) 对应 UTC 时刻。"""
+    now = now or datetime.now(timezone.utc)
+    local = now.astimezone(_TZ_UTC9)
+    start_local = local.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_local = start_local + timedelta(days=1)
+    return start_local.astimezone(timezone.utc), end_local.astimezone(timezone.utc)
+
+
+def count_submissions_today(submitter_id: str) -> int:
+    """统计该用户在本 UTC+9 自然日内已创建的投稿数（含待审/通过/驳回）。"""
+    if not submitter_id or not PENDING_DIR.is_dir():
+        return 0
+    start, end = _utc9_day_range_utc()
+    n = 0
+    for child in PENDING_DIR.iterdir():
+        if not child.is_dir():
+            continue
+        meta = _read_meta(child)
+        if not meta or meta.get("submitter_id") != submitter_id:
+            continue
+        created = _parse_iso_dt(meta.get("created_at"))
+        if created is None:
+            continue
+        if start <= created < end:
+            n += 1
+    return n
+
+
 def validate_orig_url(url: str) -> str:
     raw = (url or "").strip()
     if not raw:
@@ -162,6 +205,9 @@ def create_submission(
     char = catalog.find_char(char_id)
     if not char:
         raise ValueError("角色不存在")
+    used = count_submissions_today(submitter_id)
+    if used >= DAILY_SUBMIT_LIMIT:
+        raise ValueError(f"今日投稿已达上限（{DAILY_SUBMIT_LIMIT} 张），请明天再试")
     url = validate_orig_url(orig_url)
     sub_id = secrets.token_hex(8)
     data = {

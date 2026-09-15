@@ -35,6 +35,8 @@ PUBLIC_PREFIX = os.getenv("GALLERY_PUBLIC_PREFIX", "").rstrip("/") or ""
 DEFAULT_SUBMITTER = os.getenv("GALLERY_DEFAULT_SUBMITTER", "jo")
 DEFAULT_REVIEWER = os.getenv("GALLERY_DEFAULT_REVIEWER", "jo")
 ASSET_VERSION = os.getenv("GALLERY_ASSET_VERSION", "38")
+# 每人每日投稿上限；日历日按 UTC+9 结算
+DAILY_SUBMIT_LIMIT = int(os.getenv("GALLERY_DAILY_SUBMIT_LIMIT", "20"))
 
 _DEFAULT_OFFICIAL = Path.home() / "gsuid_core/data/WutheringWavesUID/resource/role_pile"
 OFFICIAL_PILE_DIR = _path("GALLERY_OFFICIAL_PILE_DIR", _DEFAULT_OFFICIAL)
