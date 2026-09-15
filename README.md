@@ -386,7 +386,7 @@ Discord 发 `core重启` 仍可重启 core；若用了 systemd，core 退出后�
 - **本 fork** 已改为按 mask **可见框 cover 居中**（少吃边）。若你只用本图集 API、仍用上游或自研画卡，请自行把「铺满整槽再 mask」改成「相对可见框 cover/contain」，或接受多切一圈。
 - API 只提供文件；贴图算法在各 Bot 本地，**同步本图不会自动改你的画卡代码**。
 
-**Discord 与群归属：**
+## Discord 与群归属
 
 - 桥接回信用的 `group_id` 仍是**频道 ID**（发消息必需）。
 - **逻辑群**（`群排行` / `群持有率` / WavesBind 归属）= **Discord 服务器 ID（guild）**，与 QQ 群对齐；经 `sender.discord_guild_id` + 补丁 `apply_discord_guild_as_group_patch.py`。
@@ -397,7 +397,9 @@ Discord 发 `core重启` 仍可重启 core；若用了 systemd，core 退出后�
 
 旧绑定里可能残留历史**频道** ID；用户在服务器频道再发一次会触发的指令（绑定 / 群排行 / 群持有率等）会把 **guild** 写入归属。
 
-**国际服说明：** 体力、先约电台、结晶波片等数据由 `kuro-py` 从 Kuro 国际服接口拉取，**并非**国服「库街区便笺」同一套 API。登录成功后应能出图；若只绑定 UID、未 `登录`，或 token 过期，会提示重新登录。周度游历等国际服暂无的字段会显示「国际服暂无数据」。
+## 国际服与总排行
+
+**国际服：** 体力、先约电台、结晶波片等数据由 `kuro-py` 从 Kuro 国际服接口拉取，**并非**国服「库街区便笺」同一套 API。登录成功后应能出图；若只绑定 UID、未 `登录`，或 token 过期，会提示重新登录。周度游历等国际服暂无的字段会显示「国际服暂无数据」。
 
 **总排行：** 接入全服总排行所需的 token / URL 为防止滥用**并未公开**，详情请咨询 [MoonShadow1976](https://github.com/MoonShadow1976)。
 
