@@ -148,7 +148,10 @@ async def send_waves_bind_uid_msg(bot: Bot, ev: Event):
 
     if "绑定" in ev.command:
         if not uid:
-            return await bot.send(f"该命令需要带上正确的uid!参考示例:\n{PREFIX}绑定uid\n{PREFIX}绑定1234\n", at_sender)
+            return await bot.send(
+                f"请在「绑定」后直接跟上特征码（同一条消息），例如：{PREFIX}绑定701179473",
+                at_sender,
+            )
         uid_list = await WavesBind.get_uid_list_by_game(qid, ev.bot_id)
         cookie_uid_list = await WavesUser.select_user_cookie_uids(qid)
         if uid_list and cookie_uid_list:

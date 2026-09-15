@@ -124,7 +124,10 @@ async def async_ocr(bot: Bot, ev: Event):
 
     bool_d, final_result = await ocr_results_to_dict(chain_num, chek_imgs, ocr_results)
     if not bool_d:
-        return await bot.send("[鸣潮]Please use chinese card！\n", at_sender)
+        return await bot.send(
+            "[鸣潮]未能解析卡片内容。请确认使用的是繁体中文官方dc卡（英文卡暂不支持）。\n",
+            at_sender,
+        )
 
     name, char_id = await which_char(bot, ev, final_result["角色信息"].get("角色名", ""))
     if char_id is None:

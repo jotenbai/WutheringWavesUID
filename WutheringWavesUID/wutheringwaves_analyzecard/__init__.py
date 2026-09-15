@@ -30,7 +30,8 @@ async def analyze_card(bot: Bot, ev: Event):
 
     at_sender = True if ev.group_id else False
     await bot.send(
-        "[鸣潮][dc卡片分析] 请在30秒内发送一张dc官方bot生成的卡片图或图片链接\n(分辨率尽可能为1920*1080，过低可能导致识别失败)\n",
+        "[鸣潮][dc卡片分析] 请在30秒内发送一张官方dc bot生成的卡片图或图片链接\n"
+        "（须为繁体中文界面；分辨率尽可能为1920×1080，过低可能导致识别失败）\n",
         at_sender,
     )
 

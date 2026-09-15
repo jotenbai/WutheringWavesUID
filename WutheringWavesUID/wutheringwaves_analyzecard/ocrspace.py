@@ -208,7 +208,13 @@ async def ocrspace(
     if API_KEY is None:
         return "[鸣潮] OCRspace API密钥不可用！请等待额度恢复或更换密钥\n"
 
-    error_msg = "[鸣潮]OCRspace识别失败！或是输入异常或是OCR服务故障，请尝试修改输入或等待OCR服务恢复\n"
+    error_msg = (
+        "[鸣潮]OCRspace识别失败！可能原因："
+        "①卡片不是繁体中文（英文/日文等官方卡暂不支持）；"
+        "②图片过糊或分辨率过低；"
+        "③OCR服务暂时故障。"
+        "请改用繁体中文 DC 卡后重试，或稍后再试。\n"
+    )
     if not ocr_results:
         logger.warning(error_msg)
         return error_msg
