@@ -91,7 +91,10 @@ async def send_rank_card(bot: Bot, ev: Event):
         await bot.send(im)
 
 
-@sv_waves_rank_all_list.on_regex(f"^{CHAR_NAME_PATTERN}(?:总排行|总排名)(\\d+)?$", block=True)
+@sv_waves_rank_all_list.on_regex(
+    rf"^(?!.*(?:持有率|链率)){CHAR_NAME_PATTERN}(?:总排行|总排名)(\d+)?$",
+    block=True,
+)
 async def send_all_rank_card(bot: Bot, ev: Event):
     # 正则表达式
     match = re.search(
