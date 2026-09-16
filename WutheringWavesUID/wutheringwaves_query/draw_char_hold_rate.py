@@ -113,16 +113,15 @@ async def new_draw_char_hold_rate(ev: Event, data, group_id: str = "") -> bytes:
     icon = icon.resize((180, 180))
     title_mask.paste(icon, (60, 380), icon)
 
-    # title
-    if group_id:
-        group_id = f" {group_id}" if "bot" in group_id else f" 群{group_id}"
+    # 标题统一为“种类 + 范围”；不把内部群 ID 暴露到标题
+    scope_text = "bot排行" if group_id == "bot" else "群排行" if group_id else "总排行"
     if filter_type:
         if filter_type == "UP":
-            title_text = f"#UP角色持有率{group_id}"
+            title_text = f"#UP角色持有率{scope_text}"
         else:
-            title_text = f"#{filter_type}星角色持有率{group_id}"
+            title_text = f"#{filter_type}星角色持有率{scope_text}"
     else:
-        title_text = f"#角色持有率{group_id}"
+        title_text = f"#角色持有率{scope_text}"
     title_mask_draw.text((300, 430), title_text, "white", waves_font_58, "lm")
 
     # count

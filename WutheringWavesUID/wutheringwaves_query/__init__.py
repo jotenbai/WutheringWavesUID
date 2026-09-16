@@ -5,6 +5,7 @@ from gsuid_core.models import Event
 from gsuid_core.sv import SV
 
 from ..utils.button import WavesButton
+from ..utils.name_convert import get_event_command_text
 from ..utils.waves_group import resolve_waves_group_id, touch_waves_group
 from ..wutheringwaves_config import WutheringWavesConfig
 from .draw_char_chain_hold_rate import get_char_chain_hold_rate_img
@@ -19,74 +20,60 @@ sv_slash_appear_rate = SV("waves冥想出场率", priority=1)
 
 
 # 角色持有率指令
-@sv_char_hold_rate.on_command(
-    (
-        "角色持有率",
-        "角色持有率列表",
-        "持有率",
-        "群角色持有率",
-        "群角色持有率列表",
-        "群持有率",
-        "bot角色持有率",
-        "bot角色持有率列表",
-        "bot持有率",
-    )
+@sv_char_hold_rate.on_regex(
+    r"^(?:群|bot|总)?(?:角色)?持有率(?:列表|[45四五]|UP|up|全|all)?"
+    r"(?:群|bot|总)?(?:排行|排名)?$",
+    block=True,
 )
 async def handle_char_hold_rate(bot: Bot, ev: Event):
-    if "群" in ev.command:
+    command = get_event_command_text(ev)
+    if "bot" in command.lower():
+        botData = WutheringWavesConfig.get_config("botData").data
+        if not botData:
+            return await bot.send("[鸣潮] 未开启bot排行")
+        img = await get_char_hold_rate_img(ev, "bot")
+    elif "总" in command:
+        img = await get_char_hold_rate_img(ev)
+    else:
+        # 未写范围时统一按群排行处理
         await touch_waves_group(ev)
         waves_gid, err = await resolve_waves_group_id(ev)
         if err:
             return await bot.send(err)
         img = await get_char_hold_rate_img(ev, waves_gid or "")
-    elif "bot" in ev.command:
-        botData = WutheringWavesConfig.get_config("botData").data
-        if not botData:
-            return await bot.send("[鸣潮] 未开启bot排行")
-        img = await get_char_hold_rate_img(ev, "bot")
-    else:
-        img = await get_char_hold_rate_img(ev)
     buttons: list[Any] = [
-        WavesButton("UP持有率", "角色持有率UP"),
-        WavesButton("持有率", "角色持有率"),
-        WavesButton("持有率4星", "角色持有率4"),
-        WavesButton("持有率5星", "角色持有率5"),
-        WavesButton("群持有率", "群角色持有率"),
+        WavesButton("UP总持有率", "角色持有率UP总排行"),
+        WavesButton("总持有率", "角色持有率总排行"),
+        WavesButton("总持有率4星", "角色持有率4总排行"),
+        WavesButton("总持有率5星", "角色持有率5总排行"),
+        WavesButton("群持有率", "角色持有率群排行"),
+        WavesButton("bot持有率", "角色持有率bot排行"),
     ]
     await bot.send_option(img, buttons)
 
 
 # 角色持有率指令
-@sv_char_chain_hold_rate.on_command(
-    (
-        "角色共鸣链持有率",
-        "共鸣链持有率",
-        "链持有率",
-        "链率",
-        "群角色共鸣链持有率",
-        "群共鸣链持有率",
-        "群链持有率",
-        "群链率",
-        "bot角色共鸣链持有率",
-        "bot共鸣链持有率",
-        "bot链持有率",
-        "bot链率",
-    )
+@sv_char_chain_hold_rate.on_regex(
+    r"^(?:群|bot|总)?(?:角色)?(?:共鸣链持有率|链持有率|链率)"
+    r"(?:[45四五]|UP|up|全|all)?(?:群|bot|总)?(?:排行|排名)?$",
+    block=True,
 )
 async def handle_char_chain_hold_rate(bot: Bot, ev: Event):
-    if "群" in ev.command:
+    command = get_event_command_text(ev)
+    if "bot" in command.lower():
+        botData = WutheringWavesConfig.get_config("botData").data
+        if not botData:
+            return await bot.send("[鸣潮] 未开启bot排行")
+        img = await get_char_chain_hold_rate_img(ev, "bot")
+    elif "总" in command:
+        img = await get_char_chain_hold_rate_img(ev)
+    else:
+        # 未写范围时统一按群排行处理
         await touch_waves_group(ev)
         waves_gid, err = await resolve_waves_group_id(ev)
         if err:
             return await bot.send(err)
         img = await get_char_chain_hold_rate_img(ev, waves_gid or "")
-    elif "bot" in ev.command:
-        botData = WutheringWavesConfig.get_config("botData").data
-        if not botData:
-            return await bot.send("[鸣潮] 未开启bot排行")
-        img = await get_char_chain_hold_rate_img(ev, "bot")
-    else:
-        img = await get_char_chain_hold_rate_img(ev)
     await bot.send(img)
 
 
