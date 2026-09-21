@@ -59,7 +59,7 @@ async def send_url(bot: Bot, ev: Event, url):
         im = [
             f"[鸣潮][文件上传] 您的id为【{ev.user_id}】",
             "请复制地址到浏览器打开",
-            f" {url}",
+            f" <{url}>",
             "链接10分钟内有效",
         ]
 
@@ -174,7 +174,7 @@ async def handle_file_list(files: list[UploadFile]) -> ResultModel:
                 tip = (
                     f"❌ {file.filename} 解析失败（Wuthery）：{api_err}\n"
                     "· 版本更新后头几天常见，属 Wuthery 协议未适配，不是机器人故障\n"
-                    "· 可对照 https://status.wuthery.com/ 与 https://wuthery.com/import ；"
+                    "· 可对照 <https://status.wuthery.com/> 与 <https://wuthery.com/import> ；"
                     "官网同失败则等 Wuthery 恢复后再传\n"
                     "· 也可先用「分析」更新单个角色本地面板"
                 )

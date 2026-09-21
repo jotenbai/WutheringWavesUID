@@ -69,8 +69,9 @@ class PcapFileHandler:
                 err = result.get("error", "未知错误")
                 return (
                     f"解析失败（Wuthery）：{err}\n"
-                    "版本更新后头几天常见；可对照 status.wuthery.com / wuthery.com/import，"
-                    "官网同失败则等 Wuthery 适配后再传。也可先用「分析」。\n"
+                    "版本更新后头几天常见；可对照 <https://status.wuthery.com/> 与 "
+                    "<https://wuthery.com/import>，官网同失败则等 Wuthery 适配后再传。"
+                    "也可先用「分析」。\n"
                 )
 
             # 檢查結果是否包含數據

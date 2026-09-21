@@ -105,8 +105,9 @@ async def pcap_parse(bot: Bot, ev: Event):
                 err = result.get("error", "未知错误")
                 return await bot.send(
                     f"解析失败（Wuthery）：{err}\n"
-                    "版本更新后头几天常见；可对照 status.wuthery.com / wuthery.com/import，"
-                    "官网同失败则等 Wuthery 适配后再传。也可先用「分析」。\n",
+                    "版本更新后头几天常见；可对照 <https://status.wuthery.com/> 与 "
+                    "<https://wuthery.com/import>，官网同失败则等 Wuthery 适配后再传。"
+                    "也可先用「分析」。\n",
                     at_sender,
                 )
 
@@ -200,47 +201,49 @@ async def pcap_parse(bot: Bot, ev: Event):
 )
 async def pcap_help(bot: Bot, ev: Event):
     """Wuthery pcap 数据导入帮助"""
-    url = "https://wuthery.COM/guides"
+    # 官方导览：https://wuthery.com/guides/1（Method 2=PC Wireshark，Method 3=安卓 PCAPdroid）
+    url = "https://wuthery.com/guides/1"
     if WutheringWavesConfig.get_config("WavesTencentWord").data:
         url = f"https://docs.qq.COM/scenario/link.html?url={url}"
 
     warn = "\n".join(
         [
-            "导入前请注意：",
-            "1. 此方法通过抓取游戏网络数据包实现，可直接导入所有角色面板数据",
-            # "3. 用户账号系统（云端保存与同步）即将上线",
+            "【导入前请注意】",
+            "1. 此方法通过抓取游戏网络数据包，可一次导入全部角色面板",
             "2. 加速器等网络工具可能导致抓包失败",
-            "3. 请关闭其他可能产生大量网络数据包的软件，确保pcap文件体积不超过4MB（文件过大可能导致解析失败）",
-            "4. 请勿上传含有隐私信息的 .pcap 文件",
-            f"5. 具体教程请前往[ {url} ]查看, 内有视频教程，可参考操作",
+            "3. 抓包时尽量关闭其它产生大量流量的软件；.pcap 文件建议不超过 4MB（过大易解析失败）",
+            f"4. 视频教程见 Wuthery官网导入教程：<{url}>",
+            "5. 请勿使用教程里的 Method 1（Wuthery Sniffer）：杀软常误报病毒；"
+            "PC 请用下方 Wireshark，安卓请用 PCAPdroid",
             "\n",
         ]
     )
     method = "\n".join(
         [
-            "【PC端方法】使用 Wireshark:",
-            "1. 安装 Wireshark 并打开",
-            "2. 启动鸣潮游戏，进入登录界面（男女主角界面）",
-            "3. 在Wireshark中选择您连接互联网的网络接口",
-            "4. 切换回游戏并登录进入游戏世界（进度条开始加载时即可停止抓包）",
-            "5. 返回Wireshark停止抓包，并保存为 .pcap 文件",
-            "6. 前往导入页面，上传刚才保存的 .pcap 文件",
-            "注意：也可以使用其他能导出 .pcap 文件的抓包工具",
+            "【PC端获取 .pcap 文件方法】（对应官网 Method 2）",
+            "1. 安装并打开 Wireshark",
+            "2. 启动鸣潮，停在登录界面（男女主角界面）",
+            "3. 在 Wireshark 中双击你上网用的网卡（中文名多为「以太网」/「乙太網」）开始抓包",
+            "4. 切回游戏登录进入世界（进度条开始加载即可停抓）",
+            "5. 返回 Wireshark 停止抓包，另存为 .pcap"
+            "（默认常为 .pcapng，需改扩展名为 .pcap）",
+            "6. 用下方「上传」把文件交给本机器人解析",
+            "注意：其它能导出 .pcap 的抓包工具亦可",
             "\n",
-            "【安卓端方法】使用 PCAPdroid:",
-            "1. 安装 PCAPdroid，在 Traffic dump 选 .pcap 文件",
-            "2. Target apps 中选择 Wuthering Waves",
-            "3. 点击“Ready”，然后启动并进入游戏",
-            "4. 返回 PCAPdroid 停止抓包，生成文件并上传",
+            "【安卓端获取 .pcap 文件方法】（对应官网 Method 3）",
+            "1. 安装 PCAPdroid，Traffic dump 选 .pcap 文件",
+            "2. Target apps 选择 Wuthering Waves",
+            "3. 点 Ready，再启动并进入游戏",
+            "4. 返回 PCAPdroid 停止抓包，导出文件后上传",
             "\n",
         ]
     )
     upload_note = "\n".join(
         [
-            "【上传方法】:",
-            f"• [{PREFIX}上传pcap]：打开网页上传 .pcap（推荐，各平台通用）",
-            f"• [{PREFIX}解析pcap] + 附件：Discord 私聊/频道里把 .pcap 作为消息附件一并发送（不是查询上传状态）",
-            "• qq用户也可直接发送 .pcap 文件到本群或私聊机器人(qq官方bot暂未支持)",
+            "【上传到本机器人】",
+            f"• [{PREFIX}上传pcap]：打开网页上传（推荐）",
+            f"• [{PREFIX}解析pcap] + 附件：Discord 私聊/频道把 .pcap 当消息附件发送"
+            "（不是查上传状态；公开频道慎发）",
             f"• 无附件时发[{PREFIX}解析pcap]：仅查看当前 UID 是否已有解析结果",
             "\n",
         ]

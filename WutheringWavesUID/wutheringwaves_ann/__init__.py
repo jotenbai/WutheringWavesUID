@@ -43,7 +43,7 @@ async def ann_(bot: Bot, ev: Event):
         if content:
             post_id = content[0].get("postId", "")
             if post_id:
-                link_text = f"https://www.kurobbs.com/mc/post/{post_id}?enter_source=2"
+                link_text = f"<https://www.kurobbs.com/mc/post/{post_id}?enter_source=2>"
 
     if link_text:
         if isinstance(img, list):
@@ -154,7 +154,7 @@ async def check_waves_ann_state():
                 if content:
                     post_id = content[0].get("postId", "")
                     if post_id:
-                        link_text = f"https://www.kurobbs.com/mc/post/{post_id}?enter_source=2"
+                        link_text = f"<https://www.kurobbs.com/mc/post/{post_id}?enter_source=2>"
 
             if link_text:
                 if isinstance(img, list):
