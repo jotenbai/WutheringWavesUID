@@ -32,8 +32,19 @@ class WavesCharRank(BaseModel):
     energy_regen: str = ""  # 共鸣效率，与面板 role_card 一致（如 125.0%）
 
     def to_rank_dict(self):
+        # FORK(jotenbai) TEMP — 合上游时搜此标记：
+        # 全服榜（MoonShadow）按「伤害模块主 ID」建索引；漂泊者另一性别 char_id
+        # 上传返回 200 但不入伤害/评分榜（例：男暗主 1605→须传 1604）。
+        # 映射复用 SPECIAL_ID_TO_MODULE。上游排行服务或官方插件修好后删除本段。
+        # 说明见 .cursor/rules/project-context.mdc「全服榜漂泊者性别」。
+        from .map.damage.register import SPECIAL_ID_TO_MODULE
+
+        char_id = self.roleId
+        mapped = SPECIAL_ID_TO_MODULE.get(str(char_id))
+        if mapped:
+            char_id = int(mapped)
         return {
-            "char_id": self.roleId,
+            "char_id": char_id,
             "level": self.level,
             "chain": self.chain,
             "weapon_id": self.weaponId,
