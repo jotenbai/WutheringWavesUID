@@ -113,8 +113,9 @@ async def new_draw_char_hold_rate(ev: Event, data, group_id: str = "") -> bytes:
     icon = icon.resize((180, 180))
     title_mask.paste(icon, (60, 380), icon)
 
-    # 标题统一为“种类 + 范围”；不把内部群 ID 暴露到标题
+    # 标题统一为“种类 + 范围”；群/bot 在标题写样本人数
     scope_text = "bot排行" if group_id == "bot" else "群排行" if group_id else "总排行"
+    _n = data.get("total_player_count", 0)
     if filter_type:
         if filter_type == "UP":
             title_text = f"#UP角色持有率{scope_text}"
@@ -122,23 +123,22 @@ async def new_draw_char_hold_rate(ev: Event, data, group_id: str = "") -> bytes:
             title_text = f"#{filter_type}星角色持有率{scope_text}"
     else:
         title_text = f"#角色持有率{scope_text}"
+    if group_id:
+        title_text = f"{title_text} · {_n}人"
     title_mask_draw.text((300, 430), title_text, "white", waves_font_58, "lm")
 
-    # count
-    _n = data.get("total_player_count", 0)
     if group_id:
-        title = f"样本数量: {_n} 人"
-        if data.get("sample_note") == "intl_pcap":
-            title = f"样本数量: {_n} 人（国际服计pcap）"
+        title = "国际服仅计pcap样本" if data.get("sample_note") == "intl_pcap" else ""
     else:
         title = f"近期活跃人数: {_n}"
-    title_mask_draw.text(
-        (300, 500),
-        title,
-        "white",
-        waves_font_36,
-        "lm",
-    )
+    if title:
+        title_mask_draw.text(
+            (300, 500),
+            title,
+            "white",
+            waves_font_36,
+            "lm",
+        )
 
     img.paste(title_bg, (0, 0), title_bg)
     img.paste(title_mask, (0, 0), title_mask)

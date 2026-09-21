@@ -155,8 +155,9 @@ async def draw_char_chain_hold_rate(ev: Event, data, group_id: str = "") -> byte
     icon = icon.resize((180, 180))
     title_mask.paste(icon, (60, 380), icon)
 
-    # 标题统一为“种类 + 范围”；不把内部群 ID 暴露到标题
+    # 标题统一为“种类 + 范围”；群/bot 在标题写样本人数
     scope_text = "bot排行" if group_id == "bot" else "群排行" if group_id else "总排行"
+    _n = data.get("total_player_count", 0)
     if filter_type:
         if filter_type == "UP":
             title_text = f"#UP角色共鸣链持有率{scope_text}"
@@ -164,14 +165,15 @@ async def draw_char_chain_hold_rate(ev: Event, data, group_id: str = "") -> byte
             title_text = f"#{filter_type}星角色共鸣链持有率{scope_text}"
     else:
         title_text = f"#共鸣链持有率{scope_text}"
+    if group_id:
+        title_text = f"{title_text} · {_n}人"
     title_mask_draw.text((300, 430), title_text, "white", waves_font_42, "lm")
 
-    # count
-    _n = data.get("total_player_count", 0)
     if group_id:
-        title = f"样本数量: {_n} 人 | 共 {total_items} 种共鸣链"
         if data.get("sample_note") == "intl_pcap":
-            title = f"样本: {_n}（国际服计pcap）| {total_items} 链种"
+            title = f"国际服仅计pcap | 共 {total_items} 种共鸣链"
+        else:
+            title = f"共 {total_items} 种共鸣链"
     else:
         title = f"近期活跃人数: {_n} | 共 {total_items} 种共鸣链"
     title_mask_draw.text(
