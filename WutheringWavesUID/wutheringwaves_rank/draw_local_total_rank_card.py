@@ -331,9 +331,9 @@ async def draw_local_total_rank(bot: Bot, ev: Event, bot_bool: bool = False) -> 
     icon = icon.resize((128, 128))
     title_bg.paste(icon, (60, 240), icon)
 
-    # title（人数为全量样本，不限于图上前 N 名）
+    # title（人数为全量样本，不限于图上前 N 名；无 #，与伤害/评分群 bot 标题一致）
     sample_count = len(rank_all_list)
-    title_text = f"#练度{'bot' if bot_bool else '群'}排行 · {sample_count}人"
+    title_text = f"练度{'bot' if bot_bool else '群'}排行·{sample_count}人"
     title_bg_draw = ImageDraw.Draw(title_bg)
     title_bg_draw.text((220, 290), title_text, "white", waves_font_58, "lm")
 

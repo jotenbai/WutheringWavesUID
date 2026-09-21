@@ -124,7 +124,7 @@ async def new_draw_char_hold_rate(ev: Event, data, group_id: str = "") -> bytes:
     else:
         title_text = f"#角色持有率{scope_text}"
     if group_id:
-        title_text = f"{title_text} · {_n}人"
+        title_text = f"{title_text}·{_n}人"
     title_mask_draw.text((300, 430), title_text, "white", waves_font_58, "lm")
 
     if group_id:

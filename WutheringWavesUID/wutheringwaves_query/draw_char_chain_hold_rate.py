@@ -166,7 +166,7 @@ async def draw_char_chain_hold_rate(ev: Event, data, group_id: str = "") -> byte
     else:
         title_text = f"#共鸣链持有率{scope_text}"
     if group_id:
-        title_text = f"{title_text} · {_n}人"
+        title_text = f"{title_text}·{_n}人"
     title_mask_draw.text((300, 430), title_text, "white", waves_font_42, "lm")
 
     if group_id:

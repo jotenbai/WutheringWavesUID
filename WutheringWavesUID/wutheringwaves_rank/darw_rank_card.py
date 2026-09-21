@@ -537,7 +537,7 @@ async def draw_rank_img(bot: Bot, ev: Event, char: str, rank_type: str) -> str |
     if char_id in SPECIAL_CHAR_NAME:
         char_name = SPECIAL_CHAR_NAME[char_id]
 
-    title_name = f"{char_name}{rank_type}群排行 · {sample_count}人"
+    title_name = f"{char_name}{rank_type}群排行·{sample_count}人"
     title_draw.text((140, 265), f"{title_name}", "black", waves_font_30, "lm")
 
     # 备注
