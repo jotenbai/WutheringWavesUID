@@ -40,7 +40,7 @@ from ..utils.image import (
     WAVES_FREEZING,
     WAVES_LINGERING,
     WAVES_MOLTEN,
-    WAVES_MOONLIT,
+    WAVES_SINKING,
     WAVES_SIERRA,
     WAVES_VOID,
     WEAPON_RESONLEVEL_COLOR,
@@ -83,8 +83,13 @@ BOT_COLOR = [
     WAVES_SIERRA,
     WAVES_FREEZING,
     WAVES_LINGERING,
-    WAVES_MOONLIT,
+    WAVES_SINKING,
 ]
+
+# 固定 bot 标签色（避免按出场顺序落到浅色）
+FIXED_BOT_COLOR = {
+    "守岸人": (30, 100, 160),
+}
 
 
 async def get_rank(item: RankItem) -> RankInfoResponse | None:
@@ -345,7 +350,10 @@ async def draw_all_rank_card(bot: Bot, ev: Event, char: str, rank_type: str, pag
         botName = rank.alias_name if rank.alias_name else ""
         if botName:
             color = (54, 54, 54)
-            if botName in bot_color_map:
+            if botName in FIXED_BOT_COLOR:
+                color = FIXED_BOT_COLOR[botName]
+                bot_color_map[botName] = color
+            elif botName in bot_color_map:
                 color = bot_color_map[botName]
             elif bot_color:
                 color = bot_color.pop(0)
@@ -353,9 +361,9 @@ async def draw_all_rank_card(bot: Bot, ev: Event, char: str, rank_type: str, pag
 
             info_block = Image.new("RGBA", (200, 30), color=(255, 255, 255, 0))
             info_block_draw = ImageDraw.Draw(info_block)
-            info_block_draw.rounded_rectangle([0, 0, 200, 30], radius=6, fill=color + (int(0.6 * 255),))
+            info_block_draw.rounded_rectangle([0, 0, 200, 30], radius=6, fill=color + (int(0.85 * 255),))
             info_block_draw.text((100, 15), f"bot: {botName}", "white", waves_font_18, "mm")
-            bar_bg.alpha_composite(info_block, (350, 65))
+            bar_bg.alpha_composite(info_block, (350, 55))
 
         # 贴到背景
         card_img.paste(bar_bg, (0, title_h + text_bar_h + index * bar_star_h), bar_bg)
