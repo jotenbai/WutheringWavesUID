@@ -229,7 +229,7 @@ async def pcap_help(bot: Bot, ev: Event):
             "（默认常为 .pcapng，需改扩展名为 .pcap）",
             "6. 用下方「上传」把文件交给本机器人解析",
             "注意：其它能导出 .pcap 的抓包工具亦可",
-            "\n",
+            "",
             "【安卓端获取 .pcap 文件方法】（对应官网 Method 3）",
             "1. 安装 PCAPdroid，Traffic dump 选 .pcap 文件",
             "2. Target apps 选择 Wuthering Waves",

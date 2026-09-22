@@ -222,13 +222,17 @@ def get_role_pile_path(
 ) -> tuple[bool, Path]:
     _role_pile_notice.set(None)
     if custom:
-        dirs = _iter_custom_role_dirs(resource_id)
-        if pile_id:
+        # 0000：显式要求官方立绘（自定义池不含官图时可用）
+        if pile_id is not None and str(pile_id).isdigit() and int(pile_id) == 0:
+            pass
+        elif pile_id:
+            dirs = _iter_custom_role_dirs(resource_id)
             found = _find_pile_by_id(dirs, str(pile_id))
             if found:
                 return True, found
             _role_pile_notice.set(f"[鸣潮] 图号{str(pile_id).zfill(4)}不存在，已使用官方立绘。")
         else:
+            dirs = _iter_custom_role_dirs(resource_id)
             paths: list[Path] = []
             for d in dirs:
                 try:
