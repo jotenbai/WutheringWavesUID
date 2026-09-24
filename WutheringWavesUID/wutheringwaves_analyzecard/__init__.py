@@ -32,7 +32,7 @@ async def analyze_card(bot: Bot, ev: Event):
     await bot.send(
         "[鸣潮][dc卡片分析] 请在30秒内发送官方 wuwa bot 角色卡图片或直链\n"
         "出卡：/bind → /language 繁体中文 → /create → 右键图「复制链接地址」\n"
-        "（须繁体界面；分辨率尽量 1920×1080，过低易识别失败）\n",
+        "（须繁体界面；请用原图直链，勿用缩略图/预览链）\n",
         at_sender,
     )
 
