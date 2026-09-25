@@ -1234,6 +1234,21 @@ class Echo_6000221(EchoAbstract):
         return {"气动伤害加成": "10%"}
 
 
+class Echo_6000225(EchoAbstract):
+    id = 6000225
+    name = "天演溯心"
+
+    def do_equipment_first(self, role_id: int):
+        """首位常驻10%导电加成归面板，不将条件增益提前计入。"""
+        return {"导电伤害加成": "10%"}
+
+    def damage(self, attr: DamageAttribute, isGroup: bool = False):
+        if attr.char_attr != CHAR_ATTR_VOID:
+            return
+        if attr.env_electro_flare or attr.env_unison or attr.env_unison_response:
+            attr.add_dmg_bonus(0.1, self.name, "附加电磁效应或获得/响应同奏后30秒内，导电伤害额外提升10%")
+
+
 def register_echo():
     # 自动注册所有以 Echo_ 开头的类
     for name, obj in globals().items():

@@ -17,7 +17,6 @@ from ...damage.utils import (
     hit_damage,
     skill_damage_calc,
 )
-from .buff import iuno_buff, lupa_buff, mornye_buff, motefei_buff, shouanren_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -68,6 +67,7 @@ def calc_damage_1(
 
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], skillParamId, skillLevel)
+    attr.set_teammate_buff()
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
 
@@ -162,6 +162,7 @@ def calc_damage_2(
 
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "21", skillLevel)
+    attr.set_teammate_buff()
     title = "共鸣解放·万鬼同葬"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -268,6 +269,7 @@ def calc_damage_3(
     title = "共鸣回路-命火"
     hp_units = min(25, max(0, (life - 25000) / 1000))
     hp_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], hpParamId, skillLevel)
+    attr.set_teammate_buff()
     value = calc_percent_expression(f"({hp_multi})*{hp_units}")
     msg = f"荧惑状态下消耗命火增加重击伤害倍率,当前增加{value * 100:.2f}%"
     if chain_num >= 2:
@@ -355,40 +357,19 @@ def calc_damage_3(
 
 
 def calc_damage_10(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True):
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-
-    # 守岸人buff
-    shouanren_buff(attr, 0, 1, isGroup)
-
-    # 莫特斐buff
-    motefei_buff(attr, 6, 1, isGroup)
+    attr.set_teammate((1505, 0, 1), (1204, 6, 1))
 
     return calc_damage_3(attr, role, isGroup, heavy="踏罡")
 
 
 def calc_damage_11(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True):
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-
-    # 守岸人buff
-    shouanren_buff(attr, 0, 1, isGroup)
-
-    # 尤诺buff
-    iuno_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1505, 0, 1), (1410, 0, 1))
 
     return calc_damage_3(attr, role, isGroup, heavy="踏罡")
 
 
 def calc_damage_12(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True):
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-
-    # 莫宁buff
-    mornye_buff(attr, 0, 1, isGroup)
-
-    # 露帕buff
-    lupa_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1209, 0, 1), (1207, 0, 1))
 
     return calc_damage_3(attr, role, isGroup, heavy="踏罡")
 

@@ -47,6 +47,7 @@ def calc_damage_1(
     attr.add_skill_multi(skill_multi, title, msg)
 
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "11", skillLevel)
+    attr.set_teammate_buff()
     title = "御反之隙第三段伤害"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -121,6 +122,7 @@ def calc_damage_2(
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "20", skillLevel)
+    attr.set_teammate_buff()
     title = "不动如山"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -201,6 +203,7 @@ def calc_damage_3(
     attr.add_shield_skill_multi(skill_multi, title, msg)
 
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "29", skillLevel)
+    attr.set_teammate_buff()
     title = "御反之隙第三段护盾"
     msg = f"技能倍率{skill_multi}"
     attr.add_shield_skill_multi(skill_multi, title, msg)

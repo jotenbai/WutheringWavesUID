@@ -17,7 +17,6 @@ from ...damage.utils import (
     hit_damage,
     skill_damage_calc,
 )
-from .buff import chisa_buff, motefei_buff, suisui_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -64,6 +63,7 @@ def calc_damage_1(
     title = "秧秧·玄翎-常态"
     msg = "特定攻击为命中目标附加【虚湮效应】"
     attr.set_env_havoc_bane()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     level = get_havoc_bane_level(attr)
@@ -174,6 +174,7 @@ def calc_damage_2(
     title = "秧秧·玄翎-常态"
     msg = "特定攻击为命中目标附加【虚湮效应】"
     attr.set_env_havoc_bane()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     level = get_havoc_bane_level(attr)
@@ -254,18 +255,7 @@ def calc_damage_2(
 def calc_damage_10(
     attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True, d: Literal["r", "a"] = "r"
 ) -> tuple[str, str]:
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-
-    title = "秧秧·玄翎-常态"
-    msg = "特定攻击为命中目标附加【虚湮效应】"
-    attr.set_env_havoc_bane()
-
-    # 穗穗buff
-    suisui_buff(attr, 0, 1, isGroup)
-
-    # 莫特斐buff
-    motefei_buff(attr, 6, 5, isGroup)
+    attr.set_teammate((1110, 0, 1), (1204, 6, 5))
 
     if d == "r":
         return calc_damage_1(attr, role, isGroup)
@@ -276,18 +266,7 @@ def calc_damage_10(
 def calc_damage_11(
     attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True, d: Literal["r", "a"] = "r"
 ) -> tuple[str, str]:
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-
-    title = "秧秧·玄翎-常态"
-    msg = "特定攻击为命中目标附加【虚湮效应】"
-    attr.set_env_havoc_bane()
-
-    # 穗穗buff
-    suisui_buff(attr, 0, 1, isGroup)
-
-    # 千咲buff
-    chisa_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1110, 0, 1), (1508, 0, 1))
 
     if d == "r":
         return calc_damage_1(attr, role, isGroup)
@@ -298,18 +277,7 @@ def calc_damage_11(
 def calc_damage_12(
     attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True, d: Literal["r", "a"] = "r"
 ) -> tuple[str, str]:
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-
-    title = "秧秧·玄翎-常态"
-    msg = "特定攻击为命中目标附加【虚湮效应】"
-    attr.set_env_havoc_bane()
-
-    # 千咲buff
-    chisa_buff(attr, 0, 1, isGroup)
-
-    # 莫特斐buff
-    motefei_buff(attr, 6, 5, isGroup)
+    attr.set_teammate((1508, 0, 1), (1204, 6, 5))
 
     if d == "r":
         return calc_damage_1(attr, role, isGroup)

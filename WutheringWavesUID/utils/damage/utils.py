@@ -36,6 +36,7 @@ SONATA_SHATTERDREAM = "碎梦亡鬼之魇"
 SONATA_FEATHERED_TRACE = "羽落空尘之歌"
 SONATA_NETHER_ROAD = "冥途夜行之灯"
 SONATA_EVIL_PURGE = "清邪荡煞之心"
+SONATA_DREAMHEART = "衔梦照世之心"
 
 
 CHAR_ATTR_FREEZING = "冷凝"
@@ -61,6 +62,18 @@ phantom_damage = "phantom_damage"
 heal_bonus = "heal_bonus"
 # 护盾量加成
 shield_bonus = "shield_bonus"
+
+# 伤害类型的中文名（上面的注释读不到，这里落成数据；加新伤害类型时补一行）
+damage_name_map = {
+    attack_damage: "普攻伤害",
+    hit_damage: "重击伤害",
+    skill_damage: "共鸣技能伤害",
+    liberation_damage: "共鸣解放伤害",
+    intro_skill_damage: "变奏技能伤害",
+    phantom_damage: "声骸技能伤害",
+    heal_bonus: "治疗",
+    shield_bonus: "护盾",
+}
 
 # 造成伤害
 cast_damage = "cast_damage"
@@ -121,6 +134,9 @@ Tune_Rupture_Role_Ids = [1209, 1210, 1509]
 
 # 集谐伤害
 Tune_Strain_Role_Ids = [1413, 1211, 1510, 1509]
+
+# 协同攻击
+Sync_Strike_Role_Ids = [1302, 1204, 1303, 1105, 1503, 1311, 1312]
 
 # 失序彼岸之梦 套装
 Ancient_Role_Ids = [1608, 1109]

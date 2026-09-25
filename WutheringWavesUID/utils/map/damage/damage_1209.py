@@ -15,7 +15,6 @@ from ...damage.utils import (
     skill_create_healing,
     skill_damage_calc,
 )
-from .buff import lynae_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -38,6 +37,7 @@ def calc_damage_1(
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "14", skillLevel)
+    attr.set_teammate_buff()
     title = "分布式阵列治疗量"
     msg = f"技能倍率{skill_multi}"
     attr.add_healing_skill_multi(skill_multi, title, msg)
@@ -100,6 +100,7 @@ def calc_damage_2(
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "27", skillLevel)
+    attr.set_teammate_buff()
     title = "谐振场治疗量"
     msg = f"技能倍率{skill_multi}"
     attr.add_healing_skill_multi(skill_multi, title, msg)
@@ -169,6 +170,7 @@ def calc_damage_3(
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "21", skillLevel)
+    attr.set_teammate_buff()
     title = "共鸣解放·临界协议"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -269,31 +271,19 @@ def calc_damage_3(
 
 
 def calc_damage_10(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(liberation_damage)
-    attr.set_char_template("temp_def")
-
-    # 琳奈buff
-    lynae_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1509, 0, 1))
 
     return calc_damage_3(attr, role, isGroup)
 
 
 def calc_damage_11(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(liberation_damage)
-    attr.set_char_template("temp_def")
-
-    # 琳奈buff
-    lynae_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1509, 0, 1))
 
     return calc_damage_3(attr, role, isGroup, Interfered=True)
 
 
 def calc_damage_12(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(liberation_damage)
-    attr.set_char_template("temp_def")
-
-    # 琳奈buff
-    lynae_buff(attr, 2, 5, isGroup)
+    attr.set_teammate((1509, 2, 5))
 
     return calc_damage_3(attr, role, isGroup, Interfered=True)
 

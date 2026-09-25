@@ -1,6 +1,5 @@
 # 尤诺
 
-
 from ...api.model import RoleDetailData
 from ...ascension.char import WavesCharResult, get_char_detail2
 from ...damage.damage import DamageAttribute
@@ -33,6 +32,7 @@ def calc_damage_1(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "8", skillLevel)
+    attr.set_teammate_buff()
     title = "共鸣技能·越限的弦引"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -108,6 +108,7 @@ def calc_damage_2(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "19", skillLevel)
+    attr.set_teammate_buff()
     title = "重击·至臻的完满"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)

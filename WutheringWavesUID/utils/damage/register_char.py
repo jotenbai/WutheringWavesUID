@@ -8,6 +8,7 @@ from .utils import (
     CHAR_ATTR_SINKING,
     CHAR_ATTR_VOID,
     attack_damage,
+    cast_attack,
     cast_variation,
     hit_damage,
     liberation_damage,
@@ -20,6 +21,10 @@ from .utils import (
 
 class Char_1102(CharAbstract):
     id = 1102
+    teammate_equip = {
+        "sonata": "轻云出月",
+        "echo": "无常凶鹭",
+    }
     name = "散华"
     starLevel = 4
 
@@ -36,15 +41,6 @@ class Char_1102(CharAbstract):
                 title = "散华-六链"
                 msg = "队伍中的角色攻击提升20%"
                 attr.add_atk_percent(0.2, title, msg)
-
-            title = "散华-合鸣效果-轻云出月"
-            msg = "下一个登场的共鸣者攻击提升22.5%"
-            attr.add_atk_percent(0.225, title, msg)
-
-        # 无常凶鹭
-        title = "散华-声骸技能-无常凶鹭"
-        msg = "施放延奏技能，则可使下一个变奏登场的角色伤害提升12%"
-        attr.add_dmg_bonus(0.12, title, msg)
 
         if attack_damage == attr.char_damage:
             title = "散华-延奏技能"
@@ -66,6 +62,10 @@ class Char_1104(CharAbstract):
 
 class Char_1105(CharAbstract):
     id = 1105
+    teammate_equip = {
+        "sonata": "轻云出月",
+        "echo": "无常凶鹭",
+    }
     name = "折枝"
     starLevel = 5
 
@@ -81,15 +81,6 @@ class Char_1105(CharAbstract):
                 title = f"{self.name}-四链"
                 msg = "折枝施放共鸣解放虚实境趣时，队伍中角色攻击提升20%"
                 attr.add_atk_percent(0.2, title, msg)
-
-            title = f"{self.name}-合鸣效果-轻云出月"
-            msg = "使用延奏技能后，下一个登场的共鸣者攻击提升22.5%"
-            attr.add_atk_percent(0.225, title, msg)
-
-        # 无常凶鹭
-        title = f"{self.name}-声骸技能-无常凶鹭"
-        msg = "施放延奏技能，则可使下一个变奏登场的角色伤害提升12%"
-        attr.add_dmg_bonus(0.12, title, msg)
 
         if attr.char_attr == CHAR_ATTR_FREEZING:
             title = f"{self.name}-延奏技能"
@@ -135,6 +126,15 @@ class Char_1108(CharAbstract):
 
 class Char_1109(CharAbstract):
     id = 1109
+    teammate_equip = {
+        "sonata": "雪落无声之愿",
+        "echo": "迷胧幻蛾",
+        "weapon": {"id": 21050086, "action": "do_action"},
+        # 主C打声骸技能伤害时改带这套（原本写死在 _do_buff 的声骸模态分支里）
+        "cases": [
+            {"damage": phantom_damage, "sonata": "轻云出月", "echo": "无常凶鹭"},
+        ],
+    }
     name = "洛瑟菈"
     starLevel = 5
 
@@ -156,17 +156,6 @@ class Char_1109(CharAbstract):
                 msg = "目标受到【霜渐效应】的伤害加深60%"
                 attr.add_dmg_deepen(0.6, title, msg)
 
-            if attr.char_attr == CHAR_ATTR_FREEZING:
-                title = f"{self.name}-合鸣效果-雪落无声之愿"
-                msg = "使用延奏技能后，下一个登场的角色冷凝伤害提升25%"
-                attr.add_atk_percent(0.225, title, msg)
-
-            # 迷胧幻蛾
-            if attr.char_template == temp_atk:
-                title = f"{self.name}-声骸技能-迷胧幻蛾"
-                msg = "施放延奏技能，则可使下一个变奏登场的角色攻击提升12%"
-                attr.add_atk_percent(0.12, title, msg)
-
         if phantom_damage == attr.char_damage:
             title = "固有技能-声骸模态"
             msg = "队伍中的角色声骸技能伤害加成提升25%"
@@ -185,15 +174,7 @@ class Char_1109(CharAbstract):
             msg = "下一位登场角色声骸技能伤害加深50%"
             attr.add_dmg_deepen(0.5, title, msg)
 
-            if attr.char_template == temp_atk:
-                title = f"{self.name}-合鸣效果-轻云出月"
-                msg = "使用延奏技能后，下一个登场的共鸣者攻击提升22.5%"
-                attr.add_atk_percent(0.225, title, msg)
-
-            # 无常凶鹭
-            title = f"{self.name}-声骸技能-无常凶鹭"
-            msg = "施放延奏技能，则可使下一个变奏登场的角色伤害提升12%"
-            attr.add_dmg_bonus(0.12, title, msg)
+            # 轻云出月 / 无常凶鹭 换在这条分支里，见上面的 teammate_equip["cases"]
 
         # 存帧
         weapon_clz = WavesWeaponRegister.find_class(21050086)
@@ -206,6 +187,10 @@ class Char_1109(CharAbstract):
 
 class Char_1110(CharAbstract):
     id = 1110
+    teammate_equip = {
+        "sonata": "羽落空尘之歌",
+        "weapon": {"id": 21050096, "action": "do_action"},
+    }
     name = "穗穗"
     starLevel = 5
 
@@ -239,10 +224,6 @@ class Char_1110(CharAbstract):
             msg = "共鸣效率超200%每0.12%时提升0.1%攻击,上限50%"
             attr.add_atk_percent(0.5, title, msg)
 
-            title = "穗穗-合鸣效果-羽落空尘之歌"
-            msg = "获得【重明之羽】：每1%共鸣效率使队中角色攻击提升0.1%,上限25%"
-            attr.add_atk_percent(0.25, title, msg)
-
         if chain >= 2 and attr.is_env_abnormal():
             title = "穗穗-二链"
             msg = "山河水境内触发效果的角色暴击伤害提升50%"
@@ -271,6 +252,11 @@ class Char_1203(CharAbstract):
 
 class Char_1204(CharAbstract):
     id = 1204
+    teammate_equip = {
+        "sonata": "轻云出月",
+        "echo": "无常凶鹭",
+        "weapon": {"id": 21030015, "action": "buff"},
+    }
     name = "莫特斐"
     starLevel = 4
 
@@ -287,15 +273,6 @@ class Char_1204(CharAbstract):
                 title = "莫特斐-六链"
                 msg = "施放共鸣解放暴烈终曲时，队伍中的角色攻击提升20%"
                 attr.add_atk_percent(0.2, title, msg)
-
-            title = "莫特斐-合鸣效果-轻云出月"
-            msg = "使用延奏技能后，下一个登场的共鸣者攻击提升22.5%"
-            attr.add_atk_percent(0.225, title, msg)
-
-        # 无常凶鹭
-        title = "莫特斐-声骸技能-无常凶鹭"
-        msg = "施放延奏技能，则可使下一个变奏登场的角色伤害提升12%"
-        attr.add_dmg_bonus(0.12, title, msg)
 
         if hit_damage == attr.char_damage:
             title = "莫特斐-延奏技能"
@@ -367,6 +344,10 @@ class Char_1206(CharAbstract):
 
 class Char_1207(CharAbstract):
     id = 1207
+    teammate_equip = {
+        "sonata": "奔狼燎原之焰",
+        "weapon": {"id": 21010036, "action": "cast_hit"},
+    }
     name = "露帕"
     starLevel = 5
 
@@ -392,9 +373,7 @@ class Char_1207(CharAbstract):
         molten_num, team_num = get_molten_num(attr)
 
         """获得buff"""
-        title = "露帕-奔狼燎原之焰"
-        msg = "队伍中的角色热熔伤害提升15%"
-        attr.add_dmg_bonus(0.15, title, msg)
+        # 奔狼燎原之焰 走目录，见上面的 teammate_equip
 
         if attr.char_attr == CHAR_ATTR_MOLTEN:
             title = "露帕-延奏技能"
@@ -449,6 +428,10 @@ class Char_1207(CharAbstract):
 
 class Char_1209(CharAbstract):
     id = 1209
+    teammate_equip = {
+        "sonata": "星构寻辉之环",
+        "weapon": {"id": 21010066, "action": "cast_healing"},
+    }
     name = "莫宁"
     starLevel = 5
 
@@ -459,11 +442,6 @@ class Char_1209(CharAbstract):
         resonLevel: int = 1,
         isGroup: bool = True,
     ):
-        if attr.char_template == temp_atk:
-            title = "莫宁-合鸣效果-星构寻辉之环"
-            msg = "为队中角色治疗时，使队伍中角色攻击提升25%"
-            attr.add_atk_percent(0.25, title, msg)
-
         # 谐振场
         title = "莫宁-谐振场"
         msg = "谐振场生效范围内偏谐值累积效率提升50%"
@@ -538,6 +516,15 @@ class Char_1210(CharAbstract):
 
 class Char_1211(CharAbstract):
     id = 1211
+    teammate_equip = {
+        "sonata": "逆光跃彩之约",
+        "echo": "海维夏",
+        "weapon": {"id": 21050076, "action": "do_action"},
+        # 聚爆模态时改带这套（原本写死在 _do_buff 的聚爆分支里）
+        "cases": [
+            {"env": "env_fusion_burst", "sonata": "斑驳粉饰之沫", "echo": "达妮娅"},
+        ],
+    }
     name = "达妮娅"
     starLevel = 5
 
@@ -573,22 +560,6 @@ class Char_1211(CharAbstract):
             msg = f"下一个登场的角色全伤害加深{dmg * 100:.0f}%"
             attr.add_dmg_deepen(dmg, title, msg)
 
-            title = "达妮娅-声骸技能-海维夏"
-            msg = "使用后15秒内，使下一个变奏技能登场的角色全属性伤害加成提升10%"
-            attr.add_dmg_bonus(0.1, title, msg)
-
-            # 角色施放延奏技能后，下一个变奏技能登场的角色攻击提升15%，其每点谐度破坏增幅还会使攻击额外提升0.3%，上限15%，持续15秒，若切换至其他角色则该效果提前结束。
-            if attr.char_template == "temp_atk":
-                title = "达妮娅-合鸣效果-逆光跃彩之约"
-                msg = "角色施放延奏技能后，下一个变奏技能登场的角色攻击提升15%"
-                attr.add_atk_percent(0.15, title, msg)
-
-                # dmg = min(0.15, attr.tune_break_boost * 0.003) # 其 是指变奏的角色
-                # msg = f"其每点谐度破坏增幅使攻击额外提升0.3%,上限15%(当前提升{dmg * 100:.2f}%)"
-                # attr.add_atk_percent(dmg, title, msg)
-                msg = "其谐度破坏增幅使攻击额外提升15%"  # 其 是指戴套的角色
-                attr.add_atk_percent(0.15, title, msg)
-
         if attr.env_fusion_burst:
             title = "达妮娅-固有技能·蚀刻繁彩"
             msg = "共鸣模态·聚爆:热熔伤害加成提升30%"
@@ -604,13 +575,7 @@ class Char_1211(CharAbstract):
                 msg = "队伍中登场角色周围目标受到聚爆效应伤害加深60%"
                 attr.add_dmg_deepen(0.6, title, msg)
 
-            title = "达妮娅-合鸣效果-斑驳粉饰之沫"
-            msg = "使用延奏技能后，下一个登场的角色热熔伤害提升25%"
-            attr.add_dmg_bonus(0.25, title, msg)
-
-            title = "达妮娅-声骸技能-达妮娅"
-            msg = "施放延奏技能，使下一个变奏登场的角色热熔伤害加成提升12%"
-            attr.add_dmg_bonus(0.12, title, msg)
+            # 斑驳粉饰之沫 / 达妮娅 换在这条分支里，见上面的 teammate_equip["cases"]
 
         # 赝作的矮星
         weapon_clz = WavesWeaponRegister.find_class(21050076)
@@ -629,6 +594,10 @@ class Char_1301(CharAbstract):
 
 class Char_1302(CharAbstract):
     id = 1302
+    teammate_equip = {
+        "sonata": "轻云出月",
+        "echo": "无常凶鹭",
+    }
     name = "吟霖"
     starLevel = 5
 
@@ -644,15 +613,6 @@ class Char_1302(CharAbstract):
                 title = "吟霖-四链"
                 msg = "共鸣回路审判之雷命中时，队伍中的角色攻击提升20%"
                 attr.add_atk_percent(0.2, title, msg)
-
-            title = "吟霖-合鸣效果-轻云出月"
-            msg = "使用延奏技能后，下一个登场的共鸣者攻击提升22.5%"
-            attr.add_atk_percent(0.225, title, msg)
-
-        # 无常凶鹭
-        title = "吟霖-声骸技能-无常凶鹭"
-        msg = "施放延奏技能，则可使下一个变奏登场的角色伤害提升12%"
-        attr.add_dmg_bonus(0.12, title, msg)
 
         # 下一位登场角色导电伤害加深20%，共鸣解放伤害加深25%
         if attr.char_attr == CHAR_ATTR_VOID:
@@ -686,6 +646,10 @@ class Char_1305(CharAbstract):
 
 class Char_1306(CharAbstract):
     id = 1306
+    teammate_equip = {
+        "sonata": "隐世回光",
+        "echo": "无归的谬误",
+    }
     name = "卜灵"
     starLevel = 4
 
@@ -718,18 +682,14 @@ class Char_1306(CharAbstract):
                 msg = "队伍中登场的角色共鸣技能伤害加成提升50%"
                 attr.add_dmg_bonus(0.5, title, msg)
 
-        if attr.char_template == temp_atk:
-            title = "卜灵-合鸣效果-隐世回光"
-            msg = "全队共鸣者攻击提升15%"
-            attr.add_atk_percent(0.15, title, msg)
-
-            title = "卜灵-声骸技能-无归的谬误"
-            msg = "全队角色攻击提升10%"
-            attr.add_atk_percent(0.1, title, msg)
-
 
 class Char_1308(CharAbstract):
     id = 1308
+    teammate_equip = {
+        "sonata": "轻云出月",
+        "echo": "无常凶鹭",
+        "weapon": {"id": 21030066, "action": "do_action"},
+    }
     name = "丽贝卡"
     starLevel = 5
 
@@ -764,15 +724,6 @@ class Char_1308(CharAbstract):
             msg = "施放共鸣解放后附近队伍中角色攻击提升20%"
             attr.add_atk_percent(0.2, title, msg)
 
-            title = f"{self.name}-合鸣效果-轻云出月"
-            msg = "使用延奏技能后，下一个登场的共鸣者攻击提升22.5%"
-            attr.add_atk_percent(0.225, title, msg)
-
-        # 无常凶鹭
-        title = f"{self.name}-声骸技能-无常凶鹭"
-        msg = "施放延奏技能，则可使下一个变奏登场的角色伤害提升12%"
-        attr.add_dmg_bonus(0.12, title, msg)
-
         # 碎骨
         weapon_clz = WavesWeaponRegister.find_class(21030066)
         if weapon_clz:
@@ -784,6 +735,10 @@ class Char_1308(CharAbstract):
 
 class Char_1310(CharAbstract):
     id = 1310
+    teammate_equip = {
+        "sonata": "轻云出月",
+        "echo": "无常凶鹭",
+    }
     name = "漂泊者·导电"
     starLevel = 5
 
@@ -803,15 +758,6 @@ class Char_1310(CharAbstract):
             title = "雷主-共鸣回路-超负荷"
             msg = "短按施放超负荷，队伍中的角色获得10%攻击加成"
             attr.add_atk_percent(0.1, title, msg)
-
-            title = "雷主-合鸣效果-轻云出月"
-            msg = "使用延奏技能后，下一个登场的共鸣者攻击提升22.5%"
-            attr.add_atk_percent(0.225, title, msg)
-
-        # 无常凶鹭
-        title = "雷主-声骸技能-无常凶鹭"
-        msg = "施放延奏技能，则可使下一个变奏登场的角色伤害提升12%"
-        attr.add_dmg_bonus(0.12, title, msg)
 
         title = "雷主-延奏技能"
         msg = "持有电髓的角色附加异常效应时，全伤害加深25%"
@@ -844,6 +790,10 @@ class Char_1405(CharAbstract):
 
 class Char_1406(CharAbstract):
     id = 1406
+    teammate_equip = {
+        "sonata": "流云逝尽之空",
+        "weapon": {"id": 21020046, "action": "cast_skill"},
+    }
     name = "漂泊者·气动"
     starLevel = 5
 
@@ -854,17 +804,15 @@ class Char_1406(CharAbstract):
         resonLevel: int = 1,
         isGroup: bool = True,
     ):
-        if attr.char_attr == CHAR_ATTR_SIERRA:
-            #  血誓盟约
-            title = "风主-血誓盟约"
-            msg = "风主施放共鸣技能时，附近队伍中登场角色气动伤害加深10%"
-            attr.add_dmg_deepen(0.1, title, msg)
+        # 流云逝尽之空 走目录，见上面的 teammate_equip
 
-            # 流云逝尽之空
-            # 角色为敌人添加【风蚀效应】时，队伍中角色气动伤害提升15%
-            title = "风主-流云逝尽之空"
-            msg = "队伍中的角色气动伤害提升15%"
-            attr.add_dmg_bonus(0.15, title, msg)
+        # 血誓盟约
+        weapon_clz = WavesWeaponRegister.find_class(21020046)
+        if weapon_clz:
+            w = weapon_clz(21020046, 90, 6, resonLevel)
+            method = getattr(w, "cast_skill", None)
+            if callable(method):
+                method(attr, isGroup)
 
 
 class Char_1407(CharAbstract):
@@ -890,8 +838,21 @@ class Char_1408(Char_1406):
 
 class Char_1410(CharAbstract):
     id = 1410
+    teammate_equip = {
+        "sonata": "轻云出月",
+        "echo": "无常凶鹭",
+    }
     name = "尤诺"
     starLevel = 5
+    teammate_states = {
+        "祝福层数": {
+            "type": "int",
+            "min": 0,
+            "max": 10,
+            "default": 10,
+            "desc": "苍白死光的祝颂层数，每层全伤害加深4%；叠满10层时二链额外+40%",
+        },
+    }
 
     def _do_buff(
         self,
@@ -899,27 +860,21 @@ class Char_1410(CharAbstract):
         chain: int = 0,
         resonLevel: int = 1,
         isGroup: bool = True,
+        states: dict | None = None,
     ):
         """获得buff"""
-        if attr.char_template == temp_atk:
-            title = "尤诺-合鸣效果-轻云出月"
-            msg = "使用延奏技能后，下一个登场的共鸣者攻击提升22.5%"
-            attr.add_atk_percent(0.225, title, msg)
+        states = states or {}
+        # 苍白死光的祝颂：默认按满层10层计算
+        stacks = int(states.get("祝福层数", 10))
+        if stacks:
+            title = "尤诺-苍白死光的祝颂"
+            msg = f"满月领域中获得十次护盾后，角色全伤害加深4%*{stacks}"
+            attr.add_dmg_deepen(0.04 * stacks, title, msg)
 
-        # 10层苍白死光的祝颂
-        title = "尤诺-苍白死光的祝颂"
-        msg = "满月领域中获得十次护盾后，角色全伤害加深4%*10"
-        attr.add_dmg_deepen(0.04 * 10, title, msg)
-
-        if chain >= 2:
+        if chain >= 2 and stacks >= 10:
             title = "尤诺-二链"
             msg = "苍白死光的祝颂叠加至10层时额外获得40%全伤害加深"
             attr.add_dmg_deepen(0.4, title, msg)
-
-        # 无常凶鹭
-        title = "尤诺-声骸技能-无常凶鹭"
-        msg = "施放延奏技能，则可使下一个变奏登场的角色伤害提升12%"
-        attr.add_dmg_bonus(0.12, title, msg)
 
         if hit_damage == attr.char_damage:
             title = "尤诺-延奏技能"
@@ -929,8 +884,19 @@ class Char_1410(CharAbstract):
 
 class Char_1411(CharAbstract):
     id = 1411
+    teammate_equip = {
+        "sonata": "息界同调之律",
+        "weapon": {"id": 21020066, "action": "cast_variation"},
+    }
     name = "仇远"
     starLevel = 5
+    teammate_states = {
+        "暴击增益": {
+            "type": "bool",
+            "default": True,
+            "desc": "仇远自身暴击是否达到65%，达到时给登场角色+30%暴击伤害",
+        },
+    }
 
     def _do_buff(
         self,
@@ -938,17 +904,18 @@ class Char_1411(CharAbstract):
         chain: int = 0,
         resonLevel: int = 1,
         isGroup: bool = True,
+        states: dict | None = None,
     ):
         """获得buff"""
-        # 共鸣解放爆伤提升
-        title = "仇远-共鸣解放爆伤提升"
-        msg = "仇远暴击至少65%时，登场角色提升30%暴击伤害"
-        attr.add_crit_dmg(0.3, title, msg)
+        states = states or {}
+        # 共鸣解放爆伤提升（需要仇远自身暴击至少65%）
+        if states.get("暴击增益", True):
+            title = "仇远-共鸣解放爆伤提升"
+            msg = "仇远暴击至少65%时，登场角色提升30%暴击伤害"
+            attr.add_crit_dmg(0.3, title, msg)
 
         if phantom_damage == attr.char_damage:
-            title = "仇远-息界同调之律"
-            msg = "队伍中角色声骸技能伤害加成提升16%"
-            attr.add_dmg_bonus(0.16, title, msg)
+            # 息界同调之律 走目录，见上面的 teammate_equip
 
             # 竹照
             title = "仇远-竹照"
@@ -977,6 +944,15 @@ class Char_1412(CharAbstract):
     id = 1412
     name = "西格莉卡"
     starLevel = 55
+    teammate_states = {
+        "祝福层数": {
+            "type": "int",
+            "min": 0,
+            "max": 6,
+            "default": 6,
+            "desc": "语义的祝福层数，每层给队伍中登场角色3%气动/声骸技能伤害加成",
+        },
+    }
 
     def _do_buff(
         self,
@@ -984,15 +960,21 @@ class Char_1412(CharAbstract):
         chain: int = 0,
         resonLevel: int = 1,
         isGroup: bool = True,
+        states: dict | None = None,
     ):
+        states = states or {}
         # 每层语义的祝福使队伍中登场角色气动伤害加成提升3%，声骸技能伤害加成提升3%
+        # 默认按满层6层计算
+        stacks = int(states.get("祝福层数", 6))
         title = "西格莉卡-固有技能-语义共鸣"
-        if attr.char_attr == CHAR_ATTR_SIERRA:
-            msg = "6层语义的祝福使队伍中登场角色气动伤害加成提升18%"
-            attr.add_dmg_bonus(0.18, title, msg)
-        if attr.char_damage == phantom_damage:
-            msg = "6层语义的祝福使队伍中登场角色声骸技能伤害加成提升18%"
-            attr.add_dmg_bonus(0.18, title, msg)
+        if stacks:
+            value = 0.03 * stacks
+            if attr.char_attr == CHAR_ATTR_SIERRA:
+                msg = f"{stacks}层语义的祝福使队伍中登场角色气动伤害加成提升{value:.0%}"
+                attr.add_dmg_bonus(value, title, msg)
+            if attr.char_damage == phantom_damage:
+                msg = f"{stacks}层语义的祝福使队伍中登场角色声骸技能伤害加成提升{value:.0%}"
+                attr.add_dmg_bonus(value, title, msg)
 
         # 队伍中的角色施放声骸技能时，使队伍中的角色攻击提升20%，持续20秒
         if chain >= 4:
@@ -1003,6 +985,10 @@ class Char_1412(CharAbstract):
 
 class Char_1501(CharAbstract):
     id = 1501
+    teammate_equip = {
+        "sonata": "轻云出月",
+        "echo": "无常凶鹭",
+    }
     name = "漂泊者·衍射"
     starLevel = 5
 
@@ -1023,16 +1009,6 @@ class Char_1501(CharAbstract):
             msg = "施放共鸣技能时，目标衍射伤害抗性降低10%"
             attr.add_enemy_resistance(-0.1, title, msg)
 
-        if attr.char_template == temp_atk:
-            title = "光主-合鸣效果-轻云出月"
-            msg = "下一个登场的共鸣者攻击提升22.5%"
-            attr.add_atk_percent(0.225, title, msg)
-
-        # 无常凶鹭
-        title = "光主-声骸技能-无常凶鹭"
-        msg = "施放延奏技能，则可使下一个变奏登场的角色伤害提升12%"
-        attr.add_dmg_bonus(0.12, title, msg)
-
 
 class Char_1502(Char_1501):
     id = 1502
@@ -1042,6 +1018,10 @@ class Char_1502(Char_1501):
 
 class Char_1503(CharAbstract):
     id = 1503
+    teammate_equip = {
+        "sonata": "隐世回光",
+        "echo": "鸣钟之龟",
+    }
     name = "维里奈"
     starLevel = 5
 
@@ -1063,15 +1043,6 @@ class Char_1503(CharAbstract):
             msg = "队伍中的角色衍射伤害加成提升15%"
             attr.add_dmg_bonus(0.4, title, msg)
 
-        if attr.char_template == temp_atk:
-            title = "维里奈-合鸣效果-隐世回光"
-            msg = "全队共鸣者攻击提升15%"
-            attr.add_atk_percent(0.15, title, msg)
-
-        title = "维里奈-声骸技能-鸣钟之龟"
-        msg = "全队角色10.00%的伤害提升"
-        attr.add_dmg_bonus(0.1, title, msg)
-
         title = "维里奈-延奏技能"
         msg = "队伍中的角色全伤害加深15%"
         attr.add_dmg_deepen(0.15, title, msg)
@@ -1079,6 +1050,10 @@ class Char_1503(CharAbstract):
 
 class Char_1504(CharAbstract):
     id = 1504
+    teammate_equip = {
+        "sonata": "轻云出月",
+        "echo": "无常凶鹭",
+    }
     name = "灯灯"
     starLevel = 4
 
@@ -1095,15 +1070,6 @@ class Char_1504(CharAbstract):
                 msg = "施放共鸣解放时，队伍中的角色的攻击提升20%"
                 attr.add_atk_percent(0.2, title, msg)
 
-            title = f"{self.name}-合鸣效果-轻云出月"
-            msg = "使用延奏技能后，下一个登场的共鸣者攻击提升22.5%"
-            attr.add_atk_percent(0.225, title, msg)
-
-        # 无常凶鹭
-        title = f"{self.name}-声骸技能-无常凶鹭"
-        msg = "施放延奏技能，则可使下一个变奏登场的角色伤害提升12%"
-        attr.add_dmg_bonus(0.12, title, msg)
-
         if skill_damage == attr.char_damage:
             title = f"{self.name}-延奏技能"
             msg = "下一位登场角色共鸣技能伤害加深38%"
@@ -1112,8 +1078,20 @@ class Char_1504(CharAbstract):
 
 class Char_1505(CharAbstract):
     id = 1505
+    teammate_equip = {
+        "sonata": "隐世回光",
+        "echo": "无归的谬误",
+        "weapon": {"id": 21050036, "action": "skill_create_healing"},
+    }
     name = "守岸人"
     starLevel = 5
+    teammate_states = {
+        "领域": {
+            "type": "bool",
+            "default": True,
+            "desc": "共鸣解放领域是否生效（暴击提升12.5% + 暴击伤害提升25%）",
+        },
+    }
 
     def _do_buff(
         self,
@@ -1121,17 +1099,15 @@ class Char_1505(CharAbstract):
         chain: int = 0,
         resonLevel: int = 1,
         isGroup: bool = True,
+        states: dict | None = None,
     ):
         """获得buff"""
+        states = states or {}
         if attr.char_template == temp_atk:
             if chain >= 2:
                 title = "守岸人-二链"
                 msg = "队伍中的角色攻击提升40%"
                 attr.add_atk_percent(0.4, title, msg)
-
-            title = "守岸人-合鸣效果-隐世回光"
-            msg = "全队共鸣者攻击提升15%"
-            attr.add_atk_percent(0.15, title, msg)
 
         # 星序协响
         weapon_clz = WavesWeaponRegister.find_class(21050036)
@@ -1139,16 +1115,12 @@ class Char_1505(CharAbstract):
             w = weapon_clz(21050036, 90, 6, resonLevel)
             w.do_action("skill_create_healing", attr, isGroup)
 
-        if attr.char_template == temp_atk:
-            title = "守岸人-声骸技能-无归的谬误"
-            msg = "全队角色攻击提升10%"
-            attr.add_atk_percent(0.1, title, msg)
-
-        title = "守岸人-共鸣解放"
-        msg = "暴击提升12.5%+暴击伤害提升25%"
-        attr.add_crit_rate(0.125)
-        attr.add_crit_dmg(0.25)
-        attr.add_effect(title, msg)
+        if states.get("领域", True):
+            title = "守岸人-共鸣解放"
+            msg = "暴击提升12.5%+暴击伤害提升25%"
+            attr.add_crit_rate(0.125)
+            attr.add_crit_dmg(0.25)
+            attr.add_effect(title, msg)
 
         title = "守岸人-延奏技能"
         msg = "队伍中的角色全伤害加深15%"
@@ -1157,8 +1129,21 @@ class Char_1505(CharAbstract):
 
 class Char_1506(CharAbstract):
     id = 1506
+    teammate_equip = {
+        "sonata": "轻云出月",
+        "echo": "无常凶鹭",
+        "weapon": {"id": 21050046, "action": "cast_extension"},
+    }
     name = "菲比"
     starLevel = 5
+    teammate_states = {
+        "模式": {
+            "type": "enum",
+            "choices": ("告解", "赦罪"),
+            "default": "告解",
+            "desc": "告解：减少目标衍射抗性10%；赦罪：不减抗",
+        },
+    }
 
     def _do_buff(
         self,
@@ -1166,27 +1151,20 @@ class Char_1506(CharAbstract):
         chain: int = 0,
         resonLevel: int = 1,
         isGroup: bool = True,
+        states: dict | None = None,
     ):
         """获得buff"""
+        states = states or {}
         attr.set_env_spectro()
         title = "菲比"
         msg = "触发光噪效应"
         attr.add_effect(title, msg)
 
-        if attr.char_attr == CHAR_ATTR_CELESTIAL:
+        # 默认告解模式：减少目标衍射抗性
+        if states.get("模式", "告解") == "告解" and attr.char_attr == CHAR_ATTR_CELESTIAL:
             title = "菲比-延奏技能-告解"
             msg = "使一定范围内的目标衍射伤害抗性减少10%"
             attr.add_enemy_resistance(-0.1, title, msg)
-
-        if attr.char_template == temp_atk:
-            title = f"{self.name}-合鸣效果-轻云出月"
-            msg = "使用延奏技能后，下一个登场的共鸣者攻击提升22.5%"
-            attr.add_atk_percent(0.225, title, msg)
-
-        # 无常凶鹭
-        title = f"{self.name}-声骸技能-无常凶鹭"
-        msg = "施放延奏技能，则可使下一个变奏登场的角色伤害提升12%"
-        attr.add_dmg_bonus(0.12, title, msg)
 
         if attr.env_spectro_deepen:
             title = f"{self.name}-延奏技能-告解"
@@ -1220,6 +1198,9 @@ class Char_1507(CharAbstract):
 
 class Char_1508(CharAbstract):
     id = 1508
+    teammate_equip = {
+        "weapon": {"id": 21010056, "action": "do_action"},
+    }
     name = "千咲"
     starLevel = 5
 
@@ -1275,6 +1256,11 @@ class Char_1508(CharAbstract):
 
 class Char_1509(CharAbstract):
     id = 1509
+    teammate_equip = {
+        "sonata": "逆光跃彩之约",
+        "echo": "海维夏",
+        "weapon": {"id": 21030046, "action": "do_action"},
+    }
     name = "琳奈"
     starLevel = 5
 
@@ -1317,29 +1303,13 @@ class Char_1509(CharAbstract):
             msg = "下一个登场的角色共鸣解放伤害加深25%，持续14秒"
             attr.add_dmg_deepen(0.25, title, msg)
 
-        title = "琳奈-声骸技能-海维夏"
-        msg = "使用后15秒内，使下一个变奏技能登场的角色全属性伤害加成提升10%"
-        attr.add_dmg_bonus(0.1, title, msg)
-
-        # 角色施放延奏技能后，下一个变奏技能登场的角色攻击提升15%，其每点谐度破坏增幅还会使攻击额外提升0.3%，上限15%，持续15秒，若切换至其他角色则该效果提前结束。
-        if attr.char_template == "temp_atk":
-            title = "琳奈-合鸣效果-逆光跃彩之约"
-            msg = "角色施放延奏技能后，下一个变奏技能登场的角色攻击提升15%"
-            attr.add_atk_percent(0.15, title, msg)
-
-            # dmg = min(0.15, attr.tune_break_boost * 0.003) # 其 是指变奏的角色
-            # msg = f"其每点谐度破坏增幅使攻击额外提升0.3%,上限15%(当前提升{dmg * 100:.2f}%)"
-            # attr.add_atk_percent(dmg, title, msg)
-            msg = "其谐度破坏增幅使攻击额外提升15%"  # 其 是指戴套的角色
-            attr.add_atk_percent(0.15, title, msg)
-
         # 溢彩荧辉
         weapon_clz = WavesWeaponRegister.find_class(21030046)
         if weapon_clz:
             w = weapon_clz(21030046, 90, 6, resonLevel)
-            method = getattr(w, "cast_attack", None)
+            method = getattr(w, "do_action", None)
             if callable(method):
-                method(attr, isGroup)
+                method([cast_attack], attr, isGroup, isSelf=False)
 
 
 class Char_1510(CharAbstract):
@@ -1350,6 +1320,11 @@ class Char_1510(CharAbstract):
 
 class Char_1511(CharAbstract):
     id = 1511
+    teammate_equip = {
+        "sonata": "轻云出月",
+        "echo": "无常凶鹭",
+        "weapon": {"id": 21030015, "action": "buff"},
+    }
     name = "露西"
     starLevel = 5
 
@@ -1389,16 +1364,6 @@ class Char_1511(CharAbstract):
         msg = "使所有标记目标降低5%的防御"
         attr.add_defense_reduction(0.05, title, msg)
 
-        if attr.char_template == temp_atk:
-            title = f"{self.name}-合鸣效果-轻云出月"
-            msg = "使用延奏技能后，下一个登场的共鸣者攻击提升22.5%"
-            attr.add_atk_percent(0.225, title, msg)
-
-        # 无常凶鹭
-        title = f"{self.name}-声骸技能-无常凶鹭"
-        msg = "施放延奏技能，则可使下一个变奏登场的角色伤害提升12%"
-        attr.add_dmg_bonus(0.12, title, msg)
-
         # 停驻之烟
         weapon_clz = WavesWeaponRegister.find_class(21030015)
         if weapon_clz:
@@ -1414,6 +1379,9 @@ class Char_1601(CharAbstract):
 
 class Char_1602(CharAbstract):
     id = 1602
+    teammate_equip = {
+        "sonata": "幽夜隐匿之帷",
+    }
     name = "丹瑾"
     starLevel = 4
 
@@ -1431,11 +1399,6 @@ class Char_1602(CharAbstract):
             title = "丹瑾-延奏技能"
             msg = "下一位登场角色湮灭伤害加深23%"
             attr.add_dmg_deepen(0.23, title, msg)
-
-            # 幽夜隐匿之帷
-            title = "丹瑾-合鸣效果-幽夜隐匿之帷"
-            msg = "下一位登场角色湮灭伤害加成提升15%"
-            attr.add_dmg_bonus(0.15, title, msg)
 
 
 class Char_1603(CharAbstract):
@@ -1458,10 +1421,23 @@ class Char_1605(CharAbstract):
 
 class Char_1606(CharAbstract):
     id = 1606
+    teammate_equip = {
+        "sonata": "轻云出月",
+        "echo": "无常凶鹭",
+    }
     name = "洛可可"
     starLevel = 5
 
     # 下一位登场角色湮灭伤害加深20%，普攻伤害加深25%，效果持续14秒，若切换至其他角色则该效果提前结束。
+    teammate_states = {
+        "固定攻击": {
+            "type": "int",
+            "min": 0,
+            "max": 200,
+            "default": 200,
+            "desc": "共鸣解放提供的固定攻击力，上限200",
+        },
+    }
 
     def _do_buff(
         self,
@@ -1469,21 +1445,16 @@ class Char_1606(CharAbstract):
         chain: int = 0,
         resonLevel: int = 1,
         isGroup: bool = True,
+        states: dict | None = None,
     ):
         """获得buff"""
+        states = states or {}
         if attr.char_template == temp_atk:
-            title = "洛可可-共鸣解放"
-            msg = "施放共鸣解放最多提供200点攻击"
-            attr.add_atk_flat(200, title, msg)
-
-            title = "洛可可-合鸣效果-轻云出月"
-            msg = "下一个登场的共鸣者攻击提升22.5%"
-            attr.add_atk_percent(0.225, title, msg)
-
-        # 无常凶鹭
-        title = "洛可可-声骸技能-无常凶鹭"
-        msg = "施放延奏技能，则可使下一个变奏登场的角色伤害提升12%"
-        attr.add_dmg_bonus(0.12, title, msg)
+            atk_flat = int(states.get("固定攻击", 200))
+            if atk_flat:
+                title = "洛可可-共鸣解放"
+                msg = "施放共鸣解放最多提供200点攻击" if atk_flat == 200 else f"施放共鸣解放提供{atk_flat}点攻击"
+                attr.add_atk_flat(atk_flat, title, msg)
 
         if attack_damage == attr.char_damage:
             title = "洛可可-延奏技能"
@@ -1491,11 +1462,6 @@ class Char_1606(CharAbstract):
             attr.add_dmg_deepen(0.25, title, msg)
 
         if CHAR_ATTR_SINKING == attr.char_attr:
-            # # 幽夜隐匿之帷
-            # title = "洛可可-合鸣效果-幽夜隐匿之帷"
-            # msg = "下一个登场角色湮灭属性伤害加成提升15%"
-            # attr.add_dmg_bonus(0.15, title, msg)
-
             title = "洛可可-延奏技能"
             msg = "下一位登场角色湮灭伤害加深20%"
             attr.add_dmg_deepen(0.2, title, msg)
@@ -1509,6 +1475,9 @@ class Char_1606(CharAbstract):
 
 class Char_1607(CharAbstract):
     id = 1607
+    teammate_equip = {
+        "sonata": "幽夜隐匿之帷",
+    }
     name = "坎特蕾拉"
     starLevel = 5
 
@@ -1521,10 +1490,6 @@ class Char_1607(CharAbstract):
     ):
         # 下一位登场角色湮灭伤害加深20%，共鸣技能伤害加深25%
         if CHAR_ATTR_SINKING == attr.char_attr:
-            title = "坎特蕾拉-合鸣效果-幽夜隐匿之帷"
-            msg = "使下一个登场角色湮灭属性伤害加成提升15%"
-            attr.add_dmg_bonus(0.15, title, msg)
-
             title = "坎特蕾拉-延奏技能"
             msg = "下一位登场角色湮灭伤害加深23%"
             attr.add_dmg_deepen(0.23, title, msg)

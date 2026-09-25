@@ -8,7 +8,6 @@ from ...damage.utils import (
     hit_damage,
     skill_damage_calc,
 )
-from .buff import motefei_buff, weilinai_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -29,6 +28,7 @@ def calc_damage_1(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level("共鸣解放")
     # 技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, "3", "1", skillLevel)
+    attr.set_teammate_buff()
     title = "破阵之枪第一段"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -119,6 +119,7 @@ def calc_damage_2(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     attr.add_skill_multi(skill_multi, title, msg)
 
     skill_multi = skill_damage_calc(char_result.skillTrees, "3", "3", skillLevel)
+    attr.set_teammate_buff()
     title = "破阵之枪第三段"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -199,6 +200,7 @@ def calc_damage_3(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level("共鸣回路")
     # 技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, "7", "1", skillLevel)
+    attr.set_teammate_buff()
     title = "苍躣八荒·后动"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -272,14 +274,8 @@ def calc_damage_5(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = T
     """
     0维/6+1莫/重击·破阵之枪
     """
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
 
-    # 维里奈buff
-    weilinai_buff(attr, 0, 1, isGroup)
-
-    # 莫特斐buff
-    motefei_buff(attr, 6, 1, isGroup)
+    attr.set_teammate((1503, 0, 1), (1204, 6, 1))
 
     return calc_damage_2(attr, role, isGroup)
 

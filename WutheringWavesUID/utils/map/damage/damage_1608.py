@@ -1,6 +1,5 @@
 # 弗洛洛
 
-
 from ...api.model import RoleDetailData
 from ...ascension.char import WavesCharResult, get_char_detail2
 from ...damage.damage import DamageAttribute, calc_percent_expression
@@ -89,6 +88,7 @@ def calc_damage_1(
     aftersound_num_multi = min(aftersound_num, 24)
 
     aftersound_skill_multi = f"{aftersound_skill_multi}*{aftersound_num_multi}*{aftersound_percent}"
+    attr.set_teammate_buff()
     title = f"{role_name}-余响"
     msg = f"{aftersound_num_multi}层余响-余响倍率{aftersound_skill_multi}"
     attr.add_skill_multi(aftersound_skill_multi, title, msg)

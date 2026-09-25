@@ -1,6 +1,5 @@
 # 奥古斯塔
 
-
 from ...api.model import RoleDetailData
 from ...ascension.char import WavesCharResult, get_char_detail2
 from ...damage.damage import DamageAttribute, calc_percent_expression
@@ -14,7 +13,6 @@ from ...damage.utils import (
     hit_damage,
     skill_damage_calc,
 )
-from .buff import iuno_buff, motefei_buff, shouanren_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -128,6 +126,7 @@ def calc_damage_1(
         sm = skill_multi.split("+")
         s2 = calc_percent_expression(sm[-1])
         skill_multi = f"{s2 * 100:.2f}%"
+    attr.set_teammate_buff()
 
     title = "共鸣技能·不败恒阳·落袭伤害"
     msg = f"技能倍率{skill_multi}"
@@ -191,6 +190,7 @@ def calc_damage_2(
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "31", skillLevel)
+    attr.set_teammate_buff()
 
     title = "赫日威临·烈阳伤害"
     msg = f"技能倍率{skill_multi}"
@@ -263,6 +263,7 @@ def calc_damage_3(
         skill_multi = f"{s2 * 100:.2f}%"
     else:
         title = "赫日威临·不朽者之肃总伤"
+    attr.set_teammate_buff()
 
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -301,66 +302,31 @@ def calc_damage_3(
 
 
 def calc_damage_10(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-
-    # 守岸人buff
-    shouanren_buff(attr, 0, 1, isGroup)
-
-    # 莫特斐buff
-    motefei_buff(attr, 6, 1, isGroup)
+    attr.set_teammate((1505, 0, 1), (1204, 6, 1))
 
     return calc_damage_1(attr, role, isGroup)
 
 
 def calc_damage_11(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-
-    # 守岸人buff
-    shouanren_buff(attr, 0, 1, isGroup)
-
-    # 尤诺buff
-    iuno_buff(attr, 0, 0, isGroup)
+    attr.set_teammate((1505, 0, 1), (1410, 0, 0))
 
     return calc_damage_1(attr, role, isGroup)
 
 
 def calc_damage_12(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-
-    # 守岸人buff
-    shouanren_buff(attr, 0, 1, isGroup)
-
-    # 莫特斐buff
-    motefei_buff(attr, 6, 1, isGroup)
+    attr.set_teammate((1505, 0, 1), (1204, 6, 1))
 
     return calc_damage_3(attr, role, isGroup)
 
 
 def calc_damage_13(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-
-    # 守岸人buff
-    shouanren_buff(attr, 0, 1, isGroup)
-
-    # 尤诺buff
-    iuno_buff(attr, 0, 0, isGroup)
+    attr.set_teammate((1505, 0, 1), (1410, 0, 0))
 
     return calc_damage_3(attr, role, isGroup)
 
 
 def calc_damage_14(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-
-    # 守岸人buff
-    shouanren_buff(attr, 0, 1, isGroup)
-
-    # 尤诺buff
-    iuno_buff(attr, 2, 0, isGroup)
+    attr.set_teammate((1505, 0, 1), (1410, 2, 0))
 
     return calc_damage_3(attr, role, isGroup)
 

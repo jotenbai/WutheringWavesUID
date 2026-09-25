@@ -54,6 +54,7 @@ def calc_damage_1(
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "1", skillLevel)
+    attr.set_teammate_buff()
     title = "诗中物"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -142,6 +143,7 @@ def calc_damage_2(
         skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "2", skillLevel)
         title = "诗中物治疗量"
         msg = f"技能倍率{skill_multi}"
+    attr.set_teammate_buff()
     attr.add_healing_skill_multi(skill_multi, title, msg)
 
     # 设置角色等级
@@ -175,6 +177,7 @@ def calc_damage_3(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "2", skillLevel)
+    attr.set_teammate_buff()
     title = "匣中问祯治疗量"
     msg = f"技能倍率{skill_multi}"
     attr.add_healing_skill_multi(skill_multi, title, msg)

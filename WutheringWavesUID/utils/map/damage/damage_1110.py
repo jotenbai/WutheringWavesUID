@@ -41,6 +41,7 @@ def calc_damage_1(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     title = "穗穗-常态"
     msg = "特定攻击为命中目标附加【霜渐效应】"
     attr.set_env_glacio_chafe()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     attr.set_phantom_dmg_bonus(needShuxing=False)
@@ -93,6 +94,7 @@ def calc_damage_2(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     title = "穗穗-常态"
     msg = "特定攻击为命中目标附加【霜渐效应】"
     attr.set_env_glacio_chafe()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     attr.set_phantom_dmg_bonus(needShuxing=False)
@@ -146,6 +148,7 @@ def calc_damage_3(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = T
     title = "穗穗-常态"
     msg = "特定攻击为命中目标附加【霜渐效应】"
     attr.set_env_glacio_chafe()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     title = "穗穗-延奏技能"

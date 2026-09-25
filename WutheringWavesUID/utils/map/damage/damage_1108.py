@@ -14,7 +14,6 @@ from ...damage.utils import (
     liberation_damage,
     skill_damage_calc,
 )
-from .buff import chisa_buff, lucilla_buff, lynae_buff, suisui_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -58,6 +57,7 @@ def calc_damage_1(
     title = "常态"
     msg = "特定攻击为命中目标附加【霜渐效应】"
     attr.set_env_glacio_chafe()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     # 设置角色施放技能
@@ -149,6 +149,7 @@ def calc_damage_2(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     title = "常态"
     msg = "特定攻击为命中目标附加【霜渐效应】"
     attr.set_env_glacio_chafe()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     # 设置角色施放技能
@@ -249,6 +250,7 @@ def calc_damage_3(
     title = "常态"
     msg = "特定攻击为命中目标附加【霜渐效应】"
     attr.set_env_glacio_chafe()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     # 设置角色施放技能
@@ -319,50 +321,24 @@ def calc_damage_3(
 
 def calc_damage_10(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
     """0+1千咲/0+1琳奈/归刃伤害"""
-    attr.set_char_damage(liberation_damage)
-    attr.set_char_template("temp_atk")
 
-    # 千咲buff
-    chisa_buff(attr, 0, 1, isGroup)
-
-    # 琳奈buff
-    lynae_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1508, 0, 1), (1509, 0, 1))
 
     return calc_damage_3(attr, role, isGroup, r="r2", p_num=1)
 
 
 def calc_damage_11(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
     """0+1千咲/0+1洛瑟菈/归刃伤害"""
-    attr.set_char_damage(liberation_damage)
-    attr.set_char_template("temp_atk")
 
-    title = "常态"
-    msg = "特定攻击为命中目标附加【霜渐效应】"
-    attr.set_env_glacio_chafe()
-
-    # 千咲buff
-    chisa_buff(attr, 0, 1, isGroup)
-
-    # 洛瑟菈buff
-    lucilla_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1508, 0, 1), (1109, 0, 1))
 
     return calc_damage_3(attr, role, isGroup, r="r2", p_num=1)
 
 
 def calc_damage_12(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
     """0+1穗穗/0+1洛瑟菈/归刃伤害"""
-    attr.set_char_damage(liberation_damage)
-    attr.set_char_template("temp_atk")
 
-    title = "常态"
-    msg = "特定攻击为命中目标附加【霜渐效应】"
-    attr.set_env_glacio_chafe()
-
-    # 穗穗buff
-    suisui_buff(attr, 0, 1, isGroup)
-
-    # 洛瑟菈buff
-    lucilla_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1110, 0, 1), (1109, 0, 1))
 
     return calc_damage_3(attr, role, isGroup, r="r2", p_num=1)
 

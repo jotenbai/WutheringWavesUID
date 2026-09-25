@@ -8,494 +8,494 @@
       "1": {
         "life": 824.0,
         "atk": 37.0,
-        "def": 94.0
+        "def": 91.0
       },
       "2": {
         "life": 893.3808,
         "atk": 40.1154,
-        "def": 101.7362
+        "def": 98.4893
       },
       "3": {
         "life": 962.844,
         "atk": 43.2345,
-        "def": 109.4818
+        "def": 105.9877
       },
       "4": {
         "life": 1032.3072,
         "atk": 46.3536,
-        "def": 117.2274
+        "def": 113.4861
       },
       "5": {
         "life": 1101.688,
         "atk": 49.469,
-        "def": 124.973
+        "def": 120.9845
       },
       "6": {
         "life": 1171.1512,
         "atk": 52.5881,
-        "def": 132.7186
+        "def": 128.4829
       },
       "7": {
         "life": 1240.6144,
         "atk": 55.7072,
-        "def": 140.4642
+        "def": 135.9813
       },
       "8": {
         "life": 1309.9952,
         "atk": 58.8226,
-        "def": 148.2098
+        "def": 143.4797
       },
       "9": {
         "life": 1379.4584,
         "atk": 61.9417,
-        "def": 155.9554
+        "def": 150.9781
       },
       "10": {
         "life": 1448.9216,
         "atk": 65.0608,
-        "def": 163.701
+        "def": 158.4765
       },
       "11": {
         "life": 1518.3024,
         "atk": 68.1762,
-        "def": 171.4466
+        "def": 165.9749
       },
       "12": {
         "life": 1587.7656,
         "atk": 71.2953,
-        "def": 179.1922
+        "def": 173.4733
       },
       "13": {
         "life": 1657.2288,
         "atk": 74.4144,
-        "def": 186.9378
+        "def": 180.9717
       },
       "14": {
         "life": 1726.692,
         "atk": 77.5335,
-        "def": 194.6834
+        "def": 188.4701
       },
       "15": {
         "life": 1796.0728,
         "atk": 80.6489,
-        "def": 202.429
+        "def": 195.9685
       },
       "16": {
         "life": 1865.536,
         "atk": 83.768,
-        "def": 210.1746
+        "def": 203.4669
       },
       "17": {
         "life": 1934.9992,
         "atk": 86.8871,
-        "def": 217.9202
+        "def": 210.9653
       },
       "18": {
         "life": 2004.38,
         "atk": 90.0025,
-        "def": 225.6658
+        "def": 218.4637
       },
       "19": {
         "life": 2073.8432,
         "atk": 93.1216,
-        "def": 233.4114
+        "def": 225.9621
       },
       "20": {
         "life": 2143.3064,
         "atk": 96.2407,
-        "def": 241.157
+        "def": 233.4605
       }
     },
     "1": {
       "20": {
         "life": 2692.5848,
         "atk": 123.9907,
-        "def": 302.0784
+        "def": 292.4376
       },
       "21": {
         "life": 2762.048,
         "atk": 127.1061,
-        "def": 309.824
+        "def": 299.936
       },
       "22": {
         "life": 2831.5112,
         "atk": 130.2252,
-        "def": 317.5696
+        "def": 307.4344
       },
       "23": {
         "life": 2900.892,
         "atk": 133.3443,
-        "def": 325.3152
+        "def": 314.9328
       },
       "24": {
         "life": 2970.3552,
         "atk": 136.4634,
-        "def": 333.0608
+        "def": 322.4312
       },
       "25": {
         "life": 3039.8184,
         "atk": 139.5788,
-        "def": 340.8064
+        "def": 329.9296
       },
       "26": {
         "life": 3109.2816,
         "atk": 142.6979,
-        "def": 348.552
+        "def": 337.428
       },
       "27": {
         "life": 3178.6624,
         "atk": 145.817,
-        "def": 356.2976
+        "def": 344.9264
       },
       "28": {
         "life": 3248.1256,
         "atk": 148.9324,
-        "def": 364.0432
+        "def": 352.4248
       },
       "29": {
         "life": 3317.5888,
         "atk": 152.0515,
-        "def": 371.7888
+        "def": 359.9232
       },
       "30": {
         "life": 3386.9696,
         "atk": 155.1706,
-        "def": 379.5344
+        "def": 367.4216
       },
       "31": {
         "life": 3456.4328,
         "atk": 158.286,
-        "def": 387.28
+        "def": 374.92
       },
       "32": {
         "life": 3525.896,
         "atk": 161.4051,
-        "def": 395.0256
+        "def": 382.4184
       },
       "33": {
         "life": 3595.2768,
         "atk": 164.5242,
-        "def": 402.7712
+        "def": 389.9168
       },
       "34": {
         "life": 3664.74,
         "atk": 167.6396,
-        "def": 410.5168
+        "def": 397.4152
       },
       "35": {
         "life": 3734.2032,
         "atk": 170.7587,
-        "def": 418.2624
+        "def": 404.9136
       },
       "36": {
         "life": 3803.6664,
         "atk": 173.8778,
-        "def": 426.008
+        "def": 412.412
       },
       "37": {
         "life": 3873.0472,
         "atk": 176.9969,
-        "def": 433.7536
+        "def": 419.9104
       },
       "38": {
         "life": 3942.5104,
         "atk": 180.1123,
-        "def": 441.4992
+        "def": 427.4088
       },
       "39": {
         "life": 4011.9736,
         "atk": 183.2314,
-        "def": 449.2448
+        "def": 434.9072
       },
       "40": {
         "life": 4081.3544,
         "atk": 186.3505,
-        "def": 456.9904
+        "def": 442.4056
       }
     },
     "2": {
       "40": {
         "life": 4630.7152,
         "atk": 214.1005,
-        "def": 517.9118
+        "def": 501.3827
       },
       "41": {
         "life": 4700.1784,
         "atk": 217.2159,
-        "def": 525.6574
+        "def": 508.8811
       },
       "42": {
         "life": 4769.5592,
         "atk": 220.335,
-        "def": 533.403
+        "def": 516.3795
       },
       "43": {
         "life": 4839.0224,
         "atk": 223.4541,
-        "def": 541.1486
+        "def": 523.8779
       },
       "44": {
         "life": 4908.4856,
         "atk": 226.5695,
-        "def": 548.8942
+        "def": 531.3763
       },
       "45": {
         "life": 4977.8664,
         "atk": 229.6886,
-        "def": 556.6398
+        "def": 538.8747
       },
       "46": {
         "life": 5047.3296,
         "atk": 232.8077,
-        "def": 564.3854
+        "def": 546.3731
       },
       "47": {
         "life": 5116.7928,
         "atk": 235.9268,
-        "def": 572.131
+        "def": 553.8715
       },
       "48": {
         "life": 5186.256,
         "atk": 239.0422,
-        "def": 579.8766
+        "def": 561.3699
       },
       "49": {
         "life": 5255.6368,
         "atk": 242.1613,
-        "def": 587.6222
+        "def": 568.8683
       },
       "50": {
         "life": 5325.1,
         "atk": 245.2804,
-        "def": 595.3678
+        "def": 576.3667
       }
     },
     "3": {
       "50": {
         "life": 5874.4608,
         "atk": 273.0304,
-        "def": 656.2892
+        "def": 635.3438
       },
       "51": {
         "life": 5943.8416,
         "atk": 276.1458,
-        "def": 664.0348
+        "def": 642.8422
       },
       "52": {
         "life": 6013.3048,
         "atk": 279.2649,
-        "def": 671.7804
+        "def": 650.3406
       },
       "53": {
         "life": 6082.768,
         "atk": 282.384,
-        "def": 679.526
+        "def": 657.839
       },
       "54": {
         "life": 6152.1488,
         "atk": 285.4994,
-        "def": 687.2716
+        "def": 665.3374
       },
       "55": {
         "life": 6221.612,
         "atk": 288.6185,
-        "def": 695.0172
+        "def": 672.8358
       },
       "56": {
         "life": 6291.0752,
         "atk": 291.7376,
-        "def": 702.7628
+        "def": 680.3342
       },
       "57": {
         "life": 6360.5384,
         "atk": 294.8567,
-        "def": 710.5084
+        "def": 687.8326
       },
       "58": {
         "life": 6429.9192,
         "atk": 297.9721,
-        "def": 718.254
+        "def": 695.331
       },
       "59": {
         "life": 6499.3824,
         "atk": 301.0912,
-        "def": 725.9996
+        "def": 702.8294
       },
       "60": {
         "life": 6568.8456,
         "atk": 304.2103,
-        "def": 733.7452
+        "def": 710.3278
       }
     },
     "4": {
       "60": {
         "life": 7118.124,
         "atk": 331.9603,
-        "def": 794.676
+        "def": 769.314
       },
       "61": {
         "life": 7187.5872,
         "atk": 335.0757,
-        "def": 802.4216
+        "def": 776.8124
       },
       "62": {
         "life": 7257.0504,
         "atk": 338.1948,
-        "def": 810.1672
+        "def": 784.3108
       },
       "63": {
         "life": 7326.4312,
         "atk": 341.3139,
-        "def": 817.9128
+        "def": 791.8092
       },
       "64": {
         "life": 7395.8944,
         "atk": 344.4293,
-        "def": 825.6584
+        "def": 799.3076
       },
       "65": {
         "life": 7465.3576,
         "atk": 347.5484,
-        "def": 833.404
+        "def": 806.806
       },
       "66": {
         "life": 7534.7384,
         "atk": 350.6675,
-        "def": 841.1402
+        "def": 814.2953
       },
       "67": {
         "life": 7604.2016,
         "atk": 353.7829,
-        "def": 848.8858
+        "def": 821.7937
       },
       "68": {
         "life": 7673.6648,
         "atk": 356.902,
-        "def": 856.6314
+        "def": 829.2921
       },
       "69": {
         "life": 7743.128,
         "atk": 360.0211,
-        "def": 864.377
+        "def": 836.7905
       },
       "70": {
         "life": 7812.5088,
         "atk": 363.1402,
-        "def": 872.1226
+        "def": 844.2889
       }
     },
     "5": {
       "70": {
         "life": 8361.8696,
         "atk": 381.6402,
-        "def": 933.0534
+        "def": 903.2751
       },
       "71": {
         "life": 8431.3328,
         "atk": 384.7556,
-        "def": 940.799
+        "def": 910.7735
       },
       "72": {
         "life": 8500.7136,
         "atk": 387.8747,
-        "def": 948.5446
+        "def": 918.2719
       },
       "73": {
         "life": 8570.1768,
         "atk": 390.9938,
-        "def": 956.2902
+        "def": 925.7703
       },
       "74": {
         "life": 8639.64,
         "atk": 394.1092,
-        "def": 964.0358
+        "def": 933.2687
       },
       "75": {
         "life": 8709.0208,
         "atk": 397.2283,
-        "def": 971.7814
+        "def": 940.7671
       },
       "76": {
         "life": 8778.484,
         "atk": 400.3474,
-        "def": 979.527
+        "def": 948.2655
       },
       "77": {
         "life": 8847.9472,
         "atk": 403.4628,
-        "def": 987.2726
+        "def": 955.7639
       },
       "78": {
         "life": 8917.328,
         "atk": 406.5819,
-        "def": 995.0182
+        "def": 963.2623
       },
       "79": {
         "life": 8986.7912,
         "atk": 409.701,
-        "def": 1002.7638
+        "def": 970.7607
       },
       "80": {
         "life": 9056.2544,
         "atk": 412.8201,
-        "def": 1010.5094
+        "def": 978.2591
       }
     },
     "6": {
       "80": {
         "life": 9605.6152,
         "atk": 431.3201,
-        "def": 1071.4308
+        "def": 1037.2362
       },
       "81": {
         "life": 9674.996,
         "atk": 434.4355,
-        "def": 1079.1764
+        "def": 1044.7346
       },
       "82": {
         "life": 9744.4592,
         "atk": 437.5546,
-        "def": 1086.922
+        "def": 1052.233
       },
       "83": {
         "life": 9813.9224,
         "atk": 440.6737,
-        "def": 1094.6676
+        "def": 1059.7314
       },
       "84": {
         "life": 9883.3032,
         "atk": 443.7891,
-        "def": 1102.4132
+        "def": 1067.2298
       },
       "85": {
         "life": 9952.7664,
         "atk": 446.9082,
-        "def": 1110.1588
+        "def": 1074.7282
       },
       "86": {
         "life": 10022.2296,
         "atk": 450.0273,
-        "def": 1117.9044
+        "def": 1082.2266
       },
       "87": {
         "life": 10091.6104,
         "atk": 453.1427,
-        "def": 1125.65
+        "def": 1089.725
       },
       "88": {
         "life": 10161.0736,
         "atk": 456.2618,
-        "def": 1133.3956
+        "def": 1097.2234
       },
       "89": {
         "life": 10230.5368,
         "atk": 459.3809,
-        "def": 1141.1412
+        "def": 1104.7218
       },
       "90": {
         "life": 10300.0,
         "atk": 462.5,
-        "def": 1148.8868
+        "def": 1112.2202
       }
     }
   },
@@ -503,7 +503,7 @@
     "1": {
       "skill": {
         "name": "拢伞形",
-        "desc": "<color=Title>普攻</color>\n进行最多三段的连续攻击，造成<color=Thunder>导电伤害</color>。\n\n<color=Title>普攻·解伞形</color>\n<color=Highlight>念深</color>状态下，<color=Highlight>普攻</color>替换为<color=Highlight>普攻·解伞形</color>，进行最多四段的连续攻击，造成<color=Thunder>导电伤害</color>。\n\n<color=Title>普攻·解伞形·旋雷破</color>\n施放<color=Highlight>普攻·解伞形</color>第二段后一定时间内，长按<color=Highlight>普攻</color>可连续施放<color=Highlight>普攻·解伞形·旋雷破</color>第一段、<color=Highlight>普攻·解伞形·旋雷破</color>第二段，造成<color=Thunder>导电伤害</color>。\n\n<color=Title>空中攻击</color>\n消耗耐力进行空中下落攻击，造成<color=Thunder>导电伤害</color>。\n\n<color=Title>闪避反击</color>\n成功<color=Highlight>闪避</color>一定时间内短按<color=Highlight>普攻</color>，将会攻击目标，造成<color=Thunder>导电伤害</color>。\n·<color=Highlight>念深</color>状态下，<color=Highlight>闪避反击</color>替换为普攻<color=Highlight>闪避反击·解伞形</color>。\n·施放该技能后一定时间内，短按<color=Highlight>普攻</color>可施放<color=Highlight>普攻</color>第三段。\n\n<color=Title>闪避反击·解伞形</color>\n成功<color=Highlight>闪避</color>一定时间内短按<color=Highlight>普攻</color>，将会攻击目标，造成<color=Thunder>导电伤害</color>。\n·施放该技能后一定时间内，短按<color=Highlight>普攻</color>可施放<color=Highlight>普攻·解伞形</color>第三段。\n·施放该技能后一定时间内，长按<color=Highlight>普攻</color>可施放<color=Highlight>普攻·解伞形·旋雷破</color>第一段，造成<color=Thunder>导电伤害</color>。",
+        "desc": "<color=Title>普攻</color>\n连续短按或按住<color=Highlight>普攻</color>，进行最多3段的连续攻击，造成<color=Thunder>导电伤害</color>。\n\n<color=Title>普攻·解伞形</color>\n<color=Highlight>念深</color>状态下，<color=Highlight>普攻</color>替换为<color=Highlight>普攻·解伞形</color>，进行最多4段的连续攻击，造成<color=Thunder>导电伤害</color>；\n长按<color=Highlight>普攻</color>，可连续施放<color=Highlight>普攻·解伞形第1段</color>、<color=Highlight>普攻·解伞形第2段</color>；\n施放<color=Highlight>普攻·解伞形第2段</color>后一定时间内，按住<color=Highlight>普攻</color>，可连续施放<color=Highlight>普攻·解伞形·旋雷破第1段</color>、<color=Highlight>普攻·解伞形·旋雷破第2段</color>；\n施放<color=Highlight>普攻·解伞形第3段</color>后一定时间内，按住<color=Highlight>普攻</color>，将会施放<color=Highlight>普攻·解伞形第4段</color>；\n施放<color=Highlight>普攻·解伞形·旋雷破第1段</color>后一定时间内，短按或按住<color=Highlight>普攻</color>，将会施放<color=Highlight>普攻·解伞形·旋雷破第2段</color>。\n\n<color=Title>普攻·解伞形·旋雷破</color>\n造成<color=Thunder>导电伤害</color>。\n\n<color=Title>空中攻击</color>\n消耗耐力进行空中下落攻击，造成<color=Thunder>导电伤害</color>。\n\n<color=Title>闪避反击</color>\n成功闪避后一定时间内短按<color=Highlight>普攻</color>，将会攻击目标，造成<color=Thunder>导电伤害</color>。\n·<color=Highlight>念深</color>状态下，<color=Highlight>闪避反击</color>替换为<color=Highlight>闪避反击·解伞形</color>。\n·施放该技能后一定时间内，短按<color=Highlight>普攻</color>可施放<color=Highlight>普攻第3段</color>。\n\n<color=Title>闪避反击·解伞形</color>\n成功<color=Highlight>闪避</color>一定时间内短按<color=Highlight>普攻</color>，将会攻击目标，造成<color=Thunder>导电伤害</color>。\n·施放该技能后一定时间内，短按<color=Highlight>普攻</color>可施放<color=Highlight>普攻·解伞形第3段</color>。\n·施放该技能后一定时间内，长按<color=Highlight>普攻</color>可施放<color=Highlight>普攻·解伞形·旋雷破第1段</color>，造成<color=Thunder>导电伤害</color>。",
         "param": [],
         "type": "常态攻击",
         "level": {
@@ -673,26 +673,26 @@
             "name": "普攻·解伞形第四段伤害",
             "param": [
               [
-                "53.95%+53.95%+71.93%",
-                "58.37%+58.37%+77.83%",
-                "62.80%+62.80%+83.73%",
-                "68.99%+68.99%+91.98%",
-                "73.41%+73.41%+97.88%",
-                "78.50%+78.50%+104.66%",
-                "85.58%+85.58%+114.10%",
-                "92.65%+92.65%+123.54%",
-                "99.73%+99.73%+132.97%",
-                "107.25%+107.25%+143.00%",
-                "116.10%+116.10%+154.80%",
-                "124.95%+124.95%+166.59%",
-                "133.79%+133.79%+178.39%",
-                "142.64%+142.64%+190.18%",
-                "151.49%+151.49%+201.98%",
-                "160.33%+160.33%+213.78%",
-                "169.18%+169.18%+225.57%",
-                "178.03%+178.03%+237.37%",
-                "186.87%+186.87%+249.16%",
-                "195.72%+195.72%+260.96%"
+                "53.95%+53.95%+23.98%*3",
+                "58.37%+58.37%+25.95%*3",
+                "62.80%+62.80%+27.91%*3",
+                "68.99%+68.99%+30.66%*3",
+                "73.41%+73.41%+32.63%*3",
+                "78.50%+78.50%+34.89%*3",
+                "85.58%+85.58%+38.04%*3",
+                "92.65%+92.65%+41.18%*3",
+                "99.73%+99.73%+44.33%*3",
+                "107.25%+107.25%+47.67%*3",
+                "116.10%+116.10%+51.60%*3",
+                "124.95%+124.95%+55.53%*3",
+                "133.79%+133.79%+59.47%*3",
+                "142.64%+142.64%+63.40%*3",
+                "151.49%+151.49%+67.33%*3",
+                "160.33%+160.33%+71.26%*3",
+                "169.18%+169.18%+75.19%*3",
+                "178.03%+178.03%+79.13%*3",
+                "186.87%+186.87%+83.06%*3",
+                "195.72%+195.72%+86.99%*3"
               ]
             ]
           },
@@ -982,7 +982,7 @@
     "2": {
       "skill": {
         "name": "拢伞形·破隙",
-        "desc": "攻击范围内的目标，造成<color=Thunder>导电伤害</color>。\n·即将受到敌方目标攻击时，施放<color=Highlight>共鸣技能</color>，免疫此次伤害并停滞周围的目标，此次<color=Highlight>共鸣技能</color>免疫打断，并施放<color=Highlight>共鸣技能·解伞形·赤芒瞬闪</color>。\n·进入<color=Highlight>念深</color>状态时，<color=Highlight>共鸣技能</color>刷新冷却时间。\n·<color=Highlight>念起</color>状态下，施放该技能后一定时间内，短按<color=Highlight>普攻</color>可施放<color=Highlight>普攻</color>第二段。\n·<color=Highlight>念深</color>状态下，施放该技能后一定时间内，短按<color=Highlight>普攻</color>衔接<color=Highlight>普攻·解伞形</color>第三段。\n\n<color=Title>共鸣技能·解伞形·赤芒瞬闪</color>\n攻击范围内的目标，造成<color=Thunder>导电伤害</color>。\n·<color=Highlight>念起</color>状态下，施放该技能后一定时间内，短按<color=Highlight>普攻</color>可施放<color=Highlight>普攻</color>第三段。\n·<color=Highlight>念深</color>状态下，施放该技能后一定时间内，短按<color=Highlight>普攻</color>衔接<color=Highlight>普攻·解伞形</color>第四段。",
+        "desc": "攻击范围内的目标，造成<color=Thunder>导电伤害</color>。\n·开伞向前冲击的一定时间内受到敌方目标攻击，免疫此次伤害并停滞周围的目标，随后一定时间内免疫打断且受到的伤害降低100%，并施放<color=Highlight>共鸣技能·解伞形·赤芒瞬闪</color>。\n·进入<color=Highlight>念深</color>状态时，<color=Highlight>共鸣技能</color>刷新冷却时间。\n·<color=Highlight>念起</color>状态下，施放该技能后一定时间内，短按<color=Highlight>普攻</color>可施放<color=Highlight>普攻第2段</color>。\n·<color=Highlight>念深</color>状态下，施放该技能后一定时间内，短按<color=Highlight>普攻</color>衔接<color=Highlight>普攻·解伞形第3段</color>。\n\n<color=Title>共鸣技能·解伞形·赤芒瞬闪</color>\n攻击范围内的目标，造成<color=Thunder>导电伤害</color>。\n·<color=Highlight>念起</color>状态下，施放该技能后一定时间内，短按<color=Highlight>普攻</color>可施放<color=Highlight>普攻第3段</color>。\n·<color=Highlight>念深</color>状态下，施放该技能后一定时间内，短按<color=Highlight>普攻</color>衔接<color=Highlight>普攻·解伞形第4段</color>。",
         "param": [],
         "type": "共鸣技能",
         "level": {
@@ -1041,7 +1041,7 @@
             ]
           },
           "13-3": {
-            "name": "共鸣技能·拢伞形·破隙伤害冷却时间",
+            "name": "共鸣技能·拢伞形·破隙冷却时间",
             "param": [
               [
                 "8",
@@ -1218,7 +1218,7 @@
     "3": {
       "skill": {
         "name": "暝伞形·重锁狱瘴",
-        "desc": "<color=Highlight>念深</color>状态下，解锁<color=Highlight>共鸣解放</color>，施放后对范围内目标造成<color=Thunder>导电伤害</color>。\n·施放<color=Highlight>共鸣解放</color>时，锁暝获得<color=Highlight>同奏</color>，持续{0}秒，每{1}秒内只能获得1次。\n\n<color=Title>凄雨瘴雷</color>\n施放<color=Highlight>延奏技能</color>时，若锁暝拥有<color=Highlight>同奏</color>，队伍中在场角色造成伤害时，会召唤<color=Highlight>雷痕</color>对目标进行协同攻击，造成<color=Thunder>导电伤害</color>。\n·造成伤害的接下来的{2}秒内，每秒可召唤1道<color=Highlight>雷痕</color>，该效果每秒可触发1次。<color=Highlight>雷痕</color>造成的伤害不会触发该效果。\n·<color=Highlight>雷痕</color>每秒最多召唤1道，共可召唤{3}道。\n·效果持续{4}秒，或持续至<color=Highlight>雷痕</color>达到最大召唤数。",
+        "desc": "<color=Highlight>念深</color>状态下，解锁<color=Highlight>共鸣解放</color>，施放后对范围内目标造成<color=Thunder>导电伤害</color>。\n可在低空中施放。\n·施放<color=Highlight>共鸣解放</color>时，锁暝获得<color=Highlight>同奏</color>，持续{0}秒，每{1}秒内只能获得1次。\n\n<color=Title>凄雨瘴雷</color>\n施放<color=Highlight>延奏技能</color>时，若锁暝拥有<color=Highlight>同奏</color>，队伍中在场角色造成伤害时，会召唤<color=Highlight>雷痕</color>对目标进行协同攻击，造成<color=Thunder>导电伤害</color>。\n·造成伤害的接下来的{2}秒内，每秒可召唤1道<color=Highlight>雷痕</color>，该效果每秒可触发1次。<color=Highlight>雷痕</color>造成的伤害不会触发该效果。\n·<color=Highlight>雷痕</color>每秒最多召唤1道，共可召唤{3}道。\n·效果持续{4}秒，或持续至<color=Highlight>雷痕</color>达到最大召唤数。",
         "param": [
           "5",
           "25",
@@ -1228,34 +1228,34 @@
         ],
         "type": "共鸣解放",
         "level": {
-          "17": {
+          "19": {
             "name": "共鸣解放·暝伞形·重锁狱瘴伤害",
             "param": [
               [
-                "35.00%*7+105.00%",
-                "37.87%*7+113.61%",
-                "40.74%*7+122.22%",
-                "44.76%*7+134.28%",
-                "47.63%*7+142.89%",
-                "50.93%*7+152.79%",
-                "55.53%*7+166.57%",
-                "60.12%*7+180.34%",
-                "64.71%*7+194.12%",
-                "69.59%*7+208.76%",
-                "75.33%*7+225.98%",
-                "81.07%*7+243.20%",
-                "86.81%*7+260.42%",
-                "92.55%*7+277.64%",
-                "98.29%*7+294.86%",
-                "104.03%*7+312.08%",
-                "109.77%*7+329.30%",
-                "115.51%*7+346.52%",
-                "121.25%*7+363.74%",
-                "126.99%*7+380.96%"
+                "30.63%*8+105.00%",
+                "33.14%*8+113.61%",
+                "35.65%*8+122.22%",
+                "39.17%*8+134.28%",
+                "41.68%*8+142.89%",
+                "44.57%*8+152.79%",
+                "48.59%*8+166.57%",
+                "52.60%*8+180.34%",
+                "56.62%*8+194.12%",
+                "60.89%*8+208.76%",
+                "65.91%*8+225.98%",
+                "70.94%*8+243.20%",
+                "75.96%*8+260.42%",
+                "80.98%*8+277.64%",
+                "86.00%*8+294.86%",
+                "91.03%*8+312.08%",
+                "96.05%*8+329.30%",
+                "101.07%*8+346.52%",
+                "106.09%*8+363.74%",
+                "111.12%*8+380.96%"
               ]
             ]
           },
-          "18": {
+          "20": {
             "name": "共鸣解放·暝伞形·重锁狱瘴冷却时间",
             "param": [
               [
@@ -1282,7 +1282,7 @@
               ]
             ]
           },
-          "19": {
+          "21": {
             "name": "消耗共鸣能量",
             "param": [
               [
@@ -1309,7 +1309,7 @@
               ]
             ]
           },
-          "20": {
+          "22": {
             "name": "回复协奏能量",
             "param": [
               [
@@ -1336,7 +1336,7 @@
               ]
             ]
           },
-          "21": {
+          "23": {
             "name": "共鸣解放·凄雨瘴雷伤害",
             "param": [
               [
@@ -1514,9 +1514,9 @@
     "4": {
       "skill": {
         "name": "雨浸旧契",
-        "desc": "施放<color=Highlight>变奏技能·拢伞形·闪裂</color>、<color=Highlight>变奏技能·解伞形·碎霆</color>、<color=Highlight>变奏技能·拢伞形·锁妄念·同奏</color>或<color=Highlight>变奏技能·解伞形·旋雷破·同奏</color>时，导电伤害加成提升{0}%，持续{1}秒。若切换至其他角色则该效果提前结束。\n·锁暝施放<color=Highlight>变奏技能·拢伞形·锁妄念·同奏</color>或<color=Highlight>变奏技能·解伞形·旋雷破·同奏</color>时，额外获得{2}协奏能量，每{3}秒只能获得1次。",
+        "desc": "施放<color=Highlight>变奏技能·拢伞形·闪裂</color>、<color=Highlight>变奏技能·解伞形·碎霆</color>、<color=Highlight>变奏技能·拢伞形·锁妄念·同奏</color>或<color=Highlight>变奏技能·解伞形·旋雷破·同奏</color>时，导电伤害加成提升{0}，持续{1}秒。若切换至其他角色则该效果提前结束。\n·锁暝施放<color=Highlight>变奏技能·拢伞形·锁妄念·同奏</color>或<color=Highlight>变奏技能·解伞形·旋雷破·同奏</color>时，额外获得{2}点协奏能量，每{3}秒只能获得1次。",
         "param": [
-          "50",
+          "50%",
           "15",
           "10",
           "25"
@@ -1548,16 +1548,18 @@
     "5": {
       "skill": {
         "name": "沉契凝锁",
-        "desc": "锁暝拥有<color=Highlight>同奏</color>并切换角色时，获得<color=Highlight>协契</color>效果，持续{0}秒。\n该效果存在期间，锁冥施放<color=Highlight>延奏技能</color>时，下一个登场的角色导电伤害加成提升{1}%，每拥有一层<color=Highlight>【同奏增益】</color>，导电伤害加成额外提升{2}%，最多提升{3}%，持续{4}秒，若切换至其他角色则该效果提前结束。\n\n锁暝拥有<color=Highlight>同奏</color>时，若施放<color=Highlight>共鸣技能·拢伞形·破隙</color>则移除<color=Highlight>同奏</color>，消耗{5}点协奏能量并清空<color=Highlight>【妄执】</color>，获得<color=Highlight>禁锁契主</color>效果，使<color=Highlight>普攻·解伞形</color>和<color=Highlight>普攻·解伞形·旋雷破</color>的倍率提升{6}%，并使自身暴击伤害提升{7}%，持续{8}秒，若切换至其他角色则该效果提前结束。\n·自身获得<color=Highlight>同奏</color>时，该效果提前结束。\n·获得<color=Highlight>协契</color>效果时，该效果提前结束。\n·<color=Highlight>协契</color>效果存在期间，无法获得<color=Highlight>禁锁契主</color>效果。\n·<color=Highlight>禁锁契主</color>效果期间，施放<color=Highlight>普攻·解伞形</color>第四段后，短按<color=Highlight>普攻</color>可衔接<color=Highlight>普攻·解伞形</color>第二段。",
+        "desc": "锁暝拥有<color=Highlight>同奏</color>并切换角色时，获得<color=Highlight>协契</color>效果，持续{0}秒。\n锁暝施放<color=Highlight>共鸣解放</color>或<color=Highlight>普攻·暝伞形·刻心念</color>后{1}秒内，施放<color=Highlight>延奏技能</color>时，如果获得<color=Highlight>协契</color>效果或处于<color=Highlight>协契</color>效果期间，下一个登场的角色导电伤害加成提升{2}，每拥有一层<color=Highlight>【同奏增益】</color>，导电伤害加成额外提升{3}，最多提升{4}，持续{5}秒，若切换至其他角色则该效果提前结束。\n\n锁暝拥有<color=Highlight>同奏</color>时，若施放<color=Highlight>共鸣技能·拢伞形·破隙</color>则移除<color=Highlight>同奏</color>及<color=Highlight>【同奏增益】</color>，消耗{6}点协奏能量并清空<color=Highlight>【妄执】</color>，获得<color=Highlight>禁锁契主</color>效果，使<color=Highlight>普攻·解伞形</color>和<color=Highlight>普攻·解伞形·旋雷破</color>的倍率提升{7}，且每段技能命中时额外回复{8}点协奏能量；并使自身暴击伤害提升{9}，持续{10}秒，若切换至其他角色则该效果提前结束。\n·自身获得<color=Highlight>同奏</color>时，该效果提前结束。\n·获得<color=Highlight>协契</color>效果时，该效果提前结束。\n·<color=Highlight>协契</color>效果存在期间，无法获得<color=Highlight>禁锁契主</color>效果。\n·<color=Highlight>禁锁契主</color>效果期间，施放<color=Highlight>普攻·解伞形</color>第四段后，短按<color=Highlight>普攻</color>可衔接<color=Highlight>普攻·解伞形第2段</color>。",
         "param": [
           "30",
-          "30",
-          "20",
-          "40",
+          "8",
+          "30%",
+          "20%",
+          "40%",
           "8",
           "20",
-          "40",
-          "80",
+          "100%",
+          "5",
+          "100%",
           "12"
         ],
         "type": "固有技能",
@@ -1587,11 +1589,11 @@
     "6": {
       "skill": {
         "name": "拢伞形·闪裂",
-        "desc": "攻击目标，造成<color=Thunder>导电伤害</color>，本次伤害视为<color=Highlight>普攻伤害</color>。\n·<color=Highlight>念起</color>状态下，施放该技能时，锁暝进入<color=Highlight>念深</color>状态并清空<color=Highlight>【妄执】</color>。\n·<color=Highlight>念深</color>状态下，<color=Highlight>变奏技能</color>替换为<color=Highlight>变奏技能·解伞形·碎霆</color>。\n·<color=Highlight>念起</color>状态下，响应同奏时，<color=Highlight>变奏技能</color>替换为<color=Highlight>变奏技能·拢伞形·锁妄念·同奏</color>。\n·<color=Highlight>念深</color>状态下，响应同奏时，<color=Highlight>变奏技能</color>替换为<color=Highlight>变奏技能·解伞形·旋雷破·同奏</color>。\n\n<color=Title>变奏技能·解伞形·碎霆</color>\n造成<color=Thunder>导电伤害</color>，本次伤害视为<color=Highlight>普攻伤害</color>。\n·施放该技能后一定时间内，短按<color=Highlight>普攻</color>将衔接<color=Highlight>普攻·解伞形·旋雷破</color>第二段。\n\n<color=Title>变奏技能·拢伞形·锁妄念·同奏</color>\n攻击目标，造成<color=Thunder>导电伤害</color>，本次伤害视为<color=Highlight>普攻伤害</color>。\n·施放该技能时，锁暝进入<color=Highlight>念深</color>状态并清空<color=Highlight>【妄执】</color>。\n\n<color=Title>变奏技能·解伞形·旋雷破·同奏</color>\n攻击目标，造成<color=Thunder>导电伤害</color>，本次伤害视为<color=Highlight>普攻伤害</color>。\n·<color=Highlight>念深</color>状态下，施放<color=Highlight>变奏技能·解伞形·旋雷破·同奏</color>后一定时间内，短按<color=Highlight>普攻</color>将衔接<color=Highlight>普攻·解伞形·旋雷破</color>第二段。",
+        "desc": "攻击目标，造成<color=Thunder>导电伤害</color>，本次伤害视为<color=Highlight>普攻伤害</color>。\n·<color=Highlight>念起</color>状态下，施放该技能时，锁暝进入<color=Highlight>念深</color>状态并清空<color=Highlight>【妄执】</color>。\n·<color=Highlight>念深</color>状态下，<color=Highlight>变奏技能</color>替换为<color=Highlight>变奏技能·解伞形·碎霆</color>。\n·<color=Highlight>念起</color>状态下，响应同奏时，<color=Highlight>变奏技能</color>替换为<color=Highlight>变奏技能·拢伞形·锁妄念·同奏</color>。\n·<color=Highlight>念深</color>状态下，响应同奏时，<color=Highlight>变奏技能</color>替换为<color=Highlight>变奏技能·解伞形·旋雷破·同奏</color>。\n\n<color=Title>变奏技能·解伞形·碎霆</color>\n造成<color=Thunder>导电伤害</color>，本次伤害视为<color=Highlight>普攻伤害</color>。\n·施放该技能后一定时间内，短按<color=Highlight>普攻</color>将衔接<color=Highlight>普攻·解伞形·旋雷破第2段</color>。\n\n<color=Title>变奏技能·拢伞形·锁妄念·同奏</color>\n攻击目标，造成<color=Thunder>导电伤害</color>，本次伤害视为<color=Highlight>普攻伤害</color>。\n·施放该技能时，锁暝进入<color=Highlight>念深</color>状态并清空<color=Highlight>【妄执】</color>。\n\n<color=Title>变奏技能·解伞形·旋雷破·同奏</color>\n攻击目标，造成<color=Thunder>导电伤害</color>，本次伤害视为<color=Highlight>普攻伤害</color>。\n·<color=Highlight>念深</color>状态下，施放<color=Highlight>变奏技能·解伞形·旋雷破·同奏</color>后一定时间内，短按<color=Highlight>普攻</color>将衔接<color=Highlight>普攻·解伞形·旋雷破第2段</color>。",
         "param": [],
         "type": "变奏技能",
         "level": {
-          "22": {
+          "24": {
             "name": "变奏技能·拢伞形·闪裂伤害",
             "param": [
               [
@@ -1618,7 +1620,7 @@
               ]
             ]
           },
-          "23": {
+          "25": {
             "name": "变奏技能·解伞形·碎霆伤害",
             "param": [
               [
@@ -1645,7 +1647,7 @@
               ]
             ]
           },
-          "24": {
+          "26": {
             "name": "变奏技能·拢伞形·锁妄念·同奏伤害",
             "param": [
               [
@@ -1672,7 +1674,7 @@
               ]
             ]
           },
-          "25": {
+          "27": {
             "name": "变奏技能·解伞形·旋雷破·同奏伤害",
             "param": [
               [
@@ -1699,7 +1701,7 @@
               ]
             ]
           },
-          "26": {
+          "28": {
             "name": "施放变奏技能·拢伞形·闪裂回复协奏能量",
             "param": [
               [
@@ -1726,7 +1728,7 @@
               ]
             ]
           },
-          "27": {
+          "29": {
             "name": "施放变奏技能·解伞形·碎霆回复协奏能量",
             "param": [
               [
@@ -1753,7 +1755,7 @@
               ]
             ]
           },
-          "28": {
+          "30": {
             "name": "变奏技能·拢伞形·锁妄念·同奏回复协奏能量",
             "param": [
               [
@@ -1780,7 +1782,7 @@
               ]
             ]
           },
-          "29": {
+          "31": {
             "name": "变奏技能·解伞形·旋雷破·同奏回复协奏能量",
             "param": [
               [
@@ -1958,11 +1960,14 @@
     "7": {
       "skill": {
         "name": "囚执化念",
-        "desc": "<color=Title>共鸣技能·拢伞形·锁妄念</color>\n<color=Highlight>念起</color>状态下，<color=Highlight>【妄执】</color>达到{4}点时，<color=Highlight>共鸣技能</color>替换为<color=Highlight>共鸣技能·拢伞形·锁妄念</color>，造成<color=Thunder>导电伤害</color>，本次伤害视为<color=Highlight>普攻伤害</color>。\n·施放该技能时，锁暝进入<color=Highlight>念深</color>并清空<color=Highlight>【妄执】</color>。\n\n<color=Title>共鸣技能·解伞形·无舍念</color>\n<color=Highlight>念深</color>状态下，<color=Highlight>【妄执】</color>达到{4}点时，<color=Highlight>共鸣技能</color>替换为<color=Highlight>共鸣技能·解伞形·无舍念</color>，造成<color=Thunder>导电伤害</color>，本次伤害视为<color=Highlight>普攻伤害</color>。\n\n<color=Title>普攻·暝伞形·刻心念</color>\n施放<color=Highlight>共鸣技能·解伞形·无舍念</color>后，<color=Highlight>普攻</color>替换为<color=Highlight>普攻·暝伞形·刻心念</color>。点按或长按<color=Highlight>普攻</color>或<color=Highlight>共鸣技能</color>施放该技能。攻击范围内目标，造成<color=Thunder>导电伤害</color>，本次伤害视为<color=Highlight>普攻伤害</color>。\n·施放该技能时，进入<color=Highlight>念劫</color>并清空<color=Highlight>【妄执】</color>，技能结束后进入<color=Highlight>念起</color>。\n·施放该技能时，按住<color=Highlight>普攻</color>或<color=Highlight>共鸣技能</color>，可持续攻击目标一定时间。\n·施放该技能时，锁暝免疫打断，期间无法移动、冲刺、跳跃、闪避或施放<color=Highlight>普攻</color>、<color=Highlight>共鸣技能</color>、<color=Highlight>共鸣解放</color>、<color=Highlight>闪避反击</color>、<color=Highlight>下落攻击</color>、<color=Highlight>空中攻击</color>、<color=Highlight>变奏技能</color>、且期间不能切换角色。\n\n<color=Title>同奏</color>\n锁暝拥有<color=Highlight>同奏</color>时，若切换其他角色，登场角色将施放自身变奏技能，锁暝则施放自身延奏技能，并移除其自身的<color=Highlight>同奏</color>效果。锁暝协奏能量达到最大值，并且拥有<color=Highlight>同奏</color>效果时，只消耗<color=Highlight>同奏</color>效果。\n\n<color=Title>响应同奏</color>\n锁暝拥有<color=Highlight>响应同奏</color>的能力\n队伍中的角色拥有<color=Highlight>同奏</color>时，若切换至锁暝，队伍中的角色获得{0}层<color=Highlight>【同奏增益】</color>，持续{1}秒。\n锁暝至多以此方式提供{0}层<color=Highlight>【同奏增益】</color>，重复获得刷新持续时间。\n\n<color=Title>同奏增益</color>\n每层<color=Highlight>【同奏增益】</color>使队伍中可<color=Highlight>响应同奏</color>的角色造成的最终伤害提升{2}%，可叠加{3}层。\n\n<color=Title>【妄执】获取规则</color>\n【妄执】上限为{4}点。\n·施放<color=Highlight>普攻</color>、<color=Highlight>普攻·解伞形</color>、<color=Highlight>普攻·解伞形·旋雷破</color>命中目标时，获得【妄执】。\n·施放<color=Highlight>共鸣解放</color>时，获得{5}点【妄执】。\n·施放<color=Highlight>变奏技能·解伞形·碎霆</color>或<color=Highlight>变奏技能·解伞形·旋雷破·同奏</color>时，获得{6}点【妄执】。\n\n<color=Title>契锁</color>\n若锁暝不为队伍中登场角色时，无法通过攻击命中回复【妄执】、共鸣能量和协奏能量。",
+        "desc": "<color=Title>共鸣技能·拢伞形·锁妄念</color>\n<color=Highlight>念起</color>状态下，<color=Highlight>【妄执】</color>达到{0}点时，<color=Highlight>共鸣技能</color>替换为<color=Highlight>共鸣技能·拢伞形·锁妄念</color>，造成<color=Thunder>导电伤害</color>，本次伤害视为<color=Highlight>普攻伤害</color>。\n·施放该技能时，锁暝进入<color=Highlight>念深</color>并清空<color=Highlight>【妄执】</color>。\n\n<color=Title>共鸣技能·解伞形·无舍念</color>\n<color=Highlight>念深</color>状态下，<color=Highlight>【妄执】</color>达到{1}点时，<color=Highlight>共鸣技能</color>替换为<color=Highlight>共鸣技能·解伞形·无舍念</color>，牵引附近目标，造成<color=Thunder>导电伤害</color>，本次伤害视为<color=Highlight>普攻伤害</color>。\n\n<color=Title>普攻·暝伞形·刻心念</color>\n施放<color=Highlight>共鸣技能·解伞形·无舍念</color>后一定时间内，<color=Highlight>普攻</color>、<color=Highlight>共鸣技能</color>替换为<color=Highlight>普攻·暝伞形·刻心念</color>。点按或长按<color=Highlight>普攻</color>或<color=Highlight>共鸣技能</color>施放该技能。攻击范围内目标，造成<color=Thunder>导电伤害</color>，本次伤害视为<color=Highlight>普攻伤害</color>。\n·施放该技能时，进入<color=Highlight>念劫</color>并清空<color=Highlight>【妄执】</color>，技能结束后进入<color=Highlight>念起</color>。\n·施放该技能时，按住<color=Highlight>普攻</color>或<color=Highlight>共鸣技能</color>，可持续攻击目标一定时间。\n·施放该技能时，一定时间内锁暝免疫伤害和受击，期间无法移动、冲刺、跳跃、闪避或施放<color=Highlight>普攻</color>、<color=Highlight>共鸣技能</color>、<color=Highlight>共鸣解放</color>、<color=Highlight>闪避反击</color>、<color=Highlight>下落攻击</color>、<color=Highlight>空中攻击</color>、<color=Highlight>变奏技能</color>、且期间不能切换角色。\n\n<color=Title>同奏</color>\n锁暝拥有<color=Highlight>同奏</color>时，若切换其他角色，登场角色将施放自身变奏技能，锁暝则施放自身延奏技能，并移除其自身的<color=Highlight>同奏</color>效果。锁暝协奏能量达到最大值，并且拥有<color=Highlight>同奏</color>效果时，只消耗<color=Highlight>同奏</color>效果。\n\n<color=Title>响应同奏</color>\n锁暝拥有<color=Highlight>响应同奏</color>的能力\n队伍中的角色拥有<color=Highlight>同奏</color>时，若切换至锁暝，锁暝施放变奏技能时响应同奏，队伍中的登场角色获得{2}层<color=Highlight>【同奏增益】</color>，持续{3}秒。\n锁暝至多以此方式提供{4}层<color=Highlight>【同奏增益】</color>，重复获得刷新持续时间。\n联机状态下，无法<color=Highlight>响应同奏</color>。\n\n<color=Title>同奏增益</color>\n每层<color=Highlight>【同奏增益】</color>使队伍中可<color=Highlight>响应同奏</color>的角色造成的最终伤害提升{5}，可叠加{6}层。\n\n<color=Title>【妄执】获取规则</color>\n<color=Highlight>【妄执】</color>上限为{7}点。\n·<color=Highlight>普攻</color>、<color=Highlight>普攻·解伞形</color>、<color=Highlight>普攻·解伞形·旋雷破</color>、<color=Highlight>闪避反击</color>、<color=Highlight>闪避反击·解伞形</color>或<color=Highlight>共鸣技能·解伞形·赤芒瞬闪</color>命中目标时，若锁暝为登场角色则获得<color=Highlight>【妄执】</color>。\n·施放<color=Highlight>共鸣解放</color>时，获得{8}点<color=Highlight>【妄执】</color>。\n·施放<color=Highlight>变奏技能·解伞形·碎霆</color>或<color=Highlight>变奏技能·解伞形·旋雷破·同奏</color>时，获得{9}点<color=Highlight>【妄执】</color>。",
         "param": [
+          "800",
+          "800",
           "1",
           "30",
-          "3",
+          "1",
+          "3%",
           "2",
           "800",
           "200",
@@ -2028,26 +2033,80 @@
             "name": "普攻·暝伞形·刻心念伤害",
             "param": [
               [
-                "78.04%+39.02%*2+78.04%+78.04%+39.02%*2",
-                "84.44%+42.22%*2+84.44%+84.44%+42.22%*2",
-                "90.83%+45.42%*2+90.83%+90.83%+45.42%*2",
-                "99.79%+49.90%*2+99.79%+99.79%+49.90%*2",
-                "106.19%+53.10%*2+106.19%+106.19%+53.10%*2",
-                "113.55%+56.78%*2+113.55%+113.55%+56.78%*2",
-                "123.79%+61.90%*2+123.79%+123.79%+61.90%*2",
-                "134.03%+67.02%*2+134.03%+134.03%+67.02%*2",
-                "144.26%+72.13%*2+144.26%+144.26%+72.13%*2",
-                "155.14%+77.57%*2+155.14%+155.14%+77.57%*2",
-                "167.94%+83.97%*2+167.94%+167.94%+83.97%*2",
-                "180.74%+90.37%*2+180.74%+180.74%+90.37%*2",
-                "193.53%+96.77%*2+193.53%+193.53%+96.77%*2",
-                "206.33%+103.17%*2+206.33%+206.33%+103.17%*2",
-                "219.13%+109.57%*2+219.13%+219.13%+109.57%*2",
-                "231.92%+115.96%*2+231.92%+231.92%+115.96%*2",
-                "244.72%+122.36%*2+244.72%+244.72%+122.36%*2",
-                "257.52%+128.76%*2+257.52%+257.52%+128.76%*2",
-                "270.32%+135.16%*2+270.32%+270.32%+135.16%*2",
-                "283.11%+141.56%*2+283.11%+283.11%+141.56%*2"
+                "78.04%+39.02%*2+78.04%+78.04%+39.02%*2+19.51%*4+312.13%",
+                "84.44%+42.22%*2+84.44%+84.44%+42.22%*2+21.11%*4+337.73%",
+                "90.83%+45.42%*2+90.83%+90.83%+45.42%*2+22.71%*4+363.32%",
+                "99.79%+49.90%*2+99.79%+99.79%+49.90%*2+24.95%*4+399.16%",
+                "106.19%+53.10%*2+106.19%+106.19%+53.10%*2+26.55%*4+424.75%",
+                "113.55%+56.78%*2+113.55%+113.55%+56.78%*2+28.39%*4+454.18%",
+                "123.79%+61.90%*2+123.79%+123.79%+61.90%*2+30.95%*4+495.13%",
+                "134.03%+67.02%*2+134.03%+134.03%+67.02%*2+33.51%*4+536.09%",
+                "144.26%+72.13%*2+144.26%+144.26%+72.13%*2+36.07%*4+577.04%",
+                "155.14%+77.57%*2+155.14%+155.14%+77.57%*2+38.79%*4+620.55%",
+                "167.94%+83.97%*2+167.94%+167.94%+83.97%*2+41.99%*4+671.74%",
+                "180.74%+90.37%*2+180.74%+180.74%+90.37%*2+45.19%*4+722.93%",
+                "193.53%+96.77%*2+193.53%+193.53%+96.77%*2+48.39%*4+774.12%",
+                "206.33%+103.17%*2+206.33%+206.33%+103.17%*2+51.59%*4+825.30%",
+                "219.13%+109.57%*2+219.13%+219.13%+109.57%*2+54.79%*4+876.49%",
+                "231.92%+115.96%*2+231.92%+231.92%+115.96%*2+57.98%*4+927.68%",
+                "244.72%+122.36%*2+244.72%+244.72%+122.36%*2+61.18%*4+978.87%",
+                "257.52%+128.76%*2+257.52%+257.52%+128.76%*2+64.38%*4+1030.06%",
+                "270.32%+135.16%*2+270.32%+270.32%+135.16%*2+67.58%*4+1081.25%",
+                "283.11%+141.56%*2+283.11%+283.11%+141.56%*2+70.78%*4+1132.44%"
+              ]
+            ]
+          },
+          "17": {
+            "name": "普攻·暝伞形·刻心念长按伤害",
+            "param": [
+              [
+                "9.76%*10+12.20%*8",
+                "10.56%*10+13.20%*8",
+                "11.36%*10+14.20%*8",
+                "12.48%*10+15.60%*8",
+                "13.28%*10+16.60%*8",
+                "14.20%*10+17.75%*8",
+                "15.48%*10+19.35%*8",
+                "16.76%*10+20.95%*8",
+                "18.04%*10+22.55%*8",
+                "19.40%*10+24.24%*8",
+                "21.00%*10+26.24%*8",
+                "22.60%*10+28.24%*8",
+                "24.20%*10+30.24%*8",
+                "25.80%*10+32.24%*8",
+                "27.40%*10+34.24%*8",
+                "28.99%*10+36.24%*8",
+                "30.59%*10+38.24%*8",
+                "32.19%*10+40.24%*8",
+                "33.79%*10+42.24%*8",
+                "35.39%*10+44.24%*8"
+              ]
+            ]
+          },
+          "18": {
+            "name": "普攻·暝伞形·刻心念回复协奏能量",
+            "param": [
+              [
+                "40",
+                "40",
+                "40",
+                "40",
+                "40",
+                "40",
+                "40",
+                "40",
+                "40",
+                "40",
+                "40",
+                "40",
+                "40",
+                "40",
+                "40",
+                "40",
+                "40",
+                "40",
+                "40",
+                "40"
               ]
             ]
           }
@@ -2202,10 +2261,10 @@
     "8": {
       "skill": {
         "name": "伞机鸣动",
-        "desc": "下一位登场角色导电伤害加深{0}%，拥有<color=Highlight>【同奏增益】</color>时，共鸣技能伤害加深{1}%，效果持续{2}秒。若切换至其他角色则该效果提前结束。",
+        "desc": "下一位登场角色导电伤害加深{0}，拥有<color=Highlight>【同奏增益】</color>时，共鸣技能伤害加深{1}，效果持续{2}秒。若切换至其他角色则该效果提前结束。",
         "param": [
-          "20",
-          "25",
+          "20%",
+          "25%",
           "8"
         ],
         "type": "延奏技能",
@@ -2447,54 +2506,54 @@
   "chains": {
     "1": {
       "name": "身入凄雨",
-      "desc": "<color=Highlight>共鸣技能·解伞形·无舍念</color>免疫打断。\n<color=Highlight>变奏技能·拢伞形·闪裂</color>、<color=Highlight>变奏技能·解伞形·碎霆</color>、<color=Highlight>变奏技能·拢伞形·锁妄念·同奏</color>、<color=Highlight>变奏技能·解伞形·旋雷破·同奏</color>的伤害倍率提升{0}%。",
+      "desc": "<color=Highlight>共鸣技能·解伞形·无舍念</color>免疫打断。\n<color=Highlight>变奏技能·拢伞形·闪裂</color>、<color=Highlight>变奏技能·解伞形·碎霆</color>、<color=Highlight>变奏技能·拢伞形·锁妄念·同奏</color>、<color=Highlight>变奏技能·解伞形·旋雷破·同奏</color>的伤害倍率提升{0}。",
       "param": [
-        "60"
+        "60%"
       ]
     },
     "2": {
       "name": "破雷斩恶",
-      "desc": "暴击伤害提升{0}%。\n施放<color=Highlight>延奏技能</color>时，下一位登场的角色暴击伤害提升{1}%，每拥有一层<color=Highlight>【同奏增益】</color>，暴击伤害额外提升{2}%，最多提升{3}%，持续{4}秒。若切换至其他角色则该效果提前结束。",
+      "desc": "暴击伤害提升{0}。\n施放<color=Highlight>延奏技能</color>时，下一位登场的角色暴击伤害提升{1}，每拥有一层<color=Highlight>【同奏增益】</color>，暴击伤害额外提升{2}，最多额外提升{3}，持续{4}秒。若切换至其他角色则该效果提前结束。",
       "param": [
-        "40",
-        "10",
-        "6",
-        "24",
+        "40%",
+        "10%",
+        "6%",
+        "24%",
         "30"
       ]
     },
     "3": {
       "name": "孤伞独行",
-      "desc": "施放<color=Highlight>变奏技能·拢伞形·闪裂</color>或<color=Highlight>变奏技能·解伞形·碎霆</color>时，获得{0}层<color=Highlight>【同奏增益】</color>，该效果每{1}秒生效一次。\n·若锁暝提供过<color=Highlight>【同奏增益】</color>，在<color=Highlight>【同奏增益】</color>存在期间内则仅刷新持续时间。\n\n施放<color=Highlight>共鸣解放</color>时，锁暝自身普攻伤害加深{2}%，持续{3}秒。",
+      "desc": "施放<color=Highlight>变奏技能·拢伞形·闪裂</color>或<color=Highlight>变奏技能·解伞形·碎霆</color>时，获得{0}层<color=Highlight>【同奏增益】</color>，该效果每{1}秒生效一次。\n·若锁暝提供过<color=Highlight>【同奏增益】</color>，在<color=Highlight>【同奏增益】</color>存在期间内则仅刷新持续时间。\n\n施放<color=Highlight>共鸣解放</color>时，锁暝自身普攻伤害加深{2}，持续{3}秒。",
       "param": [
         "1",
         "25",
-        "30",
+        "30%",
         "25"
       ]
     },
     "4": {
       "name": "承印于心",
-      "desc": "锁暝攻击提升{0}%。",
+      "desc": "锁暝攻击提升{0}。",
       "param": [
-        "20"
+        "20%"
       ]
     },
     "5": {
       "name": "契深未忘",
-      "desc": "<color=Highlight>共鸣解放·暝伞形·重锁狱瘴</color>的伤害倍率提升{0}%。",
+      "desc": "<color=Highlight>共鸣解放·暝伞形·重锁狱瘴</color>的伤害倍率提升{0}。",
       "param": [
-        "40"
+        "40%"
       ]
     },
     "6": {
       "name": "九影相随",
-      "desc": "每层<color=Highlight>【同奏增益】</color>的效果提升{0}%，最多对{1}层<color=Highlight>同奏增益</color>生效。\n<color=Highlight>普攻·暝伞形·刻心念</color>的伤害倍率提升{2}%。\n拥有<color=Highlight>禁锁契主</color>效果时，锁暝暴击伤害额外提升{3}%。",
+      "desc": "每层<color=Highlight>【同奏增益】</color>的效果提升{0}，最多对{1}层<color=Highlight>【同奏增益】</color>生效。\n<color=Highlight>普攻·暝伞形·刻心念</color>的伤害倍率提升{2}。\n拥有<color=Highlight>禁锁契主</color>效果时，锁暝暴击伤害额外提升{3}。",
       "param": [
-        "50",
+        "50%",
         "4",
-        "50",
-        "80"
+        "50%",
+        "200%"
       ]
     }
   },
