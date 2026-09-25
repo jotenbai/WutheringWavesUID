@@ -808,7 +808,7 @@ damage_detail = [
         "func": lambda attr, role: calc_damage_5(attr, role),
     },
     {
-        "title": "·天钧荡煞·昙体仙身(满心识)",
+        "title": "重击··昙体仙身(满心识)",
         "func": lambda attr, role: calc_damage_3(attr, role, MindlockNum=30),
     },
     {
@@ -824,7 +824,7 @@ damage_detail = [
         "func": lambda attr, role: calc_damage_4(attr, role, MindlockNum=30, ExorcisingSealNum=25),
     },
     {
-        "title": "01莫/01达/·天钧荡煞·昙体仙身(满)",
+        "title": "01莫/01达/重击··昙体仙身(满)",
         "func": lambda attr, role: calc_damage_10(attr, role),
     },
     {

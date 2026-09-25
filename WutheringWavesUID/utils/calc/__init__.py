@@ -149,6 +149,8 @@ class WuWaCalc:
         self,
         result: dict[str, str | float],
     ):
+        # 共鸣链数量：放进声骸面板上下文，供 calc/condition.json 按 "chain" 匹配不同权重
+        result["chain"] = self.role_detail.get_chain_num()
         role_id = self.role_detail.role.roleId
         role_level = self.role_detail.role.level
         role_breach = self.role_detail.role.breach

@@ -124,19 +124,30 @@ def get_calc_map(ctx: dict, char_name: str, char_id: int | str):
         return None
 
     calc_json_path = check_conditions("condition-user.json") or check_conditions("condition.json") or "calc.json"
+    # 条件命中的文件缺失时回退到默认 calc.json
+    if not (char_path / calc_json_path).exists():
+        calc_json_path = "calc.json"
     with open(char_path / calc_json_path, encoding="utf-8") as f:
         return msgjson.decode(f.read())
 
 
-def build_base_data(char_id, weapon_id, max_sub_props):
-    """构建基准面板（空词条-精1-五星0链四星6链），用于计算基础伤害"""
-    base_data = limit_role_id_list.get(int(char_id), {})
+def build_base_data(char_id, weapon_id, max_sub_props, chain_num: int | None = None):
+    """构建基准面板（空词条-精1-指定共鸣链），用于计算基础伤害
+
+    chain_num 为 None 时保持旧行为：五星 0 链，四星 6 链。
+    """
+    # 深拷贝，避免不同共鸣链之间互相污染 limit_role_id_list 里的缓存数据
+    base_data = copy.deepcopy(limit_role_id_list.get(int(char_id), {}))
     base_phantom = None
     if not base_data:
         return None, None
 
-    # 五星0链
-    if base_data["role"]["starLevel"] == 5:
+    # 共鸣链
+    if chain_num is not None:
+        for i in base_data["chainList"]:
+            i["unlocked"] = i.get("order", 0) <= chain_num
+        print(f"{base_data['role']['roleName']} 共鸣链设置为 {chain_num}链")
+    elif base_data["role"]["starLevel"] == 5:
         for i in base_data["chainList"]:
             i["unlocked"] = False
         print(f"{base_data['role']['roleName']} 共鸣链设置为 0链")
@@ -207,39 +218,36 @@ def build_base_data(char_id, weapon_id, max_sub_props):
     return base_data, base_phantom
 
 
-def save_calc_json(char_name, data):
-    """保存更新后的 calc.json"""
+def save_calc_json(char_name, data, file_name: str = "calc.json"):
+    """保存更新后的 calc 文件（file_name 缺省为 calc.json）"""
     char_dir = MAP_PATH / char_name
     char_dir.mkdir(parents=True, exist_ok=True)
-    file_path = char_dir / "calc.json"
+    file_path = char_dir / file_name
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+    return file_path
 
 
-def update_calc_json_weights(char_name, char_id, calc_file, weapon_id):
-    """核心：读取 calc.json，根据 max_sub_props 重新计算权重并更新"""
-    calc_path = MAP_PATH / char_name / calc_file
-    if not calc_path.exists():
-        print(f"未找到 {calc_path}，跳过更新")
-        return
+def calc_weights(char_name, char_id, calc_data, weapon_id, chain_num: int | None = None):
+    """核心：按指定共鸣链，用「满值副词条带来的伤害提升」重新拟合 calc_data 的权重。
 
-    with open(calc_path, encoding="utf-8") as f:
-        calc_data = json.load(f)
-
+    只计算不落盘：成功时就地更新并返回 calc_data，失败返回 None。
+    chain_num 决定基准面板解锁几条共鸣链（None = 旧行为：五星 0 链 / 四星 6 链）。
+    """
     max_sub_props = calc_data["max_sub_props"]
     skill_weight = calc_data["skill_weight"]
 
     # 构建基准面板
-    base_data, _base_phantom = build_base_data(char_id, weapon_id, max_sub_props)
+    base_data, _base_phantom = build_base_data(char_id, weapon_id, max_sub_props, chain_num)
     if not base_data:
         print(f"角色{char_name}({char_id})未适配极限面板，跳过更新权重")
-        return
+        return None
 
     # 获取伤害计算类
     rankDetail = DamageRankRegister.find_class(str(char_id))
     if rankDetail is None:
         print(f"角色{char_name}({char_id})未适配伤害计算，跳过更新权重")
-        return
+        return None
 
     # 辅助函数：计算伤害
     def calc_damage(role_dict, need_crit=False):
@@ -309,8 +317,6 @@ def update_calc_json_weights(char_name, char_id, calc_file, weapon_id):
         # print(f"测试词条：test {test_data['phantomData']['equipPhantomList'][0]}")
 
     # ========== 使用 sub_max=65 归一化 ==========
-    max_sub_props = calc_data["max_sub_props"]
-    skill_weight = calc_data["skill_weight"]
     jineng = max(skill_weight)
 
     # 构建未缩放的权重（improvements 是每点词条数值的伤害提升）
@@ -337,17 +343,39 @@ def update_calc_json_weights(char_name, char_id, calc_file, weapon_id):
             k = "技能伤害加成"
         calc_data["sub_props"][k] = v
 
-    save_calc_json(char_name, calc_data)
-    print(f"已更新权重表: {char_name}")
+    return calc_data
 
 
-if __name__ == "__main__":
-    # 注册伤害计算
+def update_calc_json_weights(char_name, char_id, calc_file, weapon_id, chain_num=None, out_file=None):
+    """读取 calc 文件，按 chain_num 重新计算权重并写盘（out_file 缺省时覆盖原文件）"""
+    calc_path = MAP_PATH / char_name / calc_file
+    if not calc_path.exists():
+        print(f"未找到 {calc_path}，跳过更新")
+        return None
+
+    with open(calc_path, encoding="utf-8") as f:
+        calc_data = json.load(f)
+
+    new_data = calc_weights(char_name, char_id, calc_data, weapon_id, chain_num)
+    if new_data is None:
+        return None
+
+    save_path = save_calc_json(char_name, new_data, out_file or calc_file)
+    print(f"已更新权重表: {save_path}")
+    return new_data
+
+
+def register_all():
+    """注册伤害计算所需的武器/声骸/伤害/排行/角色数据"""
     register_weapon()
     register_echo()
     register_damage()
     register_rank()
     register_char()
+
+
+if __name__ == "__main__":
+    register_all()
 
     for char_limit in limit_data["charList"]:
         char_name = char_limit["name"]

@@ -1,464 +1,232 @@
+"""按共鸣链（0~6）批量生成角色声骸评分权重
+
+直接运行：
+    python WutheringWavesUID/utils/map/new_calc_score_script.py
+
+对 TARGET_CHARS 命中的每个角色依次执行：
+    1. 复制 calc.json 的「通用权重」作为模板，逐个链数调用
+       optimize_score_with_demage.calc_weights()：把基准面板的共鸣链换成该链数，
+       用「满值副词条带来的伤害提升」重新拟合 sub_props 权重（归一化到 sub_max = 65）；
+    2. 权重完全相同的链数合并成一组，共用同一个权重文件（0 链和 1 链这种情况就不再重复出文件）：
+           含 0 链的组 -> calc.json
+           其余        -> calc-{链数}链.json
+       例如：
+           {0, 1}    -> calc.json
+           {2}       -> calc-2链.json
+           {4, 5, 6} -> calc-4-6链.json
+           {2, 4}    -> calc-2+4链.json（不连续时用 + 连接）
+    3. 删掉该角色目录下上一次生成、这次已经被合并掉的 calc-*链.json；
+    4. 重写角色的 condition.json —— 链数规则排在最前，原有条件（套装等）顺延。
+       WuWaCalc 已把共鸣链数量写进条件匹配上下文（key = "chain"），
+       所以打分时会自动挑到对应链数的权重文件；
+    5. 全部生成完后调用 calc_score_script.read_calc_json_files()，
+       统一重算 score_max / props_grade 并重建 1.json，得到最终权重。
+"""
+
 import copy
 import json
-import math
 from pathlib import Path
-
-from msgspec import json as msgjson
+import re
+import sys
 
 SCRIPT_PATH = Path(__file__).parents[0]
 MAP_PATH = SCRIPT_PATH / "character"
-DETAIL_PATH = SCRIPT_PATH / "detail_json"
-CHAR_DETAIL_PATH = DETAIL_PATH / "char"
-WEAPON_DETAIL_PATH = DETAIL_PATH / "weapon"
-SONATA_DETAIL_PATH = DETAIL_PATH / "sonata"
-
-
 LIMIT_DATA_PATH = SCRIPT_PATH / "limit.json"
-TEMPLATE_DATA_PATH = SCRIPT_PATH / "templata.json"
-ROLE_LIMIT_PATH = SCRIPT_PATH / "1.json"
-ID_NAME_PATH = SCRIPT_PATH / "id2name.json"
+
+# 把插件根目录加入 sys.path，和 optimize_score_with_demage 使用同样的绝对导入
+ROOT = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(ROOT))
+
+from WutheringWavesUID.utils.map.calc_score_script import read_calc_json_files
+from WutheringWavesUID.utils.map.optimize_score_with_demage import (
+    calc_weights,
+    register_all,
+    save_calc_json,
+)
 
 limit_data = json.loads(LIMIT_DATA_PATH.read_text(encoding="utf-8"))
-template_data = json.loads(TEMPLATE_DATA_PATH.read_text(encoding="utf-8"))
-id2Name = json.loads(ID_NAME_PATH.read_text(encoding="utf-8"))
+
+# ---------------------------------------------------------------------------
+# 配置
+# ---------------------------------------------------------------------------
+
+# 目标角色（按名称包含匹配，和 limit.json 里的 name 比较）
+TARGET_CHARS = ["心", "锁暝"]
+
+# 需要生成权重的共鸣链数量
+CHAIN_LIST = [0, 1, 2, 3, 4, 5, 6]
+
+# 通用权重模板：每个链数都以它的结构为底复制
+BASE_CALC_FILE = "calc.json"
+
+# 是否重写 condition.json（链数规则插到最前，保留原有条件）
+WRITE_CONDITION = True
+
+# 生成结束后是否统一重算 score_max / props_grade 并重建 1.json
+FINALIZE_SCORE = True
+
+# 本脚本生成的权重文件长这样：calc-1链.json / calc-4-6链.json / calc-2+4链.json
+# 只清理匹配这个格式的文件，calc-新光套.json 这类手工文件不会被误删
+CHAIN_FILE_PATTERN = re.compile(r"^calc-[\d\-+]+链\.json$")
+
+# 两组权重的最大相对差异小于这个比例时，认为它们是同一条权重，合并共用一个文件。
+# 权重本身被 floor 到 1e-5，有些链数之间只差最后一个最小位（伤害计算里的浮点噪声，
+# 比如全队统一的伤害乘区不改变相对收益），这种差异对评分的影响远小于 0.01%。
+WEIGHT_TOLERANCE = 1e-4
 
 
-# 声骸副词条
-phantom_sub_value = [
-    {"name": "攻击", "values": ["30", "40", "50", "60"]},
-    {
-        "name": "攻击%",
-        "values": [
-            "6.4%",
-            "7.1%",
-            "7.9%",
-            "8.6%",
-            "9.4%",
-            "10.1%",
-            "10.9%",
-            "11.6%",
-        ],
-    },
-    {
-        "name": "生命",
-        "values": ["320", "360", "390", "430", "470", "510", "540", "580"],
-    },
-    {
-        "name": "生命%",
-        "values": [
-            "6.4%",
-            "7.1%",
-            "7.9%",
-            "8.6%",
-            "9.4%",
-            "10.1%",
-            "10.9%",
-            "11.6%",
-        ],
-    },
-    {"name": "防御", "values": ["40", "50", "60", "70"]},
-    {
-        "name": "防御%",
-        "values": ["8.1%", "9%", "10%", "10.9%", "11.8%", "12.8%", "13.8%", "14.7%"],
-    },
-    {
-        "name": "暴击",
-        "values": ["6.3%", "6.9%", "7.5%", "8.1%", "8.7%", "9.3%", "9.9%", "10.5%"],
-    },
-    {
-        "name": "暴击伤害",
-        "values": [
-            "12.6%",
-            "13.8%",
-            "15%",
-            "16.2%",
-            "17.4%",
-            "18.6%",
-            "19.8%",
-            "21.0%",
-        ],
-    },
-    {
-        "name": "普攻伤害加成",
-        "values": [
-            "6.4%",
-            "7.1%",
-            "7.9%",
-            "8.6%",
-            "9.4%",
-            "10.1%",
-            "10.9%",
-            "11.6%",
-        ],
-    },
-    {
-        "name": "重击伤害加成",
-        "values": [
-            "6.4%",
-            "7.1%",
-            "7.9%",
-            "8.6%",
-            "9.4%",
-            "10.1%",
-            "10.9%",
-            "11.6%",
-        ],
-    },
-    {
-        "name": "共鸣技能伤害加成",
-        "values": [
-            "6.4%",
-            "7.1%",
-            "7.9%",
-            "8.6%",
-            "9.4%",
-            "10.1%",
-            "10.9%",
-            "11.6%",
-        ],
-    },
-    {
-        "name": "共鸣解放伤害加成",
-        "values": [
-            "6.4%",
-            "7.1%",
-            "7.9%",
-            "8.6%",
-            "9.4%",
-            "10.1%",
-            "10.9%",
-            "11.6%",
-        ],
-    },
-    {
-        "name": "技能伤害加成",
-        "values": [
-            "6.4%",
-            "7.1%",
-            "7.9%",
-            "8.6%",
-            "9.4%",
-            "10.1%",
-            "10.9%",
-            "11.6%",
-        ],
-    },
-    {
-        "name": "共鸣效率",
-        "values": ["6.8%", "7.6%", "8.4%", "9.2%", "10%", "10.8%", "11.6%", "12.4%"],
-    },
-]
-phantom_sub_value_map = {i["name"]: i["values"] for i in phantom_sub_value}
-
-"""
-    声骸副词条 - 配平权重 - 小词条1 属伤1.5 大词条2 双爆3 重要3
-    词条       最大值    权重(=1)
-    攻击       60       0.0167
-    防御       70       0.01429
-    生命       580      0.00173
-    伤加成     11.6%    0.08621
-    攻击%      11.6%
-    生命%      11.6%
-    共鸣效     12.4%    0.08065
-    防御%      14.7%    0.06803
-    暴击       10.5%    0.09524
-    暴伤       21.0%    0.0477
-"""
-
-# 1, 3, 4
-phantom_main_value = [
-    {"name": "攻击", "values": ["0", "100", "150"]},
-    {"name": "攻击%", "values": ["18%", "30%", "33%"]},
-    {"name": "生命", "values": ["2280", "0", "0"]},
-    {"name": "生命%", "values": ["22.8%", "30%", "33%"]},
-    {"name": "防御%", "values": ["18%", "38%", "41.8%"]},
-    {"name": "暴击", "values": ["0%", "0%", "22%"]},
-    {"name": "暴击伤害", "values": ["0%", "0%", "44%"]},
-    {"name": "共鸣效率", "values": ["0%", "32%", "0%"]},
-    {"name": "属性伤害加成", "values": ["0%", "30%", "0%"]},
-    {"name": "治疗效果加成", "values": ["0%", "0%", "26.4%"]},
-]
-phantom_main_value_map = {i["name"]: i["values"] for i in phantom_main_value}
-
-"""
-    声骸主词条 - 配平权重 - c4_0.7 c3_1 c1_1.4
-    词条       最大值    权重(=1)
-            1 cost
-    攻击%      18%      0.05556
-    防御%      18%
-    生命%      22.8%    0.04386
-            3 cost
-    伤加成     30%      0.03334
-    攻击%      30%
-    生命%      30%
-    共鸣效     32%      0.03125
-    防御%      38%      0.02632
-            4 cost
-    暴击       22%      0.04546
-    治疗效     26.4%    0.03789
-    攻击%      33%      0.03031
-    生命%      33%
-    防御%      41.8%    0.02393
-    暴伤       44%      0.02273
-"""
+def chains_tag(chains: list[int]) -> str:
+    """{2} -> '2'；{4, 5, 6} -> '4-6'；{2, 4} -> '2+4'"""
+    if len(chains) == 1:
+        return str(chains[0])
+    if chains == list(range(chains[0], chains[-1] + 1)):
+        return f"{chains[0]}-{chains[-1]}"
+    return "+".join(str(chain) for chain in chains)
 
 
-def calc_sub_max_score(_temp, sub_props, jineng: list | None = None, skill_weight: list | None = None):
-    score = 0
-    jineng_list = [
-        "普攻伤害加成",
-        "重击伤害加成",
-        "共鸣技能伤害加成",
-        "共鸣解放伤害加成",
-    ]
-    for i in _temp:
-        ratio = 1
-        if jineng is not None and i == "技能伤害加成":
-            ratio = jineng
-        elif i in jineng_list:
-            if skill_weight is not None:
-                ratio = skill_weight[jineng_list.index(i)]
-        _phantom_value = phantom_sub_value_map[i][-1]
-        if "%" in _phantom_value:
-            _phantom_value = _phantom_value.replace("%", "")
-        _phantom_value = float(_phantom_value)
-        score += sub_props[i] * _phantom_value * ratio
-
-    # return round(score, 2)
-    return math.floor(score * 10000) / 10000
+def weights_diff(a: dict, b: dict) -> float:
+    """两份权重表的最大相对差异，用来判断能不能共用同一个文件"""
+    diff = 0.0
+    for key in set(a) | set(b):
+        va, vb = a.get(key, 0.0), b.get(key, 0.0)
+        diff = max(diff, abs(va - vb) / max(1e-9, abs(va), abs(vb)))
+    return diff
 
 
-def calc_main_max_score(_temp, main_props, sub_score):
-    score = []
-    for k, v in _temp.items():
-        cost = int(k.split(".")[0])
-        index = 2 if cost == 4 else (1 if cost == 3 else 0)
-        ratio_key = 9.0 / 41 if cost == 4 else (7.5 / 42.5 if cost == 3 else 5.0 / 45)
-        need_score = sub_score * ratio_key
+def group_chains(chain_data: dict[int, dict]) -> list[list[int]]:
+    """把权重相同的相邻链数并成一组，共用同一个权重文件
 
-        _score = 0
-        props = main_props[str(cost)]
-        for i in v:
-            _phantom_value = phantom_main_value_map[i][index]
-            _phantom_value = float(_phantom_value.replace("%", ""))
-            if i in props:
-                _score += props[i] * _phantom_value
-
-        scale = 1
-        if _score != 0:
-            low = need_score / _score
-            high = (need_score + 0.0001) / _score
-            scale = (low + high) / 2.0  # 取中值（浮点误差留有余量）
-
-            for i in props:
-                props[i] = math.floor(props[i] * scale * 100000) / 100000
-
-        # score.append(round(_score, 2))
-        score.append(math.floor(_score * scale * 10000) / 10000)
-
-    return score
-
-
-def read_calc_json_files(directory):
-    files = directory.rglob("calc*.json")
-
-    char_limit_cards = []
-    for file in files:
-        try:
-            with open(file, encoding="utf-8") as f:
-                data = msgjson.decode(f.read())
-
-                skill_weight = data["skill_weight"]
-                jineng = max(skill_weight)
-                sub_max = calc_sub_max_score(data["max_sub_props"], data["sub_props"], jineng, skill_weight)
-                main_max = calc_main_max_score(data["max_main_props"], data["main_props"], sub_max)
-                # score_max = [round(sub_max + i, @) for i in main_max]
-                score_max = [math.floor((sub_max + i) * 10000) / 10000 for i in main_max]
-
-                print(
-                    f"{file.parents[0].name}/{file.name} - 技能分: {jineng} - "
-                    f"副词条最大: {sub_max} - "
-                    f"主词条最大: {main_max} - "
-                    f"总词条分数：{score_max}"
-                )
-                data["score_max"] = score_max
-                data["total_grade"] = [0, 0.48, 0.6, 0.7, 0.78, 0.84]
-                data["props_grade"] = [
-                    [0, 0.48, 0.6, 0.7, 0.78, 0.84],
-                    [0, 0.48, 0.6, 0.7, 0.78, 0.84],
-                    [0, 0.48, 0.6, 0.7, 0.78, 0.84],
-                ]
-            with open(file, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-
-            char_name = f"{file.parents[0].name}"
-            char_limit = next(
-                (i for i in limit_data["charList"] if i["name"] == char_name and i["calcFile"] == file.name),
-                None,
-            )
-            if char_limit is None:
+    每次都拿组内第一条链做基准（而不是上一条），避免误差逐级累积后把差距明显的链也并进来。
+    """
+    groups: list[list[int]] = []
+    for chain in sorted(chain_data):
+        if groups:
+            base = groups[-1][0]
+            diff = weights_diff(chain_data[base]["sub_props"], chain_data[chain]["sub_props"])
+            if diff <= WEIGHT_TOLERANCE:
+                print(f"[合组] {chain}链 与 {base}链 权重最大差异 {diff:.2e}，共用文件")
+                groups[-1].append(chain)
                 continue
-            card_limit = calc_char_limit(char_limit, data)
-            if card_limit:
-                char_limit_cards.append(card_limit)
-        except Exception as e:
-            print(f"Error decoding {file}", e)
-
-    char_limit_cards.sort(key=lambda x: x["role"]["roleId"])
-    with open(ROLE_LIMIT_PATH, "w", encoding="utf-8") as f:
-        json.dump(char_limit_cards, f, ensure_ascii=False, indent=2)
+        groups.append([chain])
+    return groups
 
 
-def calc_char_limit(char_limit, calc_file_dict):
-    sonata_lib = next(
-        (i for i in limit_data["sonataLib"] if i["libId"] == char_limit["sonataLibId"]),
-        None,
-    )
-    if sonata_lib is None:
-        return
-    char_detail_path = CHAR_DETAIL_PATH / f"{char_limit['charId']}.json"
-    if not char_detail_path.exists():
-        return
-    weapon_detail_path = WEAPON_DETAIL_PATH / f"{char_limit['weaponId']}.json"
-    if not weapon_detail_path.exists():
-        return
-    char_detail = json.loads(char_detail_path.read_text(encoding="utf-8"))
-    weapon_detail = json.loads(weapon_detail_path.read_text(encoding="utf-8"))
+def group_calc_file(chains: list[int]) -> str:
+    """含 0 链的组沿用 calc.json（条件不匹配时的默认回退），其余按链数命名"""
+    if chains[0] == 0:
+        return BASE_CALC_FILE
+    return f"calc-{chains_tag(chains)}链.json"
 
-    char_template_data = copy.deepcopy(template_data)
 
-    # 命座
-    for i, j in zip(char_detail["chains"].values(), char_template_data["chainList"]):
-        j["name"] = i["name"]
-        j["description"] = i["desc"].format(*i["param"])
-        j["iconUrl"] = ""
-        j["unlocked"] = True
+def build_condition_expressions(char_dir: Path, chain_files: dict[int, str]) -> list[dict]:
+    """链数规则在前（大链优先），原有非链数条件顺延保留"""
+    condition_path = char_dir / "condition.json"
+    old_expressions: list[dict] = []
+    if condition_path.exists():
+        old_expressions = json.loads(condition_path.read_text(encoding="utf-8")) or []
 
-    # 技能
-    skill_map = {
-        "常态攻击": "1",
-        "共鸣技能": "2",
-        "共鸣回路": "7",
-        "共鸣解放": "3",
-        "变奏技能": "6",
-        "延奏技能": "8",
-        "谐度破坏": "17",
-    }
-    for i in char_template_data["skillList"]:
-        temp_skill = i["skill"]
-        skill_type = temp_skill["type"]
-        skill_detail = char_detail["skillTree"][skill_map[skill_type]]["skill"]
+    # 旧的链数规则由本次重新生成，直接丢掉；其余条件（套装等）原样保留
+    kept = [expr for expr in old_expressions if expr.get("key") != "chain"]
 
-        temp_skill["name"] = skill_detail["name"]
-        temp_skill["description"] = skill_detail["desc"].format(*skill_detail["param"])
-        temp_skill["iconUrl"] = ""
+    chain_rules = [
+        {"choose": chain_files[chain], "key": "chain", "op": "=", "value": chain} for chain in sorted(chain_files, reverse=True)
+    ]
+    return chain_rules + kept
 
-    # role
-    attributeIdMap = {1: "冷凝", 2: "热熔", 3: "导电", 4: "气动", 5: "衍射", 6: "湮灭"}
-    weaponTypeIdMap = {1: "长刃", 2: "迅刀", 3: "佩枪", 4: "臂铠", 5: "音感仪"}
-    temp_role = char_template_data["role"]
-    temp_role["roleName"] = char_detail["name"]
-    temp_role["iconUrl"] = ""
-    temp_role["roleId"] = char_limit["charId"]
-    temp_role["starLevel"] = char_detail["starLevel"]
-    temp_role["weaponTypeId"] = char_detail["weaponTypeId"]
-    temp_role["weaponTypeName"] = weaponTypeIdMap[char_detail["weaponTypeId"]]
-    temp_role["attributeId"] = char_detail["attributeId"]
-    temp_role["attributeName"] = attributeIdMap[char_detail["attributeId"]]
 
-    # 武器
-    temp_weapon = char_template_data["weaponData"]["weapon"]
-    temp_weapon["weaponEffectName"] = weapon_detail["effect"].format(*[i[-1] for i in weapon_detail["param"]])
-    temp_weapon["weaponIcon"] = ""
-    temp_weapon["weaponId"] = char_limit["weaponId"]
-    temp_weapon["weaponName"] = weapon_detail["name"]
-    temp_weapon["weaponStarLevel"] = weapon_detail["starLevel"]
-    temp_weapon["weaponType"] = weapon_detail["type"]
+def remove_stale_chain_files(char_dir: Path, keep: set[str]) -> None:
+    """删掉上一次生成、这次已经合并掉的 calc-*链.json"""
+    for path in char_dir.glob("calc-*链.json"):
+        if CHAIN_FILE_PATTERN.match(path.name) and path.name not in keep:
+            path.unlink()
+            print(f"[清理] 删除已合并的旧权重文件 {path.name}")
 
-    # 声骸
 
-    attribute = char_template_data["role"]["attributeName"]
+def generate_char(char_limit: dict) -> dict[int, str]:
+    """生成单个角色各共鸣链的权重文件，返回 {链数: 文件名}"""
+    char_name = char_limit["name"]
+    char_id = char_limit["charId"]
+    weapon_id = char_limit["weaponId"]
+    char_dir = MAP_PATH / char_name
+    base_path = char_dir / BASE_CALC_FILE
 
-    list_index = 0
+    if not base_path.exists():
+        print(f"[跳过] {char_name} 没有 {BASE_CALC_FILE}")
+        return {}
 
-    fetterList = sonata_lib["fetterList"]
-    for fetter in fetterList:
-        sonata_detail_path = SONATA_DETAIL_PATH / f"{fetter['fetterDetailName']}.json"
-        if not sonata_detail_path.exists():
+    # 复制通用权重，作为所有链数的模板
+    base_data = json.loads(base_path.read_text(encoding="utf-8"))
+
+    # 1) 先算出每个链数的权重，这一步还不落盘
+    chain_data: dict[int, dict] = {}
+    for chain in CHAIN_LIST:
+        print(f"\n===== {char_name} {chain}链 =====")
+        calc_data = copy.deepcopy(base_data)
+        new_data = calc_weights(char_name, char_id, calc_data, weapon_id, chain)
+        if new_data is None:
+            print(f"[失败] {char_name} {chain}链 权重计算失败，跳过")
             continue
-        sonata_detail = json.loads(sonata_detail_path.read_text(encoding="utf-8"))
+        chain_data[chain] = new_data
 
-        temp_fetter_detail = {
-            "firstDescription": "",
-            "groupId": 0,
-            "iconUrl": "",
-            "name": sonata_detail["name"],
-            "num": len(fetter["equipPhantomList"]),
-            "secondDescription": "",
-        }
+    if not chain_data:
+        return {}
 
-        for j in fetter["equipPhantomList"]:
-            i = char_template_data["phantomData"]["equipPhantomList"][list_index]
-            cost = j["cost"]
-            i["fetterDetail"] = temp_fetter_detail
-            i["cost"] = cost
-            phantomProp = i["phantomProp"]
-            phantomProp["phantomId"] = j["phantomId"]
-            phantomProp["name"] = id2Name[str(j["phantomId"])]
-            phantomProp["cost"] = cost
+    # 2) 权重相同的链数合并，共用一个文件
+    chain_files: dict[int, str] = {}
+    for group in group_chains(chain_data):
+        file_name = group_calc_file(group)
+        tag = chains_tag(group)
+        print(f"[合并] {char_name} {tag}链 -> {file_name}")
 
-            custom_main_shuxing = j.get("mainPropName")
+        data = copy.deepcopy(chain_data[group[0]])
+        data["name"] = f"{char_name}-{tag}链"
+        save_calc_json(char_name, data, file_name)
 
-            mainProps = i["mainProps"]
-            for flag, main_props_name in enumerate(calc_file_dict["max_main_props"][f"{cost}.1"]):
-                if cost == 4:
-                    index = 2
-                elif cost == 3:
-                    index = 1
-                else:
-                    index = 0
-                if flag == 0 and custom_main_shuxing:
-                    main_props_name = custom_main_shuxing
-                _phantom_value = phantom_main_value_map[main_props_name][index]
-                if main_props_name.startswith("属性"):
-                    main_props_name = f"{attribute}伤害加成"
-                res = {
-                    "attributeName": main_props_name.replace("%", ""),
-                    "attributeValue": _phantom_value,
-                    "iconUrl": "",
-                }
-                mainProps.append(res)
+        for chain in group:
+            chain_files[chain] = file_name
 
-            skill_weight = calc_file_dict["skill_weight"]
-            jineng_index = skill_weight.index(max(skill_weight))
-            jineng_name = [
-                "普攻伤害加成",
-                "重击伤害加成",
-                "共鸣技能伤害加成",
-                "共鸣解放伤害加成",
-            ][jineng_index]
+    # 3) 清理上次遗留、这次已合并掉的文件
+    remove_stale_chain_files(char_dir, set(chain_files.values()))
 
-            custom_sub_shuxing = j.get("subPropName", [])
-            max_sub_props = calc_file_dict["max_sub_props"]
+    # 有 calc.json 之外的权重文件时才需要写条件（0 链是条件不匹配时的默认回退）
+    if WRITE_CONDITION and any(file_name != BASE_CALC_FILE for file_name in chain_files.values()):
+        expressions = build_condition_expressions(char_dir, chain_files)
+        condition_path = char_dir / "condition.json"
+        condition_path.write_text(json.dumps(expressions, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"[条件] 已重写 {condition_path}（{len(expressions)} 条规则）")
 
-            subProps = i["subProps"]
-            max_len = max(len(custom_sub_shuxing), len(max_sub_props))
-            for idx in range(max_len):
-                sub_props_name = custom_sub_shuxing[idx] if idx < len(custom_sub_shuxing) else max_sub_props[idx]
+    return chain_files
 
-                _phantom_value = phantom_sub_value_map[sub_props_name][-1]
-                if sub_props_name.startswith("技能"):
-                    sub_props_name = jineng_name
-                res = {
-                    "attributeName": sub_props_name.replace("%", ""),
-                    "attributeValue": _phantom_value,
-                }
-                subProps.append(res)
 
-            list_index += 1
+def main():
+    register_all()
 
-    return char_template_data
+    summary: dict[str, dict[int, str]] = {}
+    for char_limit in limit_data["charList"]:
+        char_name = char_limit["name"]
+        for i in TARGET_CHARS:
+            if i in char_name:
+                print(f"\n########## 角色{char_name} 开始生成 {min(CHAIN_LIST)}~{max(CHAIN_LIST)} 链权重 ##########")
+                summary[char_name] = generate_char(char_limit)
+                break
+
+    if not summary:
+        print(f"没有命中任何目标角色：{TARGET_CHARS}")
+        return
+
+    if FINALIZE_SCORE:
+        print("\n########## 统一重算 score_max / props_grade 并重建 1.json ##########")
+        read_calc_json_files(MAP_PATH)
+
+    print("\n########## 生成结果 ##########")
+    for char_name, files in summary.items():
+        merged: dict[str, list[int]] = {}
+        for chain, file_name in files.items():
+            merged.setdefault(file_name, []).append(chain)
+        print(f"{char_name}:")
+        for file_name, chains in merged.items():
+            print(f"    {file_name:<18} <- {chains_tag(sorted(chains))}链")
 
 
 if __name__ == "__main__":
-    read_calc_json_files(MAP_PATH)
+    main()

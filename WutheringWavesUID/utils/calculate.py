@@ -34,6 +34,9 @@ def get_calc_map(ctx: dict, char_name: str, char_id: int | str):
 
     # 先检查用户条件，然后是默认条件
     calc_json_path = check_conditions("condition-user.json") or check_conditions("condition.json") or "calc.json"
+    # 条件命中的文件缺失时回退到默认 calc.json（例如按共鸣链生成的权重文件还没生成）
+    if not (char_path / calc_json_path).exists():
+        calc_json_path = "calc.json"
     logger.debug(f"{char_name} [匹配文件]: {char_path.name}/{calc_json_path}")
     with open(char_path / calc_json_path, encoding="utf-8") as f:
         return msgjson.decode(f.read())
