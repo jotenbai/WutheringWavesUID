@@ -117,7 +117,13 @@ async def async_ocr(bot: Bot, ev: Event):
 
     # 卡片词条OCR
     set_cache_analyze_card(ev.user_id, True)  # 设置时限
-    ocr_results = await ocrspace(cropped_images, bot, at_sender, need_all_pass=True)
+    ocr_results = await ocrspace(
+        cropped_images,
+        bot,
+        at_sender,
+        need_all_pass=True,
+        source_size=images[0].size,
+    )
     set_cache_analyze_card(ev.user_id, False)  # 清除时限
     if isinstance(ocr_results, str):
         return await bot.send(ocr_results, at_sender)

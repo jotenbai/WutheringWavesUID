@@ -152,6 +152,54 @@ async def check_ocr_engine_accessible(plan: str) -> int:
         return -1
 
 
+def _format_ocr_fail_msg(
+    ocr_results: list | None,
+    source_size: tuple[int, int] | None = None,
+) -> str:
+    """尽量给出明确原因；无法判断时列出三种可能。"""
+    generic = (
+        "[鸣潮]OCRspace识别失败！可能原因："
+        "①卡片不是繁体中文（英文/日文等官方卡暂不支持）；"
+        "②使用了缩略图/预览链而非原图直链；"
+        "③OCR服务暂时故障。"
+        "请用繁体中文官方卡的原图直链重试，或稍后再试。\n"
+    )
+    if source_size:
+        w, h = source_size
+        # 官方卡参考约 1072×602；明显更小多半是缩略/预览
+        if w < 700 or h < 400:
+            return (
+                "[鸣潮]OCRspace识别失败：图片过小，疑似缩略图或预览图。\n"
+                "请右键卡片「复制链接地址」使用原图直链，或直接发送原图附件后重试。\n"
+            )
+    if not ocr_results:
+        return (
+            "[鸣潮]OCRspace识别失败：OCR服务无返回结果（暂时故障或网络问题）。\n"
+            "请稍后再试。\n"
+        )
+
+    errors = [str(r.get("error") or "") for r in ocr_results if r.get("error")]
+    if not errors:
+        return generic
+
+    service_markers = (
+        "HTTP Error",
+        "503",
+        "429",
+        "401",
+        "Timeout",
+        "Service Unavailable",
+        "Processing Error",
+    )
+    service_n = sum(1 for e in errors if any(m in e for m in service_markers))
+    if service_n >= max(1, (len(errors) + 1) // 2):
+        return (
+            "[鸣潮]OCRspace识别失败：OCR服务暂时故障（如过载/不可用）。\n"
+            "与卡片语言或链接无关，请稍后再试。\n"
+        )
+    return generic
+
+
 async def ocrspace(
     cropped_images: list[Image.Image],
     bot: Bot,
@@ -159,6 +207,7 @@ async def ocrspace(
     language: str = "cht",
     isTable: bool = True,
     need_all_pass: bool = False,
+    source_size: tuple[int, int] | None = None,
 ) -> list | str:
     """
     异步OCR识别函数
@@ -208,24 +257,18 @@ async def ocrspace(
     if API_KEY is None:
         return "[鸣潮] OCRspace API密钥不可用！请等待额度恢复或更换密钥\n"
 
-    error_msg = (
-        "[鸣潮]OCRspace识别失败！可能原因："
-        "①卡片不是繁体中文（英文/日文等官方卡暂不支持）；"
-        "②图片过糊或分辨率过低；"
-        "③OCR服务暂时故障。"
-        "请改用繁体中文 DC 卡后重试，或稍后再试。\n"
-    )
+    failed = False
     if not ocr_results:
+        failed = True
+    elif need_all_pass and not all(result.get("error") is None for result in ocr_results):
+        failed = True
+    elif not need_all_pass and not any(result.get("error") is None for result in ocr_results):
+        failed = True
+
+    if failed:
+        error_msg = _format_ocr_fail_msg(ocr_results, source_size=source_size)
         logger.warning(error_msg)
         return error_msg
-    if need_all_pass:
-        if not all(result.get("error") is None for result in ocr_results):
-            logger.warning(error_msg)
-            return error_msg
-    else:
-        if not any(result.get("error") is None for result in ocr_results):
-            logger.warning(error_msg)
-            return error_msg
 
     return ocr_results
 
