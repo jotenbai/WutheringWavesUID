@@ -8,7 +8,6 @@ CUR_PACKAGE = __package__
 CURRENT_DIR = os.path.dirname(__file__)
 
 # 特例映射：注册ID -> 实际使用的模块后缀（即 damage_ 后面的部分）
-# FORK 另：全服榜上传 char_id 也复用此表（见 expression_ctx.to_rank_dict / project-context「全服榜漂泊者性别」）
 SPECIAL_ID_TO_MODULE = {
     "1408": "1406",  # 风主女 使用 风主男 的数据
     "1501": "1502",  # 光主男 使用 光主女 的数据
