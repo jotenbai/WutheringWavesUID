@@ -19,7 +19,6 @@ from ...damage.utils import (
     liberation_damage,
     skill_damage_calc,
 )
-from ...map.damage.buff import fengzhu_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -72,6 +71,7 @@ def calc_damage_1(
     elif skill_name == "小卡空中回收3剑":
         skillParamId = "12"
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], skillParamId, skillLevel)
+    attr.set_teammate_buff()
 
     title = skill_name
     msg = f"技能倍率{skill_multi}"
@@ -170,6 +170,7 @@ def calc_damage_2(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "6", skillLevel)
+    attr.set_teammate_buff()
 
     title = "小卡共鸣技能"
     msg = f"技能倍率{skill_multi}"
@@ -294,6 +295,7 @@ def calc_damage_11(
     elif skill_name == "大卡空中3段":
         skillParamId = "27"
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], skillParamId, skillLevel)
+    attr.set_teammate_buff()
 
     title = skill_name
     msg = f"技能倍率{skill_multi}"
@@ -387,6 +389,7 @@ def calc_damage_12(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = 
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "31", skillLevel)
+    attr.set_teammate_buff()
 
     title = "大卡共鸣解放"
     msg = f"技能倍率{skill_multi}"
@@ -472,11 +475,7 @@ def calc_damage_12(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = 
 
 
 def calc_damage_20(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(liberation_damage)
-    attr.set_char_template("temp_life")
-
-    # 风主buff
-    fengzhu_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1406, 0, 1))
 
     return calc_damage_12(attr, role, isGroup)
 

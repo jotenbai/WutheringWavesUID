@@ -66,6 +66,7 @@ def calc_damage_1(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "1", skillLevel)
+    attr.set_teammate_buff()
     title = "共鸣解放"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -124,6 +125,7 @@ def calc_damage_a(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "3", skillLevel)
+    attr.set_teammate_buff()
     title = "a第一段"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -191,6 +193,7 @@ def calc_damage_ea(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = 
 
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "4", skillLevel)
     skill_multi = f"({skill_multi})*2"
+    attr.set_teammate_buff()
     title = "a第二段"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -257,6 +260,7 @@ def calc_damage_e(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "5", skillLevel)
     skill_multi = f"({skill_multi})*5"
+    attr.set_teammate_buff()
     title = "e"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)

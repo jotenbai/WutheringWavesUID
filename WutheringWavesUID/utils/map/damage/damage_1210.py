@@ -16,7 +16,6 @@ from ...damage.utils import (
     liberation_damage,
     skill_damage_calc,
 )
-from .buff import chisa_buff, denia_buff, lynae_buff, mornye_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -73,6 +72,7 @@ def calc_damage_1(
         msg = "特定攻击为命中目标附加【聚爆效应】"
         attr.set_env_fusion_burst()
         attr.add_effect(title, msg)
+    attr.set_teammate_buff()
 
     # 设置角色等级
     attr.set_character_level(role.role.level)
@@ -177,6 +177,7 @@ def calc_damage_2(
         msg = "特定攻击为命中目标附加【聚爆效应】"
         attr.set_env_fusion_burst()
         attr.add_effect(title, msg)
+    attr.set_teammate_buff()
 
     # 设置角色等级
     attr.set_character_level(role.role.level)
@@ -260,19 +261,7 @@ def calc_damage_10(
     Mode: Literal["tune_rupture", "fusion_burst"] = "tune_rupture",
     HeavenfallEdict: Literal["Overdrive", "Finale"] = "Overdrive",
 ) -> tuple[str, str]:
-    attr.set_char_damage(liberation_damage)
-    attr.set_char_template("temp_atk")
-
-    if Mode == "tune_rupture":
-        title = "共鸣模态·震谐"
-        msg = "特定攻击为命中目标附加【震谐·偏移】"
-        attr.set_env_tune_rupture()
-
-    # 莫宁buff
-    mornye_buff(attr, 0, 1, isGroup)
-
-    # 琳奈buff
-    lynae_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1209, 0, 1), (1509, 0, 1))
 
     return calc_damage_2(attr, role, isGroup, False, Mode, HeavenfallEdict)
 
@@ -284,19 +273,7 @@ def calc_damage_11(
     Mode: Literal["tune_rupture", "fusion_burst"] = "fusion_burst",
     HeavenfallEdict: Literal["Overdrive", "Finale"] = "Overdrive",
 ) -> tuple[str, str]:
-    attr.set_char_damage(liberation_damage)
-    attr.set_char_template("temp_atk")
-
-    if Mode == "fusion_burst":
-        title = "共鸣模态·聚爆"
-        msg = "特定攻击为命中目标附加【聚爆效应】"
-        attr.set_env_fusion_burst()
-
-    # 千咲buff
-    chisa_buff(attr, 0, 1, isGroup)
-
-    # 达妮娅buff
-    denia_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1508, 0, 1), (1211, 0, 1))
 
     return calc_damage_2(attr, role, isGroup, False, Mode, HeavenfallEdict)
 

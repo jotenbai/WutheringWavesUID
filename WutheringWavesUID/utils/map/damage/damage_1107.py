@@ -15,7 +15,6 @@ from ...damage.utils import (
     skill_damage,
     skill_damage_calc,
 )
-from .buff import shouanren_buff, zhezhi_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -75,6 +74,7 @@ def calc_damage_1(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "1", skillLevel)
+    attr.set_teammate_buff()
     title = "末路见行"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -153,6 +153,7 @@ def calc_damage_2(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "4", skillLevel)
+    attr.set_teammate_buff()
     title = "致死以终"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -236,6 +237,7 @@ def calc_damage_3(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "2", skillLevel)
+    attr.set_teammate_buff()
     title = "死兆"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -364,6 +366,7 @@ def calc_damage_33(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = 
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "2", skillLevel)
+    attr.set_teammate_buff()
 
     title = "死兆"
     msg = f"技能倍率{skill_multi}"
@@ -427,6 +430,7 @@ def calc_damage_r(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "1", skillLevel)
+    attr.set_teammate_buff()
     title = "新浪潮时代"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -487,14 +491,8 @@ def calc_damage_10(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = 
     """
     0+1守/0折枝/致死以终伤害
     """
-    attr.set_char_damage(skill_damage)
-    attr.set_char_template("temp_atk")
 
-    # 守岸人buff
-    shouanren_buff(attr, 0, 1, isGroup)
-
-    # 折枝buff
-    zhezhi_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1505, 0, 1), (1105, 0, 1))
 
     return calc_damage_2(attr, role, isGroup)
 
@@ -503,14 +501,8 @@ def calc_damage_11(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = 
     """
     6+5守/6折/致死以终伤害
     """
-    attr.set_char_damage(skill_damage)
-    attr.set_char_template("temp_atk")
 
-    # 守岸人buff
-    shouanren_buff(attr, 6, 5, isGroup)
-
-    # 折枝buff
-    zhezhi_buff(attr, 6, 1, isGroup)
+    attr.set_teammate((1505, 6, 5), (1105, 6, 1))
 
     return calc_damage_2(attr, role, isGroup)
 

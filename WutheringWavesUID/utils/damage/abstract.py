@@ -213,6 +213,45 @@ class CharAbstract:
     id: int | None = None
     starLevel = None
 
+    # 作为「自定义队友」时用户可以调整的状态，按需在子类声明。
+    #
+    # 写法（键就是用户输入的参数名）::
+    #
+    #     teammate_states = {
+    #         "祝福层数": {
+    #             "type": "int",        # int / bool / enum
+    #             "min": 0,             # int 必填
+    #             "max": 10,            # int 必填
+    #             "default": 10,        # 不写时按原实现里的默认假设
+    #             "desc": "每层全伤害加深4%",
+    #         },
+    #         "领域": {"type": "bool", "default": True, "desc": "..."},
+    #         "模式": {"type": "enum", "choices": ("告解", "赦罪"), "default": "告解", "desc": "..."},
+    #     }
+    #
+    # 声明后：校验、解析、`ww队友配置` 说明图都由这份声明生成，
+    # 且 _do_buff 里必须真的读取 states，否则默认值不会变。
+    teammate_states: dict[str, dict] = {}
+
+    # 作为「自定义队友」时的默认装备，按需在子类声明。
+    #
+    # 写法（键就是装备目录里的分类名）::
+    #
+    #     teammate_equip = {
+    #         "sonata": "轻云出月",  # 默认合鸣，取值见 buff.SONATA_PRESETS
+    #         "echo": "无常凶鹭",  # 默认声骸，取值见 buff.ECHO_PRESETS
+    #         "weapon": {"id": 21050036, "action": "skill_create_healing"},  # 默认专武 + 用哪个行为触发
+    #     }
+    #
+    # 每个键都是「这个角色本来就有这一部分」的意思：写了才会作为默认值施加，
+    # 也才能被指令覆盖（`合鸣=…` / `声骸=…` / `武器=…`，填「关」表示这次不带）。
+    # 没写的键表示角色本来就不带这一部分，此时任何预设都可以由指令直接指定。
+    #
+    # 数值和生效条件只在 buff.py 的目录里维护一份：这里只写「用哪一套」，
+    # 具体给多少、什么条件下给（例如只在主C为某属性时给）都写在预设的 apply 里，
+    # 所以 _do_buff 里不要再把同一套合鸣 / 声骸写第二遍。
+    teammate_equip: dict = {}
+
     def do_buff(
         self,
         attr: DamageAttribute,

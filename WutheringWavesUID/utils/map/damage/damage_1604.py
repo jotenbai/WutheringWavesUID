@@ -1,6 +1,5 @@
 # 暗主
 
-from ....utils.map.damage.buff import danjin_buff, shouanren_buff
 from ...api.model import RoleDetailData
 from ...ascension.char import WavesCharResult, get_char_detail
 from ...damage.damage import DamageAttribute
@@ -35,6 +34,7 @@ def calc_damage_1(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level("共鸣解放")
     # 技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, "3", "1", skillLevel)
+    attr.set_teammate_buff()
     title = "临渊死寂"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -95,6 +95,7 @@ def calc_damage_2(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level("共鸣回路")
     # 技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, "7", "1", skillLevel)
+    attr.set_teammate_buff()
     title = "灭音伤害"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -160,6 +161,7 @@ def calc_damage_3(
     skillLevel = role.get_skill_level("共鸣回路")
     # 技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, "7", f"{attack_type + 1}", skillLevel)
+    attr.set_teammate_buff()
     title = f"暗流·普攻第{attack_type}段"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -220,6 +222,7 @@ def calc_damage_4(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level("共鸣回路")
     # 技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, "7", "13", skillLevel)
+    attr.set_teammate_buff()
     title = "暗流·破命"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -270,13 +273,7 @@ def calc_damage_4(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
 
 
 def calc_damage_10(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(liberation_damage)
-    attr.set_char_template("temp_atk")
-    # 守岸人buff
-    shouanren_buff(attr, 0, 1, isGroup)
-
-    # 丹瑾buff
-    danjin_buff(attr, 6, 1, isGroup)
+    attr.set_teammate((1505, 0, 1), (1602, 6, 1))
 
     return calc_damage_1(attr, role, isGroup)
 

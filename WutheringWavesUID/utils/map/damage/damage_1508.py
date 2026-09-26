@@ -14,7 +14,6 @@ from ...damage.utils import (
     liberation_damage,
     skill_damage_calc,
 )
-from .buff import luokeke_buff, shouanren_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -39,6 +38,7 @@ def calc_damage_1(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能倍率 即刻·归无 1741.49%
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "20", skillLevel)
+    attr.set_teammate_buff()
     title = "即刻·归无伤害"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -127,6 +127,7 @@ def calc_damage_2(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 治疗倍率 即刻·归无 214.61% + 4854
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "21", skillLevel)
+    attr.set_teammate_buff()
     title = "即刻·归无治疗量"
     msg = f"技能倍率{skill_multi}"
     attr.add_healing_skill_multi(skill_multi, title, msg)
@@ -215,6 +216,7 @@ def calc_damage_3(
 
     title = "锯环·终结-残响加成"
     skill_multi = calc_percent_expression(skill_multi_per_echo) * 100
+    attr.set_teammate_buff()
     msg = f"最多消耗100点【锯环残响】，增加倍率{skill_multi:.2%}"
     attr.add_skill_multi(f"{skill_multi:.2%}", title, msg)
 
@@ -298,20 +300,15 @@ def calc_damage_3(
 
 
 def calc_damage_10(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(liberation_damage)
-    attr.set_char_template("temp_atk")
     # 设置虚湮效应
-    attr.set_env_havoc_bane()
 
-    # 守岸人buff
-    shouanren_buff(attr, 0, 1, isGroup)
-
-    # 洛可可buff（延奏效果）
-    luokeke_buff(attr, 2, 1, isGroup)
-
-    # 守岸人提供的额外虚湮效应（3层，共6层）
     title = "拖曳终焉之弦"
     msg = "变奏后攻击命中时，目标虚湮效应层数上限增加3层，每层降低2%防御"
+    attr.set_teammate((1505, 0, 1), (1606, 2, 1))
+
+    # 洛可可buff（延奏效果）
+
+    # 守岸人提供的额外虚湮效应（3层，共6层）
     attr.add_defense_reduction(0.06, title, msg)
 
     return calc_damage_3(attr, role, isGroup, isSingle=False)

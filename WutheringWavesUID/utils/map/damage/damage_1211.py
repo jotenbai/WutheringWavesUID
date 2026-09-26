@@ -15,7 +15,6 @@ from ...damage.utils import (
     skill_damage,
     skill_damage_calc,
 )
-from .buff import lupa_buff, lynae_buff, mornye_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -95,6 +94,7 @@ def calc_damage_1(
         msg = "特定攻击为命中目标附加【聚爆效应】"
         attr.set_env_fusion_burst()
         attr.add_effect(title, msg)
+    attr.set_teammate_buff()
 
     # 设置角色等级
     attr.set_character_level(role.role.level)
@@ -228,6 +228,7 @@ def calc_damage_2(
         msg = "特定攻击为命中目标附加【聚爆效应】"
         attr.set_env_fusion_burst()
         attr.add_effect(title, msg)
+    attr.set_teammate_buff()
 
     # 设置角色等级
     attr.set_character_level(role.role.level)
@@ -361,6 +362,7 @@ def calc_damage_3(
         msg = "特定攻击为命中目标附加【聚爆效应】"
         attr.set_env_fusion_burst()
         attr.add_effect(title, msg)
+    attr.set_teammate_buff()
 
     # 设置角色等级
     attr.set_character_level(role.role.level)
@@ -446,18 +448,7 @@ def calc_damage_10(
     role: RoleDetailData,
     isGroup: bool = True,
 ) -> tuple[str, str]:
-    attr.set_char_damage(liberation_damage)
-    attr.set_char_template("temp_atk")
-
-    title = "共鸣模态·集谐"
-    msg = "特定攻击为命中目标附加【集谐·偏移】"
-    attr.set_env_tune_rupture()
-
-    # 莫宁buff
-    mornye_buff(attr, 0, 1, isGroup)
-
-    # 琳奈buff
-    lynae_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1209, 0, 1), (1509, 0, 1))
 
     return calc_damage_1(attr, role, isGroup, True, Mode="tune_strain")
 
@@ -467,14 +458,7 @@ def calc_damage_11(
     role: RoleDetailData,
     isGroup: bool = True,
 ) -> tuple[str, str]:
-    attr.set_char_damage(liberation_damage)
-    attr.set_char_template("temp_atk")
-
-    # 莫宁buff
-    mornye_buff(attr, 0, 1, isGroup)
-
-    # 露帕buff
-    lupa_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1209, 0, 1), (1207, 0, 1))
 
     return calc_damage_1(attr, role, isGroup, Mode="fusion_burst")
 

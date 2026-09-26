@@ -107,6 +107,7 @@ def calc_damage_1(
         msg = "共鸣技能超负荷对目标造成伤害后附加电磁效应"
         attr.set_env_electro_flare()
         attr.add_effect(title, msg)
+    attr.set_teammate_buff()
 
     if role_breach and role_breach >= 4:
         if FC != "Overshock":
@@ -203,6 +204,7 @@ def calc_damage_2(
         msg = "共鸣技能超负荷对目标造成伤害后附加电磁效应"
         attr.set_env_electro_flare()
         attr.add_effect(title, msg)
+    attr.set_teammate_buff()
 
     # 共鸣回路
     title = "共鸣回路-超负荷"

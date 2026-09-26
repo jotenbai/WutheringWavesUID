@@ -31,6 +31,7 @@ def calc_damage_1(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "2", skillLevel)
+    attr.set_teammate_buff()
     title = "应急预案"
     msg = f"技能倍率{skill_multi}"
     attr.add_healing_skill_multi(skill_multi, title, msg)
@@ -75,6 +76,7 @@ def calc_damage_2(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "3", skillLevel)
+    attr.set_teammate_buff()
     title = "刹那合弥"
     msg = f"技能倍率{skill_multi}"
     attr.add_healing_skill_multi(skill_multi, title, msg)
@@ -119,6 +121,7 @@ def calc_damage_3(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "2", skillLevel)
+    attr.set_teammate_buff()
     title = "频隙回响"
     msg = f"技能倍率{skill_multi}"
     attr.add_healing_skill_multi(skill_multi, title, msg)

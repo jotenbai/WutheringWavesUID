@@ -39,6 +39,7 @@ from ..utils.calculate import (
 )
 from ..utils.char_info_utils import get_all_roleid_detail_info, get_role_detail_online
 from ..utils.damage.abstract import DamageDetailRegister
+from ..utils.damage.buff import TeamConfigError, validate_team
 from ..utils.error_reply import WAVES_CODE_102
 from ..utils.fonts.waves_fonts import (
     waves_font_16,
@@ -101,6 +102,7 @@ from ..wutheringwaves_config.wutheringwaves_config import (
     WutheringWavesConfig,
 )
 from .role_info_change import change_role_detail
+from .team_parser import TeamParseError, parse_team_change
 
 TEXT_PATH = Path(__file__).parent / "texture2d"
 
@@ -631,6 +633,20 @@ async def draw_char_detail_img(
     char_name = alias_to_char_name(char)
 
     damageDetail = DamageDetailRegister.find_class(char_id)
+
+    # 自定义配队（换队友）：只影响本次伤害模拟，不写面板、不参与排名
+    custom_team = None
+    try:
+        custom_team, change_list_regex, _team_rows = parse_team_change(change_list_regex, int(char_id))
+    except TeamParseError as e:
+        return f"[鸣潮] 自定义队友错误：{e}\n"
+    if custom_team is not None:
+        if not damageId or not damageDetail:
+            return f"[鸣潮] 自定义队友只支持伤害查询，例如：{char_name}伤害1 换队友 散华61\n"
+        try:
+            custom_team = validate_team(custom_team, main_role_id=int(char_id))
+        except TeamConfigError as e:
+            return f"[鸣潮] 自定义队友错误：{e}\n"
     ph_sum_value = 250
     jineng_len = 180
     dd_len = 0
@@ -747,8 +763,8 @@ async def draw_char_detail_img(
             logger.exception("角色数据转换错误", e)
             role_detail = temp
     else:
-        if not is_limit_query:
-            # 非极限面板查询时，获取评分排名
+        if not is_limit_query and custom_team is None:
+            # 非极限面板查询时，获取评分排名（自定义配队不参与排名）
             oneRank = await get_one_rank(OneRankRequest(char_id=int(char_id), waves_id=uid))
             if oneRank and len(oneRank.data) > 0:
                 dd_len += 60 * 2
@@ -763,7 +779,16 @@ async def draw_char_detail_img(
         # damageAttribute = card_sort_map_to_attribute(card_map)
         calc.damageAttribute = calc.card_sort_map_to_attribute(calc.role_card)
         damageAttributeTemp = copy.deepcopy(calc.damageAttribute)
-        crit_damage, expected_damage = damage_calc["func"](damageAttributeTemp, role_detail)
+        if custom_team is not None:
+            # 这里只挂配置：真正的队友增益由伤害函数在合适的位置自己应用
+            damageAttributeTemp.set_teammate(custom_team)
+        try:
+            crit_damage, expected_damage = damage_calc["func"](damageAttributeTemp, role_detail)
+        except TeamConfigError as e:
+            return f"[鸣潮] 自定义队友错误：{e}\n"
+        if custom_team is not None:
+            # 原条目名可能写着默认队友（如「0+1守/6光」），自定义后不再代表实际配队
+            damage_title = f"自定义配队·伤害{damageId}"
         logger.debug(f"{char_name}-{damage_title} 暴击伤害: {crit_damage}")
         logger.debug(f"{char_name}-{damage_title} 期望伤害: {expected_damage}")
         logger.debug(f"{char_name}-{damage_title} 属性值: {damageAttributeTemp}")

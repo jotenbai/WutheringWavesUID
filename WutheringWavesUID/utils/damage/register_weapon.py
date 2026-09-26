@@ -5,6 +5,7 @@ from .utils import (
     CHAR_ATTR_FREEZING,
     CHAR_ATTR_MOLTEN,
     CHAR_ATTR_SIERRA,
+    CHAR_ATTR_VOID,
     Spectro_Frazzle_Role_Ids,
     attack_damage,
     cast_variation,
@@ -666,7 +667,10 @@ class Weapon_21020046(WeaponAbstract):
         """施放共鸣技能"""
         if attr.char_attr != CHAR_ATTR_SIERRA:
             return
-        if attr.role and attr.role.role.roleId in [1406, 1408]:
+        # 持有者是不是风主：主C自己就是风主，或者风主作为队友在队伍里
+        # （队友侧由 Char_1406._do_buff 按声明调到这里，attr.role 是主C）
+        holder = attr.role.role.roleId if attr.role else None
+        if holder in (1406, 1408) or 1406 in attr.teammate_char_ids or 1408 in attr.teammate_char_ids:
             dmg = f"{self.param(2)}"
             title = self.get_title()
             msg = f"风主施放共鸣技能时，附近队伍中登场角色气动伤害加深{dmg}"
@@ -938,6 +942,40 @@ class Weapon_21020106(WeaponAbstract):
                 attr.add_defense_ignore(calc_percent_expression(dmg), title, msg)
 
 
+class Weapon_21020107(WeaponAbstract):
+    id = 21020107
+    type = 2
+    name = "沉冥"
+
+    def do_action(
+        self,
+        func_list: list[str] | str,
+        attr: DamageAttribute,
+        isGroup: bool = False,
+    ):
+        # 只读取本次伤害的有效状态，不将施放解放、同奏增益或响应同奏等同于获得同奏。
+        # param(0)常驻攻击已由面板处理；全队羁念也包含持有者自身。
+        if attr.char_attr != CHAR_ATTR_VOID:
+            return
+        if isinstance(func_list, str):
+            func_list = [func_list]
+        title = self.get_title()
+        if "gain_unison" in func_list:
+            dmg = self.param(1)
+            msg = f"获得同奏后{self.param(3)}秒内，导电伤害加成提升{dmg}"
+            attr.add_dmg_bonus(calc_percent_expression(dmg), title, msg)
+
+        # 羁念/怅念为互斥的最终状态；误传两者时按已消耗协奏处理，不重复叠加。
+        if "consume_concerto" in func_list:
+            dmg = self.param(4)
+            msg = f"怅念：消耗协奏后{self.param(5)}秒内且未切人，导电伤害加成提升{dmg}，移除羁念"
+            attr.add_dmg_bonus(calc_percent_expression(dmg), title, msg)
+        elif "unison_jinian" in func_list:
+            dmg = self.param(2)
+            msg = f"羁念：全队导电伤害加成提升{dmg}，持有者自身也享受，持续{self.param(3)}秒"
+            attr.add_dmg_bonus(calc_percent_expression(dmg), title, msg)
+
+
 class Weapon_21030011(WeaponAbstract):
     id = 21030011
     type = 3
@@ -968,7 +1006,7 @@ class Weapon_21030015(WeaponAbstract):
                 dmg = f"{self.weapon_detail.param[1][self.weapon_reson_level - 1]}*{self.weapon_detail.param[2][self.weapon_reson_level - 1]}"
                 title = self.get_title()
                 msg = f"施放延奏技能后，入场角色攻击提升{dmg}"
-                attr.add_dmg_bonus(calc_percent_expression(dmg), title, msg)
+                attr.add_atk_percent(calc_percent_expression(dmg), title, msg)
 
 
 class Weapon_21030016(WeaponAbstract):
@@ -1118,9 +1156,10 @@ class Weapon_21030046(WeaponAbstract):
         func_list: list[str] | str,
         attr: DamageAttribute,
         isGroup: bool = False,
+        isSelf: bool = True,
     ):
         # 施放变奏技能或普攻伤害命中时，使自身普攻伤害提高{1}，持续{2}秒
-        if attr.char_damage == attack_damage:
+        if attr.char_damage == attack_damage and isSelf:
             dmg = f"{self.param(1)}"
             title = self.get_title()
             msg = f"施放变奏技能或普攻伤害命中时，使自身普攻伤害加成提升{dmg}"
@@ -2215,6 +2254,37 @@ class Weapon_21050104(WeaponAbstract):
             title = self.get_title()
             msg = f"施放共鸣技能时，攻击加成提升{dmg}"
             attr.add_atk_percent(calc_percent_expression(dmg), title, msg)
+
+
+class Weapon_21050116(WeaponAbstract):
+    id = 21050116
+    type = 5
+    name = "玉阙玄华"
+
+    def do_action(
+        self,
+        func_list: list[str] | str,
+        attr: DamageAttribute,
+        isGroup: bool = False,
+        on_field: bool = True,
+    ):
+        # param(0)全属性伤害加成为面板常驻属性，不在伤害计算中重加。
+        actions = [func_list] if isinstance(func_list, str) else func_list
+        if not (attr.env_electro_flare or attr.env_unison_response or "respond_unison" in actions):
+            return
+        title = self.get_title()
+        if attr.char_damage == skill_damage:
+            attr.add_dmg_deepen(calc_percent_expression(self.param(1)), title, f"触发后30秒内，共鸣技能伤害加深{self.param(1)}")
+            if attr.char_attr == CHAR_ATTR_VOID:
+                # 抗性无视仅作用本次导电技能伤害，进入有效抗性而非伤害加深/独立乘区。
+                # 暂按本仓库永远的启明星同文案约定，保留负抗折半等分段规则；游戏帧级实测待补。
+                attr.add_enemy_resistance(
+                    -calc_percent_expression(self.param(2)), title, f"共鸣技能伤害无视{self.param(2)}导电抗性"
+                )
+        if on_field and attr.env_electro_flare_deepen:
+            attr.add_dmg_deepen(
+                calc_percent_expression(self.param(3)), title, f"自身在场且目标位于范围内，电磁效应伤害加深{self.param(3)}"
+            )
 
 
 def register_weapon():

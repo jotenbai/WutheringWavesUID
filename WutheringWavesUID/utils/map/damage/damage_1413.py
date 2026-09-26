@@ -16,7 +16,6 @@ from ...damage.utils import (
     liberation_damage,
     skill_damage_calc,
 )
-from .buff import denia_buff, mornye_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -58,6 +57,7 @@ def calc_damage_1(
     msg = "技能造成伤害后附加【集谐·偏移】"
     attr.add_effect(title, msg)
     attr.set_env_tune_strain()
+    attr.set_teammate_buff()
 
     role_breach = role.role.breach
     if role_breach and role_breach >= 2:
@@ -216,6 +216,7 @@ def calc_damage_2(
     msg = "技能造成伤害后附加【集谐·偏移】"
     attr.add_effect(title, msg)
     attr.set_env_tune_strain()
+    attr.set_teammate_buff()
 
     role_breach = role.role.breach
     if role_breach and role_breach >= 2:
@@ -356,6 +357,7 @@ def calc_damage_3(
     msg = "技能造成伤害后附加【集谐·偏移】"
     attr.add_effect(title, msg)
     attr.set_env_tune_strain()
+    attr.set_teammate_buff()
 
     role_breach = role.role.breach
     if role_breach and role_breach >= 2:
@@ -510,6 +512,7 @@ def calc_damage_4(
     msg = "技能造成伤害后附加【集谐·偏移】"
     attr.add_effect(title, msg)
     attr.set_env_tune_strain()
+    attr.set_teammate_buff()
 
     role_breach = role.role.breach
     if role_breach and role_breach >= 2:
@@ -655,6 +658,7 @@ def calc_damage_5(
     msg = "技能造成伤害后附加【集谐·偏移】"
     attr.add_effect(title, msg)
     attr.set_env_tune_strain()
+    attr.set_teammate_buff()
 
     role_breach = role.role.breach
     if role_breach and role_breach >= 2:
@@ -771,36 +775,16 @@ def calc_damage_5(
 
 def calc_damage_10(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
     """0+1莫宁/0+1达妮娅/·天钧荡煞·昙体仙身(满心识)"""
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
 
-    title = "清宵-常态"
-    msg = "技能造成伤害后附加【集谐·偏移】"
-    attr.set_env_tune_strain()
-
-    # 莫宁buff
-    mornye_buff(attr, 0, 1, isGroup)
-
-    # 达妮娅buff
-    denia_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1209, 0, 1), (1211, 0, 1))
 
     return calc_damage_3(attr, role, isGroup, MindlockNum=30)
 
 
 def calc_damage_11(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
     """0+1莫宁/0+1达妮娅/天光云影沧澜兴(满心识)"""
-    attr.set_char_damage(liberation_damage)
-    attr.set_char_template("temp_atk")
 
-    title = "清宵-常态"
-    msg = "技能造成伤害后附加【集谐·偏移】"
-    attr.set_env_tune_strain()
-
-    # 莫宁buff
-    mornye_buff(attr, 0, 1, isGroup)
-
-    # 达妮娅buff
-    denia_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1209, 0, 1), (1211, 0, 1))
 
     return calc_damage_5(attr, role, isGroup, MindlockNum=30)
 
@@ -824,7 +808,7 @@ damage_detail = [
         "func": lambda attr, role: calc_damage_5(attr, role),
     },
     {
-        "title": "·天钧荡煞·昙体仙身(满心识)",
+        "title": "重击··昙体仙身(满心识)",
         "func": lambda attr, role: calc_damage_3(attr, role, MindlockNum=30),
     },
     {
@@ -840,7 +824,7 @@ damage_detail = [
         "func": lambda attr, role: calc_damage_4(attr, role, MindlockNum=30, ExorcisingSealNum=25),
     },
     {
-        "title": "01莫/01达/·天钧荡煞·昙体仙身(满)",
+        "title": "01莫/01达/重击··昙体仙身(满)",
         "func": lambda attr, role: calc_damage_10(attr, role),
     },
     {

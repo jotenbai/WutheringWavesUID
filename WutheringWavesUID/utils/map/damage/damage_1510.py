@@ -13,7 +13,6 @@ from ...damage.utils import (
     cast_skill,
     skill_damage_calc,
 )
-from .buff import denia_buff, lynae_buff, mornye_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -45,6 +44,7 @@ def calc_damage_1(
     title = f"{role_name}-常态"
     msg = "特定攻击为命中目标附加【集谐·偏移】"
     attr.set_env_tune_strain()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     chain_num = role.get_chain_num()
@@ -143,6 +143,7 @@ def calc_damage_2(
     title = f"{role_name}-常态"
     msg = "特定攻击为命中目标附加【集谐·偏移】"
     attr.set_env_tune_strain()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     title = "共鸣回路-黄金的裁量"
@@ -255,6 +256,7 @@ def calc_damage_3(
     title = f"{role_name}-常态"
     msg = "特定攻击为命中目标附加【集谐·偏移】"
     attr.set_env_tune_strain()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     title = "共鸣回路-黄金的裁量"
@@ -367,6 +369,7 @@ def calc_damage_4(
     title = f"{role_name}-常态"
     msg = "特定攻击为命中目标附加【集谐·偏移】"
     attr.set_env_tune_strain()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     title = "终局之释义"
@@ -454,18 +457,8 @@ def calc_damage_10(
     attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True, Interfered: bool = False
 ) -> tuple[str, str]:
     # 设置角色伤害类型
-    attr.set_char_damage(attack_damage)
-    attr.set_char_template("temp_atk")
 
-    title = "·陆赫斯-常态"
-    msg = "特定攻击为命中目标附加【集谐·偏移】"
-    attr.set_env_tune_strain()
-
-    # 莫宁buff
-    mornye_buff(attr, 0, 1, isGroup)
-
-    # 琳奈buff
-    lynae_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1209, 0, 1), (1509, 0, 1))
 
     return calc_damage_2(attr, role, isGroup, Interfered)
 
@@ -474,18 +467,8 @@ def calc_damage_11(
     attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True, Interfered: bool = False
 ) -> tuple[str, str]:
     # 设置角色伤害类型
-    attr.set_char_damage(attack_damage)
-    attr.set_char_template("temp_atk")
 
-    title = "·陆赫斯-常态"
-    msg = "特定攻击为命中目标附加【集谐·偏移】"
-    attr.set_env_tune_strain()
-
-    # 莫宁buff
-    mornye_buff(attr, 0, 1, isGroup)
-
-    # 琳奈buff
-    lynae_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1209, 0, 1), (1509, 0, 1))
 
     return calc_damage_4(attr, role, isGroup, Interfered)
 
@@ -494,18 +477,8 @@ def calc_damage_12(
     attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True, Interfered: bool = False
 ) -> tuple[str, str]:
     # 设置角色伤害类型
-    attr.set_char_damage(attack_damage)
-    attr.set_char_template("temp_atk")
 
-    title = "·陆赫斯-常态"
-    msg = "特定攻击为命中目标附加【集谐·偏移】"
-    attr.set_env_tune_strain()
-
-    # 莫宁buff
-    mornye_buff(attr, 0, 1, isGroup)
-
-    # 达妮娅buff
-    denia_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1209, 0, 1), (1211, 0, 1))
 
     return calc_damage_2(attr, role, isGroup, Interfered)
 
@@ -514,18 +487,8 @@ def calc_damage_13(
     attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True, Interfered: bool = False
 ) -> tuple[str, str]:
     # 设置角色伤害类型
-    attr.set_char_damage(attack_damage)
-    attr.set_char_template("temp_atk")
 
-    title = "·陆赫斯-常态"
-    msg = "特定攻击为命中目标附加【集谐·偏移】"
-    attr.set_env_tune_strain()
-
-    # 莫宁buff
-    mornye_buff(attr, 0, 1, isGroup)
-
-    # 达妮娅buff
-    denia_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1209, 0, 1), (1211, 0, 1))
 
     return calc_damage_4(attr, role, isGroup, Interfered)
 

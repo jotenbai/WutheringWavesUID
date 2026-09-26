@@ -136,11 +136,16 @@ async def draw_calendar_img(ev: Event, uid: str):
     footer_high = 70
 
     content_total_row = 1 + (len(content.content) - 1) // 2 if content else 0
-    total_high = title_high + banner_high + temp_high + content_total_row * event_high + bar2_high + footer_high
+
+    # 按实际绘制顺序累加，与 _high 的每一步完全对齐
+    total_high = title_high + banner_high
     if gacha_char_list:
-        total_high += (char_bar_high + star_fg_high * len(gacha_char_list)) * 2
-        total_high += temp_high
-        total_high += bar1_high
+        total_high += bar1_high + char_bar_high + star_fg_high * len(gacha_char_list)
+    if gacha_weapon_list:
+        total_high += temp_high + weapon_bar_high + star_fg_high * len(gacha_weapon_list)
+    total_high += temp_high + bar2_high
+    total_high += content_total_row * event_high
+    total_high += footer_high
 
     bg = f"bg{random.choice([1, 2])}"
     img = await get_calendar_bg(1200, total_high, bg)
@@ -317,7 +322,7 @@ async def draw_calendar_gacha(side_module, gacha_type):
             else:
                 name = special_images.name
 
-            name = name.replace("-前瞻", "")
+            name = name.replace("-前瞻", "").strip()
             if not name:
                 return None
 

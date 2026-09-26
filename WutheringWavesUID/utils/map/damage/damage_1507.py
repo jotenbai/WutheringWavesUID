@@ -15,7 +15,6 @@ from ...damage.utils import (
     skill_damage,
     skill_damage_calc,
 )
-from .buff import feibi_buff, shouanren_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -35,6 +34,7 @@ def calc_damage_1(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "3", skillLevel)
+    attr.set_teammate_buff()
     title = "集中压制伤害"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -117,6 +117,7 @@ def calc_damage_2(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
 
     # 每点【焰光】增加倍率
     yanguang_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "4", skillLevel)
+    attr.set_teammate_buff()
     title = "【焰光】增加倍率*40层"
     msg = f"{yanguang_multi}*40"
     attr.add_skill_multi(f"{yanguang_multi}*40", title, msg)
@@ -205,6 +206,7 @@ def calc_damage_3(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
 
     # 每点【焰光】增加倍率
     yanguang_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "4", skillLevel)
+    attr.set_teammate_buff()
     title = "【焰光】增加倍率*20层"
     msg = f"{yanguang_multi}*20"
     attr.add_skill_multi(f"{yanguang_multi}*20")
@@ -283,6 +285,7 @@ def calc_damage_4(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "1", skillLevel)
+    attr.set_teammate_buff()
     title = "重燃伤害"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -359,6 +362,7 @@ def calc_damage_5(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "2", skillLevel)
     sm = skill_multi.split("+")
     skill_multi = calc_percent_expression(sm[1])
+    attr.set_teammate_buff()
     title = "终绝将至之刻2段伤害"
     msg = f"技能倍率{skill_multi * 100:.2f}%"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -419,75 +423,37 @@ def calc_damage_5(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
 
 
 def calc_damage_10(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_env_spectro_deepen()
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-
-    # 菲比buff
-    feibi_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1506, 0, 1))
 
     return calc_damage_3(attr, role, isGroup)
 
 
 def calc_damage_11(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_env_spectro_deepen()
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-    # 守岸人buff
-    shouanren_buff(attr, 0, 1, isGroup)
-
-    # 菲比buff
-    feibi_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1505, 0, 1), (1506, 0, 1))
 
     return calc_damage_3(attr, role, isGroup)
 
 
 def calc_damage_12(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_env_spectro_deepen()
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-    # 守岸人buff
-    shouanren_buff(attr, 6, 5, isGroup)
-
-    # 菲比buff
-    feibi_buff(attr, 6, 5, isGroup)
+    attr.set_teammate((1505, 6, 5), (1506, 6, 5))
 
     return calc_damage_3(attr, role, isGroup)
 
 
 def calc_damage_13(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_env_spectro_deepen()
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-    # 守岸人buff
-    shouanren_buff(attr, 0, 1, isGroup)
-
-    # 菲比buff
-    feibi_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1505, 0, 1), (1506, 0, 1))
 
     return calc_damage_2(attr, role, isGroup)
 
 
 def calc_damage_14(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_env_spectro_deepen()
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-    # 守岸人buff
-    shouanren_buff(attr, 6, 5, isGroup)
-
-    # 菲比buff
-    feibi_buff(attr, 6, 5, isGroup)
+    attr.set_teammate((1505, 6, 5), (1506, 6, 5))
 
     return calc_damage_2(attr, role, isGroup)
 
 
 def calc_damage_15(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_env_spectro_deepen()
-    attr.set_char_damage(hit_damage)
-    attr.set_char_template("temp_atk")
-
-    # 菲比buff
-    feibi_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1506, 0, 1))
 
     return calc_damage_2(attr, role, isGroup)
 

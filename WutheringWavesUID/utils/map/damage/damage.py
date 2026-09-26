@@ -13,6 +13,7 @@ from ...damage.utils import (
     SONATA_CLAWPRINT,
     SONATA_CROWN_OF_VALOR,
     SONATA_DREAMCLIP,
+    SONATA_DREAMHEART,
     SONATA_EMPYREAN,
     SONATA_ETERNAL,
     SONATA_EVIL_PURGE,
@@ -62,6 +63,7 @@ def weapon_damage(
     damage_func: list[str] | str,
     isGroup: bool,
 ):
+    isGroup = isGroup or attr.group_mode
     # 武器谐振
     weapon_clz = WavesWeaponRegister.find_class(weapon_data.weapon.weaponId)
     if weapon_clz:
@@ -75,6 +77,7 @@ def weapon_damage(
 
 
 def echo_damage(attr: DamageAttribute, isGroup: bool):
+    isGroup = isGroup or attr.group_mode
     # 声骸计算
     echo_clz = WavesEchoRegister.find_class(attr.echo_id)
     if echo_clz:
@@ -101,6 +104,7 @@ def phase_damage(
     isGroup: bool = False,
     isHealing: bool = False,
 ):
+    isGroup = isGroup or attr.group_mode
     phase_name = "合鸣效果"
 
     # 这里的套装效果为自身触发。buff在别的地方触发。
@@ -492,6 +496,21 @@ def phase_damage(
             if attr.char_attr == CHAR_ATTR_SIERRA:
                 msg = "添加【集谐·偏移】，气动伤害提升30%"
                 attr.add_dmg_bonus(0.3, title, msg)
+
+        # 衔梦照世之心：二件套常驻属性由面板处理，这里只计五件套条件增益。
+        elif check_if_ph_5(ph_detail.ph_name, ph_detail.ph_num, SONATA_DREAMHEART):
+            if not (
+                attr.env_electro_flare
+                or attr.env_unison
+                or attr.env_unison_response
+                or "gain_unison" in damage_func
+                or "respond_unison" in damage_func
+            ):
+                continue
+            title = f"{phase_name}-{ph_detail.ph_name}"
+            attr.add_crit_rate(0.15, title, "附加电磁效应或获得/响应同奏后30秒内，暴击提升15%")
+            if attr.char_attr == CHAR_ATTR_VOID:
+                attr.add_dmg_bonus(0.225, title, "附加电磁效应或获得/响应同奏后30秒内，导电伤害提升22.5%")
 
         # 冥途夜行之灯
         elif check_if_ph_5(ph_detail.ph_name, ph_detail.ph_num, SONATA_NETHER_ROAD):

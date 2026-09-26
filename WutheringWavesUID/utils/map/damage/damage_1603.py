@@ -11,7 +11,6 @@ from ...damage.utils import (
     liberation_damage,
     skill_damage_calc,
 )
-from .buff import luokeke_buff, sanhua_buff, shouanren_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -34,6 +33,7 @@ def calc_damage_0(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "1", skillLevel)
+    attr.set_teammate_buff()
 
     title = "一日花"
     msg = f"技能倍率{skill_multi}"
@@ -105,6 +105,7 @@ def calc_damage_1(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level(skill_type)
     # 技能技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, SkillTreeMap[skill_type], "1", skillLevel)
+    attr.set_teammate_buff()
 
     title = "芳华绽烬"
     msg = f"技能倍率{skill_multi}"
@@ -155,40 +156,19 @@ def calc_damage_1(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
 
 
 def calc_damage_2(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(attack_damage)
-    attr.set_char_template("temp_atk")
-
-    # 守岸人buff
-    shouanren_buff(attr, 0, 1, isGroup)
-
-    # 散华buff
-    sanhua_buff(attr, 6, 1, isGroup)
+    attr.set_teammate((1505, 0, 1), (1102, 6, 1))
 
     return calc_damage_0(attr, role, isGroup)
 
 
 def calc_damage_10(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(attack_damage)
-    attr.set_char_template("temp_atk")
-
-    # 守岸人buff
-    shouanren_buff(attr, 0, 1, isGroup)
-
-    # 洛可可buff
-    luokeke_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1505, 0, 1), (1606, 0, 1))
 
     return calc_damage_0(attr, role, isGroup)
 
 
 def calc_damage_12(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(attack_damage)
-    attr.set_char_template("temp_atk")
-
-    # 守岸人buff
-    shouanren_buff(attr, 6, 5, isGroup)
-
-    # 洛可可buff
-    luokeke_buff(attr, 2, 1, isGroup)
+    attr.set_teammate((1505, 6, 5), (1606, 2, 1))
 
     return calc_damage_0(attr, role, isGroup)
 

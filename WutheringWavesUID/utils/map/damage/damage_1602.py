@@ -117,6 +117,7 @@ def calc_damage_1(
         title = "满能纷落伤害"
         msg = f"技能倍率{skill_multi}"
         attr.add_skill_multi(skill_multi, title, msg)
+    attr.set_teammate_buff()
 
     attr.set_phantom_dmg_bonus()
 
@@ -158,6 +159,7 @@ def calc_damage_4(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     attr.add_skill_multi(skill_multi, title, msg)
 
     skill_multi = skill_damage_calc(char_result.skillTrees, "3", "2", skillLevel)
+    attr.set_teammate_buff()
     title = "绯刹爆发"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)

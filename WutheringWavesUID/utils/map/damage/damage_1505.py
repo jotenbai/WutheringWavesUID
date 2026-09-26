@@ -27,6 +27,7 @@ def calc_damage_1(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level("共鸣技能")
     # 技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, "2", "2", skillLevel)
+    attr.set_teammate_buff()
     title = "混沌理论"
     msg = f"技能倍率{skill_multi}"
     attr.add_healing_skill_multi(skill_multi, title, msg)
@@ -67,6 +68,7 @@ def calc_damage_2(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level("共鸣解放")
     # 技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, "3", "1", skillLevel)
+    attr.set_teammate_buff()
     title = "终末回环"
     msg = f"技能倍率{skill_multi}"
     attr.add_healing_skill_multi(skill_multi, title, msg)
@@ -106,6 +108,7 @@ def calc_damage_3(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = T
     skillLevel = role.get_skill_level("变奏技能")
     # 技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, "6", "2", skillLevel)
+    attr.set_teammate_buff()
     title = "洞悉伤害"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)

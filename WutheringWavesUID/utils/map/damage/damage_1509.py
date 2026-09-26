@@ -15,7 +15,6 @@ from ...damage.utils import (
     liberation_damage,
     skill_damage_calc,
 )
-from .buff import denia_buff, mornye_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -51,6 +50,7 @@ def calc_damage_1(
     title = f"{role_name}-共鸣模态"
     msg = "光致变染为目标附加【集谐·偏移】"
     attr.set_env_tune_strain()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     # 设置角色固有技能
@@ -170,6 +170,7 @@ def calc_damage_2(
     title = f"{role_name}-共鸣模态"
     msg = "光致变染为目标附加【集谐·偏移】"
     attr.set_env_tune_strain()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     # 设置角色施放技能
@@ -249,37 +250,21 @@ def calc_damage_2(
 
 
 def calc_damage_10(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(attack_damage)
-    attr.set_char_template("temp_atk")
-
     title = "琳奈-共鸣模态"
     msg = "光致变染为目标附加【集谐·偏移】"
-    attr.set_env_tune_strain()
     attr.add_effect(title, msg)
 
-    # 莫宁buff
-    mornye_buff(attr, 0, 1, isGroup)
-
-    # 达妮娅buff
-    denia_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1209, 0, 1), (1211, 0, 1))
 
     return calc_damage_2(attr, role, isGroup, Interfered=True)
 
 
 def calc_damage_11(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = True) -> tuple[str, str]:
-    attr.set_char_damage(attack_damage)
-    attr.set_char_template("temp_atk")
-
     title = "琳奈-共鸣模态"
     msg = "光致变染为目标附加【集谐·偏移】"
-    attr.set_env_tune_strain()
     attr.add_effect(title, msg)
 
-    # 莫宁buff
-    mornye_buff(attr, 2, 5, isGroup)
-
-    # 达妮娅buff
-    denia_buff(attr, 2, 5, isGroup)
+    attr.set_teammate((1209, 2, 5), (1211, 2, 5))
 
     return calc_damage_2(attr, role, isGroup, Interfered=True)
 

@@ -29,6 +29,7 @@ def calc_damage_1(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level("共鸣回路")
     # 技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, "7", "2", skillLevel)
+    attr.set_teammate_buff()
     title = "万方法则"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)
@@ -97,6 +98,7 @@ def calc_damage_2(attr: DamageAttribute, role: RoleDetailData, isGroup: bool = F
     skillLevel = role.get_skill_level("共鸣解放")
     # 技能倍率
     skill_multi = skill_damage_calc(char_result.skillTrees, "3", "1", skillLevel)
+    attr.set_teammate_buff()
     title = "万方法则"
     msg = f"技能倍率{skill_multi}"
     attr.add_skill_multi(skill_multi, title, msg)

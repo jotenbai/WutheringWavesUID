@@ -16,7 +16,6 @@ from ...damage.utils import (
     skill_damage,
     skill_damage_calc,
 )
-from .buff import qiuyuan_buff, shouanren_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -61,6 +60,7 @@ def calc_damage_1(
         msg = "特定攻击为命中目标附加【霜渐效应】"
         attr.set_env_glacio_chafe()
         attr.add_effect(title, msg)
+    attr.set_teammate_buff()
 
     # 设置角色固有技能
     role_breach = role.role.breach
@@ -151,6 +151,7 @@ def calc_damage_2(
         msg = "特定攻击为命中目标附加【霜渐效应】"
         attr.set_env_glacio_chafe()
         attr.add_effect(title, msg)
+    attr.set_teammate_buff()
 
     zoom_count = 0  # 变焦层数
 
@@ -291,6 +292,7 @@ def calc_damage_3(
         msg = "特定攻击为命中目标附加【霜渐效应】"
         attr.set_env_glacio_chafe()
         attr.add_effect(title, msg)
+    attr.set_teammate_buff()
 
     zoom_count = 0  # 变焦层数
 
@@ -387,26 +389,7 @@ def calc_damage_10(
     Mode: Literal["glacio_chafe", "echo"] = "echo",
     r: Literal["r", "a3", "LetItGo"] = "LetItGo",
 ) -> tuple[str, str]:
-    # 设置角色伤害类型
-    # 强化a3是普攻伤害，其他两个根据模态变化
-    if r == "a3" or Mode == "glacio_chafe":
-        attr.set_char_damage(attack_damage)
-    else:
-        attr.set_char_damage(phantom_damage)
-    # 设置角色模板  "temp_atk", "temp_life", "temp_def"
-    attr.set_char_template("temp_atk")
-
-    if Mode == "glacio_chafe":
-        # 附加霜渐效应
-        title = "洛瑟菈-常态"
-        msg = "特定攻击为命中目标附加【霜渐效应】"
-        attr.set_env_glacio_chafe()
-
-    # 守岸人buff
-    shouanren_buff(attr, 0, 1, isGroup)
-
-    # 仇远buff
-    qiuyuan_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1505, 0, 1), (1411, 0, 1))
 
     return calc_damage_2(attr, role, isGroup, Mode, r)
 

@@ -270,6 +270,9 @@ class DamageAttribute:
         self.env_glacio_chafe = False
         # 霜渐效应伤害加深
         self.env_glacio_chafe_deepen = False
+        # 已获得/响应同奏触发的装备buff窗口，不是当前持有同奏；消耗同奏不清除未到期的30秒增益。
+        self.env_unison = False
+        self.env_unison_response = False
         # 电磁效应
         self.env_electro_flare = False
         # 电磁效应伤害加深
@@ -290,6 +293,10 @@ class DamageAttribute:
         self.tune_break_boost = 10
         # 集谐干涉层数 (初始0层)
         self.tune_strain_stack = 0
+        # 队友配置：换队友或条目自带的默认配队，见 set_teammate_buff
+        self._teammate_config = ()
+        # 是否按组队模式计算（挂了队友就是 True，见 buff.apply_teammates）
+        self.group_mode = False
         # 触发护盾
         self.trigger_shield = False
         # 声骸结果
@@ -386,6 +393,29 @@ class DamageAttribute:
 
     def set_char_attr(self, char_attr: Literal["冷凝", "衍射", "导电", "热熔", "气动", "湮灭"]):
         self.char_attr = char_attr
+        return self
+
+    def set_teammate(self, *members):
+        """挂队友配置。
+
+        调用方在伤害函数之前挂的是「换队友」；伤害函数开头挂的是这个条目自带的
+        默认配队。先挂的生效，所以用户换队友时默认配队不会顶掉它。
+        """
+        from .buff import attach_teammate
+
+        attach_teammate(self, members)
+        return self
+
+    def set_teammate_buff(self):
+        """在伤害函数里应用队友增益，读的就是 ``_teammate_config``。
+
+        写法参考 ``set_phantom_dmg_bonus``：伤害函数开头用 ``set_teammate(...)``
+        声明这个条目自带的默认配队，到合适的位置再调一次本方法应用。
+        用户用「换队友」指定了配队时，默认配队让位，只算用户那套。
+        """
+        from .buff import apply_teammates
+
+        apply_teammates(self)
         return self
 
     def set_char_atk(self, char_atk: float, title="", msg=""):

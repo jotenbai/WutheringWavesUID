@@ -14,7 +14,6 @@ from ...damage.utils import (
     hit_damage,
     skill_damage_calc,
 )
-from .buff import mornye_buff, motefei_buff, rebecca_buff
 from .damage import echo_damage, phase_damage, weapon_damage
 
 
@@ -49,6 +48,7 @@ def calc_damage_1(
     title = f"{role_name}-常态"
     msg = "特定攻击为命中目标附加【骇破·偏移】"
     attr.set_env_hack()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     # 设置角色固有技能
@@ -160,6 +160,7 @@ def calc_damage_2(
     title = f"{role_name}-常态"
     msg = "特定攻击为命中目标附加【骇破·偏移】"
     attr.set_env_hack()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     # 设置角色固有技能
@@ -265,6 +266,7 @@ def calc_damage_3(
     title = f"{role_name}-常态"
     msg = "特定攻击为命中目标附加【骇破·偏移】"
     attr.set_env_hack()
+    attr.set_teammate_buff()
     attr.add_effect(title, msg)
 
     # 设置角色固有技能
@@ -342,19 +344,9 @@ def calc_damage_10(
     isGroup: bool = True,
 ) -> tuple[str, str]:
     # 设置角色伤害类型
-    attr.set_char_damage(hit_damage)
     # 设置角色模板  "temp_atk", "temp_life", "temp_def"
-    attr.set_char_template("temp_atk")
 
-    title = "露西-常态"
-    msg = "特定攻击为命中目标附加【骇破·偏移】"
-    attr.set_env_hack()
-
-    # 莫宁buff
-    mornye_buff(attr, 1, 1, isGroup)
-
-    # 莫特斐buff
-    motefei_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1209, 1, 1), (1204, 0, 1))
 
     return calc_damage_3(attr, role, isGroup, r="r2")
 
@@ -365,19 +357,9 @@ def calc_damage_11(
     isGroup: bool = True,
 ) -> tuple[str, str]:
     # 设置角色伤害类型
-    attr.set_char_damage(hit_damage)
     # 设置角色模板  "temp_atk", "temp_life", "temp_def"
-    attr.set_char_template("temp_atk")
 
-    title = "露西-常态"
-    msg = "特定攻击为命中目标附加【骇破·偏移】"
-    attr.set_env_hack()
-
-    # 莫宁buff
-    mornye_buff(attr, 1, 1, isGroup)
-
-    # 丽贝卡buff
-    rebecca_buff(attr, 0, 1, isGroup)
+    attr.set_teammate((1209, 1, 1), (1308, 0, 1))
 
     return calc_damage_3(attr, role, isGroup, r="r2")
 

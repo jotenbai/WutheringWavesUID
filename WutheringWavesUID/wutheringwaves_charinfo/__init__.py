@@ -12,12 +12,13 @@ from ..utils.database.models import WavesBind
 from ..utils.error_reply import WAVES_CODE_103
 from ..utils.hint import error_reply
 from ..utils.image import consume_role_pile_notice
-from ..utils.name_convert import CHAR_NAME_PATTERN, char_name_to_char_id, get_event_command_text
+from ..utils.name_convert import CHAR_NAME_PATTERN, alias_to_char_name, char_name_to_char_id, get_event_command_text
 from ..utils.resource.constant import SPECIAL_CHAR
 from ..utils.trad_ui import disable_traditional_ui, enable_traditional_ui
 from ..utils.waves_api import waves_api
 from ..wutheringwaves_config import WutheringWavesConfig
 from .draw_char_card import draw_char_detail_img, draw_char_score_img
+from .draw_team_config import draw_teammate_config_img, draw_teammate_overview_img
 from .upload_card import (
     compress_all_custom_card,
     delete_all_custom_card,
@@ -36,6 +37,33 @@ waves_delete_char_card = SV("waves删除面板图", priority=5, pm=1)
 waves_delete_all_card = SV("waves删除全部面板图", priority=5, pm=1)
 waves_compress_card = SV("waves面板图压缩", priority=5, pm=1)
 waves_delete_char_detail = SV("waves删除角色数据", priority=5)
+waves_team_config = SV("waves队友配置", priority=3)
+
+
+@waves_team_config.on_regex(
+    rf"^队友配置(?P<char>{CHAR_NAME_PATTERN})?$",
+    block=True,
+)
+async def send_team_config_msg(bot: Bot, ev: Event):
+    match = re.search(rf"^队友配置(?P<char>{CHAR_NAME_PATTERN})?$", get_event_command_text(ev))
+    if not match:
+        return
+    ev.regex_dict = match.groupdict()
+    char = ev.regex_dict.get("char")
+    logger.debug(f"[鸣潮] [队友配置] CHAR: {char}")
+
+    if not char:
+        im = await draw_teammate_overview_img()
+        return await bot.send(await convert_img(im))
+
+    char_id = char_name_to_char_id(char)
+    if not char_id:
+        return await bot.send(f"[鸣潮] 角色名【{char}】无法找到, 可能暂未适配, 请先检查输入是否正确！\n")
+
+    im = await draw_teammate_config_img(int(char_id), short_name=alias_to_char_name(char))
+    if isinstance(im, str):
+        return await bot.send(im)
+    return await bot.send(await convert_img(im))
 
 
 @waves_delete_char_detail.on_regex(
