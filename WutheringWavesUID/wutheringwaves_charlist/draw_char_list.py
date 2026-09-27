@@ -37,6 +37,7 @@ from ..utils.image import (
     compose_ring_avatar,
     get_attribute,
     get_event_avatar,
+    get_waves_id_owner_avatar,
     get_square_avatar,
     get_square_weapon,
     get_waves_bg,
@@ -194,7 +195,7 @@ async def draw_char_list_img(
     card_img.paste(base_info_bg, (15, 20), base_info_bg)
 
     # 头像 头像环
-    avatar = await draw_pic_with_ring(ev, is_peek)
+    avatar = await draw_pic_with_ring(ev, is_peek, uid)
     avatar_ring = Image.open(TEXT_PATH / "avatar_ring.png")
     card_img.paste(avatar, (25, 70), avatar)
     avatar_ring = avatar_ring.resize((180, 180))
@@ -352,9 +353,11 @@ async def draw_char_list_img(
     return card_img
 
 
-async def draw_pic_with_ring(ev: Event, is_peek: bool = False):
+async def draw_pic_with_ring(ev: Event, is_peek: bool = False, waves_id: str = ""):
     if is_peek:
-        pic = await get_square_avatar(1505)
+        pic = await get_waves_id_owner_avatar(waves_id, ev.bot_id) if waves_id else None
+        if pic is None:
+            pic = await get_square_avatar(1505)
     else:
         pic = await get_event_avatar(ev)
 

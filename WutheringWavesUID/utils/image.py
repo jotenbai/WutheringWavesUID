@@ -21,7 +21,7 @@ from PIL import (
     ImageOps,
 )
 
-from ..utils.database.models import WavesUserAvatar
+from ..utils.database.models import WavesBind, WavesUserAvatar
 from ..utils.resource.RESOURCE_PATH import (
     AVATAR_PATH,
     CUSTOM_CARD_PATH,
@@ -553,6 +553,21 @@ async def get_user_avatar(
             logger.debug(f"[鸣潮] 头像拉取失败 {url}: {e}")
 
     raise ValueError(f"无法获取用户头像: {qid}") from last_err
+
+
+async def get_waves_id_owner_avatar(waves_id: str, bot_id: str, size: int = 640) -> Image.Image | None:
+    """按特征码查看他人时：能唯一确定绑定用户则返回其头像，否则 None（调用方回退角色头像）。"""
+    try:
+        owner = await WavesBind.get_uid_owner_user_id(waves_id, bot_id)
+    except Exception as e:
+        logger.debug(f"[鸣潮] 特征码反查绑定用户失败 {waves_id}: {e}")
+        return None
+    if not owner:
+        return None
+    try:
+        return await get_user_avatar(owner, size=size)
+    except Exception:
+        return None
 
 
 async def rank_user_has_custom_avatar(qid: int | str | None) -> bool:

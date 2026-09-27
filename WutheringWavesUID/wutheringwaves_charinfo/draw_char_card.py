@@ -72,6 +72,7 @@ from ..utils.image import (
     compose_ring_avatar,
     get_custom_gaussian_blur,
     get_event_avatar,
+    get_waves_id_owner_avatar,
     get_role_pile,
     get_small_logo,
     get_square_avatar,
@@ -225,7 +226,11 @@ async def get_user_role_data_online(ev: Event, char_id: str, uid: str, waves_id:
         }
     )
 
-    avatar = await draw_pic_with_ring(ev) if not waves_id else await draw_char_with_ring(char_id)
+    avatar = (
+        await draw_pic_with_ring(ev)
+        if not waves_id
+        else await draw_waves_id_avatar_with_ring(ev, waves_id, char_id)
+    )
 
     return account_info, avatar, role_detail
 
@@ -445,7 +450,7 @@ async def get_role_need(
 
             role_detail = RoleDetailData.model_validate(role_detail_info)
 
-            avatar = await draw_char_with_ring(char_id)
+            avatar = await draw_waves_id_avatar_with_ring(ev, waves_id, char_id)
             break
         else:
             return (
@@ -456,7 +461,7 @@ async def get_role_need(
         avatar = (
             await draw_pic_with_ring(ev, is_force_avatar, force_resource_id)
             if not waves_id
-            else await draw_char_with_ring(char_id)
+            else await draw_waves_id_avatar_with_ring(ev, waves_id, char_id)
         )
         all_role_detail: dict[str, RoleDetailData] | None = await get_all_roleid_detail_info(uid)
 
@@ -1092,7 +1097,7 @@ async def draw_char_score_img(ev: Event, uid: str, char: str, user_id: str, wave
     # 获取数据
     avatar, role_detail = await get_role_need(ev, char_id, ck, uid, char_name, waves_id)
     if isinstance(role_detail, str):
-        account_info, avatar, role_detail = await get_user_role_data_online(ev, char_id, uid)
+        account_info, avatar, role_detail = await get_user_role_data_online(ev, char_id, uid, waves_id)
         if not account_info:
             avatar, role_detail = await get_role_need(ev, char_id, ck, "1", char_name)
             account_info = AccountBaseInfo.model_validate(
@@ -1400,6 +1405,14 @@ async def draw_pic_with_ring(ev: Event, is_force_avatar=False, force_resource_id
     else:
         pic = await get_user_avatar(ev.user_id)
 
+    mask_pic = Image.open(TEXT_PATH / "avatar_mask.png")
+    return compose_ring_avatar(pic, mask_pic)
+
+
+async def draw_waves_id_avatar_with_ring(ev: Event, waves_id: str, char_id):
+    pic = await get_waves_id_owner_avatar(waves_id, ev.bot_id)
+    if pic is None:
+        return await draw_char_with_ring(char_id)
     mask_pic = Image.open(TEXT_PATH / "avatar_mask.png")
     return compose_ring_avatar(pic, mask_pic)
 

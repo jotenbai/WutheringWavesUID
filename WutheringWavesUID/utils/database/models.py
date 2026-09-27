@@ -166,6 +166,43 @@ class WavesBind(Bind, table=True):
 
         return -1
 
+    @classmethod
+    @with_session
+    async def get_uid_owner_user_id(
+        cls: type[T_WavesBind],
+        session: AsyncSession,
+        uid: str,
+        bot_id: str,
+    ) -> str | None:
+        """由特征码反查唯一可信的绑定用户：优先唯一登录者，其次唯一绑定者；有歧义返回 None。"""
+        if not uid:
+            return None
+
+        login_sql = select(WavesUser).where(
+            and_(
+                col(WavesUser.uid) == uid,
+                col(WavesUser.bot_id) == bot_id,
+                col(WavesUser.cookie) != null(),
+                col(WavesUser.cookie) != "",
+                or_(col(WavesUser.status) == null(), col(WavesUser.status) == ""),
+            )
+        )
+        login_users = {u.user_id for u in (await session.scalars(login_sql)).all() if u.user_id}
+        if len(login_users) == 1:
+            return login_users.pop()
+        if len(login_users) > 1:
+            return None
+
+        bind_sql = select(cls).where(col(cls.bot_id) == bot_id, col(cls.uid).contains(uid))
+        bind_users = {
+            b.user_id
+            for b in (await session.scalars(bind_sql)).all()
+            if b.user_id and b.uid and uid in b.uid.split("_")
+        }
+        if len(bind_users) == 1:
+            return bind_users.pop()
+        return None
+
 
 class WavesUser(User, table=True):
     __table_args__: dict[str, Any] = {"extend_existing": True}
