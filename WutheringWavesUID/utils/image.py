@@ -615,6 +615,28 @@ def compose_rank_user_avatar(
     return img
 
 
+def compose_ring_avatar(
+    pic: Image.Image,
+    avatar_mask: Image.Image,
+    *,
+    canvas_size: int = 180,
+    avatar_size: int = 160,
+    offset: tuple[int, int] = (20, 20),
+) -> Image.Image:
+    """带圆环的圆形头像（练度/面板/体力等左上角）：头像中心对齐遮罩 alpha 圆心。"""
+    pic_temp = crop_center_img(pic, avatar_size, avatar_size)
+    mask_pic = avatar_mask.copy().resize((avatar_size, avatar_size))
+    cx, cy = _alpha_centroid(mask_pic)
+    aligned = Image.new("RGBA", (avatar_size, avatar_size))
+    aligned.paste(
+        pic_temp,
+        (int(round(cx - avatar_size / 2)), int(round(cy - avatar_size / 2))),
+    )
+    img = Image.new("RGBA", (canvas_size, canvas_size))
+    img.paste(aligned, offset, mask_pic)
+    return img
+
+
 async def get_event_avatar(
     ev: Event,
     avatar_path: Path | None = None,

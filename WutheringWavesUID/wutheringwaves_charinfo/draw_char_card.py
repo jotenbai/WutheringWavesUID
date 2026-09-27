@@ -69,6 +69,7 @@ from ..utils.image import (
     get_attribute,
     get_attribute_effect,
     get_attribute_prop,
+    compose_ring_avatar,
     get_custom_gaussian_blur,
     get_event_avatar,
     get_role_pile,
@@ -1400,12 +1401,7 @@ async def draw_pic_with_ring(ev: Event, is_force_avatar=False, force_resource_id
         pic = await get_user_avatar(ev.user_id)
 
     mask_pic = Image.open(TEXT_PATH / "avatar_mask.png")
-    img = Image.new("RGBA", (180, 180))
-    mask = mask_pic.resize((160, 160))
-    resize_pic = crop_center_img(pic, 160, 160)
-    img.paste(resize_pic, (20, 20), mask)
-
-    return img
+    return compose_ring_avatar(pic, mask_pic)
 
 
 async def draw_char_with_ring(char_id):

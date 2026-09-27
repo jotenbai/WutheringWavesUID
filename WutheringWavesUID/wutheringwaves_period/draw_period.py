@@ -7,7 +7,6 @@ from gsuid_core.logger import logger
 from gsuid_core.models import Event
 from gsuid_core.sv import get_plugin_available_prefix
 from gsuid_core.utils.image.convert import convert_img
-from gsuid_core.utils.image.image_tools import crop_center_img
 from PIL import Image, ImageDraw
 
 from ..utils.api.model import AccountBaseInfo, Period, PeriodDetail, PeriodList
@@ -18,7 +17,12 @@ from ..utils.fonts.waves_fonts import (
     waves_font_30,
     waves_font_36,
 )
-from ..utils.image import add_footer, get_event_avatar, get_waves_bg
+from ..utils.image import (
+    add_footer,
+    compose_ring_avatar,
+    get_event_avatar,
+    get_waves_bg,
+)
 from ..utils.waves_api import waves_api
 
 TEXT_PATH = Path(__file__).parent / "texture2d"
@@ -474,12 +478,7 @@ async def draw_pic_with_ring(ev: Event):
     pic = await get_event_avatar(ev, is_valid_at_param=False)
 
     mask_pic = Image.open(TEXT_PATH / "avatar_mask.png")
-    img = Image.new("RGBA", (200, 200))
-    mask = mask_pic.resize((160, 160))
-    resize_pic = crop_center_img(pic, 160, 160)
-    img.paste(resize_pic, (20, 20), mask)
-
-    return img
+    return compose_ring_avatar(pic, mask_pic, canvas_size=200)
 
 
 def get_resource_item_map(period_detail: PeriodDetail) -> dict[int, Any]:

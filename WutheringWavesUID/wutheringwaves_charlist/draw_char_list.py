@@ -34,6 +34,7 @@ from ..utils.image import (
     SPECIAL_GOLD,
     WEAPON_RESONLEVEL_COLOR,
     add_footer,
+    compose_ring_avatar,
     get_attribute,
     get_event_avatar,
     get_square_avatar,
@@ -358,12 +359,7 @@ async def draw_pic_with_ring(ev: Event, is_peek: bool = False):
         pic = await get_event_avatar(ev)
 
     mask_pic = Image.open(TEXT_PATH / "avatar_mask.png")
-    img = Image.new("RGBA", (180, 180))
-    mask = mask_pic.resize((160, 160))
-    resize_pic = crop_center_img(pic, 160, 160)
-    img.paste(resize_pic, (20, 20), mask)
-
-    return img
+    return compose_ring_avatar(pic, mask_pic)
 
 
 async def draw_pic(roleId):

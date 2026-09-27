@@ -4,7 +4,7 @@ from gsuid_core.models import Event
 from gsuid_core.utils.image.image_tools import crop_center_img
 from PIL import Image
 
-from ..utils.image import get_event_avatar, get_square_avatar
+from ..utils.image import compose_ring_avatar, get_event_avatar, get_square_avatar
 
 TEXT_PATH = Path(__file__).parent / "texture2d"
 
@@ -13,10 +13,7 @@ async def draw_pic_with_ring(ev: Event):
     pic = await get_event_avatar(ev)
 
     mask_pic = Image.open(TEXT_PATH / "avatar_mask.png")
-    avatar = Image.new("RGBA", (180, 180))
-    mask = mask_pic.resize((160, 160))
-    resize_pic = crop_center_img(pic, 160, 160)
-    avatar.paste(resize_pic, (20, 20), mask)
+    avatar = compose_ring_avatar(pic, mask_pic)
 
     avatar_ring = Image.open(TEXT_PATH / "avatar_ring.png")
     avatar_ring = avatar_ring.resize((180, 180))

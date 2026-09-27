@@ -7,7 +7,6 @@ import random
 import aiofiles
 from gsuid_core.models import Event
 from gsuid_core.utils.image.convert import convert_img
-from gsuid_core.utils.image.image_tools import crop_center_img
 from PIL import Image, ImageDraw
 
 from ..utils.fonts.waves_fonts import (
@@ -23,6 +22,7 @@ from ..utils.fonts.waves_fonts import (
 from ..utils.image import (
     GOLD,
     add_footer,
+    compose_ring_avatar,
     cropped_square_avatar,
     get_event_avatar,
     get_square_avatar,
@@ -532,11 +532,7 @@ async def draw_pic_with_ring(ev: Event):
     pic = await get_event_avatar(ev, is_valid_at_param=False)
 
     mask_pic = Image.open(TEXT_PATH / "avatar_mask.png")
-    img = Image.new("RGBA", (320, 320))
-    mask = mask_pic.resize((250, 250))
-    resize_pic = crop_center_img(pic, 250, 250)
-    img.paste(resize_pic, (20, 20), mask)
-    return img
+    return compose_ring_avatar(pic, mask_pic, canvas_size=320, avatar_size=250)
 
 
 async def get_random_card_polygon(ev: Event):
