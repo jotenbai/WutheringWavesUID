@@ -271,7 +271,7 @@ async def draw_local_total_rank(bot: Bot, ev: Event, bot_bool: bool = False) -> 
             region_draw = ImageDraw.Draw(region_block)
             region_draw.rounded_rectangle([0, 0, 200, 30], radius=6, fill=detail.server_color + (int(0.9 * 255),))
             region_draw.text((100, 15), f"Server: {detail.server}", "white", waves_font_18, "mm")
-            bar_bg.alpha_composite(region_block, (350, 65))
+            bar_bg.alpha_composite(region_block, (350, 55))
 
         # 总分数
         bar_draw.text(

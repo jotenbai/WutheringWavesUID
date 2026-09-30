@@ -390,7 +390,7 @@ async def draw_bot_rank_img(bot: Bot, ev: Event, char: str, rank_type: str) -> s
         region_draw = ImageDraw.Draw(region_block)
         region_draw.rounded_rectangle([0, 0, 200, 30], radius=6, fill=rank.server_color + (int(0.9 * 255),))
         region_draw.text((100, 15), f"Server: {rank.server}", "white", waves_font_18, "mm")
-        bar_bg.alpha_composite(region_block, (350, 65))
+        bar_bg.alpha_composite(region_block, (350, 55))
 
         # 等级
         info_block = Image.new("RGBA", (60, 20), color=(255, 255, 255, 0))
