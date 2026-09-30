@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw
 from ..utils.api.model import RoleDetailData, WeaponData
 from ..utils.ascension.weapon import get_breach
 from ..utils.char_info_utils import get_all_roleid_detail_info_int
+from ..utils.database.models import WavesBind
 from ..utils.error_reply import WAVES_CODE_099
 from ..utils.expression_ctx import WavesCharRank, format_energy_regen_line, get_waves_char_rank
 from ..utils.fonts.waves_fonts import (
@@ -142,8 +143,14 @@ async def draw_char_list_img(
     waves_char_rank = await get_waves_char_rank(uid, all_role_detail)
     waves_char_rank.sort(key=lambda i: (i.score, i.starLevel, i.level, i.chain, i.roleId), reverse=True)
 
-    # 保存练度数据到数据库
-    await save_train_data_to_db(user_id=user_id, waves_id=uid, name=account_info.name, waves_char_rank=waves_char_rank)
+    # 保存练度数据到数据库；按特征码查看他人时记在机主名下，查不到唯一机主则不写
+    save_user_id = user_id
+    if is_peek and uid != user_waves_id:
+        save_user_id = await WavesBind.get_uid_owner_user_id(uid, ev.bot_id)
+    if save_user_id:
+        await save_train_data_to_db(
+            user_id=save_user_id, waves_id=uid, name=account_info.name, waves_char_rank=waves_char_rank
+        )
 
     # 统计数据
     # up角色
