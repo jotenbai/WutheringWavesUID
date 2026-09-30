@@ -198,15 +198,21 @@ async def draw_local_total_rank(bot: Bot, ev: Event, bot_bool: bool = False) -> 
     text_bar_draw.text((40, 60), "排行说明", GREY, waves_font_28, "lm")
     text_bar_draw.text(
         (185, 50),
-        "1. 综合所有角色的声骸分数。最高分为单角色最高分",
+        "1. 总分：所有声骸评分>=175 的角色分数相加；最高分：单个角色的最高声骸评分",
         SPECIAL_GOLD,
         waves_font_20,
         "lm",
     )
-    text_bar_draw.text((185, 85), "2. 显示前10个最强角色", SPECIAL_GOLD, waves_font_20, "lm")
+    text_bar_draw.text(
+        (185, 85),
+        "2. 至少1名角色>=175才纳入统计（需刷新面板或查过练度），每人最多显示10名角色",
+        SPECIAL_GOLD,
+        waves_font_20,
+        "lm",
+    )
 
     # 备注
-    temp_notes = "排行标准：以所有角色声骸分数总和（角色分数>=175）为排序的综合排名"
+    temp_notes = "按总分从高到低排名"
     text_bar_draw.text((1260, 100), temp_notes, SPECIAL_GOLD, waves_font_16, "rm")
 
     card_img.alpha_composite(text_bar_img, (0, header_height))
