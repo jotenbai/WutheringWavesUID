@@ -30,11 +30,11 @@ REF_HEIGHT = 602
 crop_ratios = [
     (0 / REF_WIDTH, 0 / REF_HEIGHT, 420 / REF_WIDTH, 350 / REF_HEIGHT),  # 角色
     (890 / REF_WIDTH, 240 / REF_HEIGHT, 1020 / REF_WIDTH, 310 / REF_HEIGHT),  # 武器
-    (583 / REF_WIDTH, 30 / REF_HEIGHT, 653 / REF_WIDTH, 130 / REF_HEIGHT),  # 普攻
-    (456 / REF_WIDTH, 115 / REF_HEIGHT, 526 / REF_WIDTH, 215 / REF_HEIGHT),  # 共鸣技能
-    (694 / REF_WIDTH, 115 / REF_HEIGHT, 764 / REF_WIDTH, 215 / REF_HEIGHT),  # 共鸣解放
-    (501 / REF_WIDTH, 250 / REF_HEIGHT, 571 / REF_WIDTH, 350 / REF_HEIGHT),  # 变奏技能
-    (650 / REF_WIDTH, 250 / REF_HEIGHT, 720 / REF_WIDTH, 350 / REF_HEIGHT),  # 共鸣回路
+    (583 / REF_WIDTH, 100 / REF_HEIGHT, 653 / REF_WIDTH, 130 / REF_HEIGHT),  # 普攻
+    (456 / REF_WIDTH, 185 / REF_HEIGHT, 526 / REF_WIDTH, 215 / REF_HEIGHT),  # 共鸣技能
+    (694 / REF_WIDTH, 185 / REF_HEIGHT, 764 / REF_WIDTH, 215 / REF_HEIGHT),  # 共鸣解放
+    (501 / REF_WIDTH, 320 / REF_HEIGHT, 571 / REF_WIDTH, 350 / REF_HEIGHT),  # 变奏技能
+    (650 / REF_WIDTH, 320 / REF_HEIGHT, 720 / REF_WIDTH, 350 / REF_HEIGHT),  # 共鸣回路 各技能后续合并
     (12 / REF_WIDTH, 360 / REF_HEIGHT, 216 / REF_WIDTH, 590 / REF_HEIGHT),  # 声骸1
     (221 / REF_WIDTH, 360 / REF_HEIGHT, 425 / REF_WIDTH, 590 / REF_HEIGHT),  # 声骸2
     (430 / REF_WIDTH, 360 / REF_HEIGHT, 634 / REF_WIDTH, 590 / REF_HEIGHT),  # 声骸3
@@ -55,8 +55,17 @@ chain_crop_ratios = [
 CHAR_WIDTH = 420
 CHAR_HEIGHT = 350
 char_crop_ratios = [
-    (37 / CHAR_WIDTH, 0 / CHAR_HEIGHT, 250 / CHAR_WIDTH, 45 / CHAR_HEIGHT),  # 上面角色名称与等级
-    (0 / CHAR_WIDTH, 45 / CHAR_HEIGHT, 155 / CHAR_WIDTH, 80 / CHAR_HEIGHT),  # 下面用户昵称与id
+    (34 / CHAR_WIDTH, 0 / CHAR_HEIGHT, 250 / CHAR_WIDTH, 45 / CHAR_HEIGHT),  # 上面角色名称与等级
+    (8 / CHAR_WIDTH, 45 / CHAR_HEIGHT, 155 / CHAR_WIDTH, 62 / CHAR_HEIGHT),  # 下面用户昵称
+    (8 / CHAR_WIDTH, 62 / CHAR_HEIGHT, 155 / CHAR_WIDTH, 80 / CHAR_HEIGHT),  # 下面用户uid
+]
+
+# 原始武器裁切区域参考分辨率，from crop_ratios
+WEAPON_WIDTH = 233
+WEAPON_HEIGHT = 125
+weapon_crop_ratios = [
+    (7 / WEAPON_WIDTH, 22 / WEAPON_HEIGHT, 233 / WEAPON_WIDTH, 48 / WEAPON_HEIGHT),  # 武器名称
+    (44 / WEAPON_WIDTH, 72 / WEAPON_HEIGHT, 233 / WEAPON_WIDTH, 110 / WEAPON_HEIGHT),  # 武器等级
 ]
 
 # 原始声骸裁切区域参考分辨率，from crop_ratios
@@ -413,10 +422,17 @@ async def cut_card_to_ocr(image: Image.Image) -> tuple[int, list[dict], list[Ima
     # 进一步处理角色头图
     image_char = cut_image(cropped_images[0], char_crop_ratios)
     # 处理 丽贝卡 背景遮蔽uid的情况: 先按颜色分离，再进行锐化+中值滤波
-    image_char[1] = extract_digits_clean(image_char[1])
-    image_char[1] = sharpen_and_clean(image_char[1])  # 可调整k值 不放大时2.5最优
-    # 把image_char[0]和image_char[1]拼接成角色头图
+    image_char[2] = extract_digits_clean(image_char[2])
+    image_char[1] = sharpen_and_clean(image_char[1], k=0, median_size=1)  # 只放大
+    image_char[2] = sharpen_and_clean(image_char[2])  # 可调整k值 不放大时2.5最优
+    # 把image_char[]拼接成角色头图
     cropped_images[0] = cut_image_need_data(image_char)
+
+    # 进一步处理武器
+    image_weapon = cut_image(cropped_images[1], weapon_crop_ratios)
+    image_weapon[0] = sharpen_and_clean(image_weapon[0], k=0, median_size=1, resize=3)  # 锐化放大
+    # 把image_weapon[]拼接成武器图
+    cropped_images[1] = cut_image_need_data(image_weapon)
 
     # 进一步处理声骸图：裁切数值、图像匹配
     analyze_echoes_results = []
@@ -436,6 +452,9 @@ async def cut_card_to_ocr(image: Image.Image) -> tuple[int, list[dict], list[Ima
         echo_values[1] = crop_icon_smart(echo_values[1])  # 裁切属性标
         echo_values_head = cut_image_need_data([echo_values[0], echo_values[1]], direction="right")  # 左右拼接主词条
         cropped_images[i] = cut_image_need_data([echo_values_head, echo_values[2]])  # 上下拼接主副词条
+
+    cropped_images[2] = cut_image_need_data(cropped_images[2:7], direction="right")  # 左右合并技能
+    cropped_images = cropped_images[:3] + cropped_images[7:]
 
     # from pathlib import Path  # 保存裁切图片用于调试
     # SRC_PATH = Path(__file__).parent / "src"
@@ -470,7 +489,7 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
             r"([A-Za-z\u4e00-\u9fa5\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7A3\u00C0-\u00FF]+)"
         ),  # 支持英文、中文、日文、韩文，以及西班牙文、德文和法文中的扩展拉丁字符，为后续逻辑判断用
         "level": re.compile(r"(?i)(?:.*?[LV]?)?\s*?(\d+)"),  # 兼容 "666", "L.9", "L1", "v8", "v.99", "L.V.2"
-        "skill_level": re.compile(r"(\d+)\s*[/ ]\s*\d*"),  # 兼容 L.10/10、LV.10/1、4 10、4/ 等格式
+        "skill_level": re.compile(r".*(?<!\d)(\d+)\s*/\s*\d+"),  # 兼容 1V.9/10、L.10/10、LV.10/1、4 10、4/ 等格式
         "player_info": re.compile(r"玩.名(?:稱)?\s*[:：]?\s*([^\t\r\n]+)"),
         "uid_info": re.compile(r"(?:特|徵|碼)[^\d]*(\d{9})"),
         "echo_cut": re.compile(r"([\u4e00-\u9fa5]+)\s*\D*([\d.]+%?)"),  # 分割各个词条与对应数值
@@ -503,6 +522,9 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
                 "千眹": "千咲",
                 "蕾貝卡": "丽贝卡",
                 "莫寧": "莫宁",
+                "清胥": "清宵",
+                "清育": "清宵",
+                "ト靈": "卜灵",
             }
 
             def normalize_char_name(name: str) -> str | None:
@@ -595,6 +617,7 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
                     line_clean.replace("幽冥的忘爱章", "幽冥的忘忧章")
                     .replace("質作的矮星", "赝作的矮星")
                     .replace("永遠啟明星", "永远的启明星")
+                    .replace("萬物持存注釋", "万物持存的注释")
                 )
                 line_clean = re.sub(r".*古洑流$", "千古洑流", line_clean)
                 if not final_result["武器信息"].get("武器名"):
@@ -606,27 +629,32 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
                 final_result["武器信息"]["等级"] = int(level_match.group(1))
                 continue
 
-    # 处理技能等级（第3-7个结果）下标：2 3 4 5 6
-    for idx in range(2, 7):
-        if idx >= len(ocr_results) or ocr_results[idx]["text"] is None:
-            final_result["技能等级"].append(1)
-            continue
+    # 处理技能等级（第3个结果）下标：2
+    if len(ocr_results) > 2 and ocr_results[2]["text"] is not None:
+        text = ocr_results[2]["text"]
+        for seg in text.split("\t"):  # 按 \t 分割逐个处理
+            if len(final_result["技能等级"]) >= 5:  # 只要前五个
+                break
+            if not seg.strip():
+                continue
+            # 强化文本清洗
+            text_clean = re.sub(r"[oOQ○◌θ]", "0", seg)  # 处理0的错误识别
+            text_clean = re.sub(r"[^0-9/]", " ", text_clean)  # 将非数字字符替换为空格
+            match = patterns["skill_level"].search(text_clean)
+            if match:
+                level = int(match.group(1))
+                level = level if level > 0 else 1  # 限制最小等级为1
+                final_result["技能等级"].append(min(level, 10))  # 限制最大等级为10
+            else:
+                logger.warning(f"[鸣潮][dc卡片识别]无法识别的技能等级：{seg}")
+                final_result["技能等级"].append(1)
 
-        text = ocr_results[idx]["text"]
-        # 强化文本清洗
-        text_clean = re.sub(r"[oOQ○◌θ]", "0", text)  # 处理0的错误识别
-        text_clean = re.sub(r"[^0-9/]", " ", text_clean)  # 将非数字字符替换为空格
-        match = patterns["skill_level"].search(text_clean)
-        if match:
-            level = int(match.group(1))
-            level = level if level > 0 else 1  # 限制最小等级为1
-            final_result["技能等级"].append(min(level, 10))  # 限制最大等级为10
-        else:
-            logger.warning(f"[鸣潮][dc卡片识别]无法识别的技能等级：{text}")
+        # 兜底补齐 5 个
+        while len(final_result["技能等级"]) < 5:
             final_result["技能等级"].append(1)
 
-    # 处理声骸装备（第8-12个结果）下标：7 8 9 10 11
-    for idx in range(7, 12):
+    # 处理声骸装备（第4-8个结果）下标：3 4 5 6 7
+    for idx in range(3, 8):
         if idx >= len(ocr_results) or ocr_results[idx]["text"] is None:
             continue
 
@@ -691,9 +719,9 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
             for entry in valid_entries[2:7]:
                 equipment["subProps"].append({"attributeName": entry[0], "attributeValue": entry[1]})
 
-            final_result["装备数据"][f"{idx - 6}"] = equipment
+            final_result["装备数据"][f"{idx - 2}"] = equipment
         else:
-            final_result["装备数据"][f"{idx - 6}"] = None
+            final_result["装备数据"][f"{idx - 2}"] = None
 
     logger.info(f" [鸣潮][dc卡片识别] 最终提取内容:\n{final_result}")
     return True, final_result
