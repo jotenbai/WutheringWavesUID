@@ -4,7 +4,7 @@
 Discord 蓝色按钮走 get_notice_message（on_notice）。
 交互只能 ACK 一次；重复应答 → 10062 / 40060。
 
-v4：点击时 ACK 改为可见消息「**昵称** 点击了「按钮」」，
+v4：静默 ACK 后另发普通消息「**昵称** 点击了「按钮」」，
 机器人正式回复引用该消息（频道 / 私聊一致）。
 
 Run on VPS:
@@ -49,7 +49,6 @@ ACK_BLOCK = f"""    _dc_btn_msg_id = ""
         from nonebot.adapters.discord import MessageComponentInteractionEvent
         from nonebot.adapters.discord.api import (
             AllowedMention,
-            InteractionCallbackMessage,
             InteractionCallbackType,
             InteractionResponse,
             is_not_unset,
@@ -84,9 +83,29 @@ ACK_BLOCK = f"""    _dc_btn_msg_id = ""
                 for _ch in "\\\\*_~`|>":
                     _name = str(_name).replace(_ch, "\\\\" + _ch)
                 _hint = f"**{{_name}}** 点击了「{{_label}}」"
-                _resp = InteractionResponse(
-                    type=InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
-                    data=InteractionCallbackMessage(
+            except Exception as _hint_err:
+                logger.warning(f"[gscore] discord button hint 失败: {{_hint_err}}")
+                _hint = ""
+
+            try:
+                await bot.call_api(
+                    "create_interaction_response",
+                    interaction_id=ev.id,
+                    interaction_token=ev.token,
+                    response=InteractionResponse(
+                        type=InteractionCallbackType.DEFERRED_UPDATE_MESSAGE,
+                    ),
+                )
+            except ActionFailed as _ack_err:
+                if getattr(_ack_err, "code", None) not in {_ACK_SKIP_CODES}:
+                    raise
+
+            # 交互回复会自动引用按钮所在消息，故提示用普通消息发送
+            if _hint:
+                try:
+                    _hint_msg = await bot.call_api(
+                        "create_message",
+                        channel_id=int(ev.channel_id),
                         content=_hint,
                         allowed_mentions=AllowedMention(
                             parse=[],
@@ -94,36 +113,10 @@ ACK_BLOCK = f"""    _dc_btn_msg_id = ""
                             roles=[],
                             replied_user=False,
                         ),
-                    ),
-                )
-            except Exception as _hint_err:
-                logger.warning(f"[gscore] discord button hint 失败: {{_hint_err}}")
-                _hint = ""
-
-            if not _hint:
-                _resp = InteractionResponse(
-                    type=InteractionCallbackType.DEFERRED_UPDATE_MESSAGE,
-                )
-            try:
-                await bot.call_api(
-                    "create_interaction_response",
-                    interaction_id=ev.id,
-                    interaction_token=ev.token,
-                    response=_resp,
-                )
-                if _hint:
-                    try:
-                        _orig = await bot.call_api(
-                            "get_origin_interaction_response",
-                            application_id=ev.application_id,
-                            interaction_token=ev.token,
-                        )
-                        _dc_btn_msg_id = str(_orig.id)
-                    except Exception as _orig_err:
-                        logger.warning(f"[gscore] discord button hint id 获取失败: {{_orig_err}}")
-            except ActionFailed as _ack_err:
-                if getattr(_ack_err, "code", None) not in {_ACK_SKIP_CODES}:
-                    raise"""
+                    )
+                    _dc_btn_msg_id = str(_hint_msg.id)
+                except Exception as _send_err:
+                    logger.warning(f"[gscore] discord button hint 发送失败: {{_send_err}}")"""
 
 NOTICE_FUNC_HEAD = """@get_notice.handle()
 async def get_notice_message(bot: Bot, ev: Event):
