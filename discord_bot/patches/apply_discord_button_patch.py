@@ -84,19 +84,23 @@ ACK_BLOCK = f"""    _dc_btn_msg_id = ""
                 for _ch in "\\\\*_~`|>":
                     _name = str(_name).replace(_ch, "\\\\" + _ch)
                 _hint = f"**{{_name}}** 点击了「{{_label}}」"
-            except Exception as _hint_err:
-                logger.warning(f"[gscore] discord button hint 失败: {{_hint_err}}")
-                _hint = ""
-
-            if _hint:
                 _resp = InteractionResponse(
                     type=InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
                     data=InteractionCallbackMessage(
                         content=_hint,
-                        allowed_mentions=AllowedMention(parse=[]),
+                        allowed_mentions=AllowedMention(
+                            parse=[],
+                            users=[],
+                            roles=[],
+                            replied_user=False,
+                        ),
                     ),
                 )
-            else:
+            except Exception as _hint_err:
+                logger.warning(f"[gscore] discord button hint 失败: {{_hint_err}}")
+                _hint = ""
+
+            if not _hint:
                 _resp = InteractionResponse(
                     type=InteractionCallbackType.DEFERRED_UPDATE_MESSAGE,
                 )
