@@ -4,8 +4,8 @@
 Discord 蓝色按钮走 get_notice_message（on_notice）。
 交互只能 ACK 一次；重复应答 → 10062 / 40060。
 
-v4：静默 ACK 后另发普通消息「**昵称** 点击了「按钮」」，
-机器人正式回复引用该消息（频道 / 私聊一致）。
+v4：静默 ACK 后先发普通消息「**昵称** 点击了「按钮」」，再发正式结果；
+两条都不引用（频道 / 私聊一致）。
 
 Run on VPS:
   cd ~/discord_bot
@@ -44,8 +44,7 @@ ACK_BLOCK_V3 = f"""    if bot.adapter.get_name() == "Discord":
                 if getattr(_ack_err, "code", None) not in {_ACK_SKIP_CODES}:
                     raise"""
 
-ACK_BLOCK = f"""    _dc_btn_msg_id = ""
-    if bot.adapter.get_name() == "Discord":
+ACK_BLOCK = f"""    if bot.adapter.get_name() == "Discord":
         from nonebot.adapters.discord import MessageComponentInteractionEvent
         from nonebot.adapters.discord.api import (
             AllowedMention,
@@ -103,7 +102,7 @@ ACK_BLOCK = f"""    _dc_btn_msg_id = ""
             # 交互回复会自动引用按钮所在消息，故提示用普通消息发送
             if _hint:
                 try:
-                    _hint_msg = await bot.call_api(
+                    await bot.call_api(
                         "create_message",
                         channel_id=int(ev.channel_id),
                         content=_hint,
@@ -114,7 +113,6 @@ ACK_BLOCK = f"""    _dc_btn_msg_id = ""
                             replied_user=False,
                         ),
                     )
-                    _dc_btn_msg_id = str(_hint_msg.id)
                 except Exception as _send_err:
                     logger.warning(f"[gscore] discord button hint 发送失败: {{_send_err}}")"""
 
@@ -282,10 +280,10 @@ def main() -> None:
         changed = True
         print("[ok] get_notice ACK v3 → v4（点击提示消息）")
 
-    if MSG_ID_EMPTY in text:
-        text = text.replace(MSG_ID_EMPTY, MSG_ID_HINT, 1)
+    if MSG_ID_HINT in text:
+        text = text.replace(MSG_ID_HINT, MSG_ID_EMPTY, 1)
         changed = True
-        print("[ok] button msg_id → 引用点击提示")
+        print("[ok] button msg_id → empty（不引用）")
 
     if ACK_BLOCK not in text:
         if NOTICE_FUNC_HEAD not in text:
