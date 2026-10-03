@@ -525,19 +525,25 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
                 "清胥": "清宵",
                 "清育": "清宵",
                 "ト靈": "卜灵",
+                "狭玄翎": "玄翎",
             }
+            single_char_names = {info["name"] for info in CHAR_DETAIL.values() if len(info["name"]) == 1}
 
             def normalize_char_name(name: str) -> str | None:
                 for old, new in REPLACE_MAP.items():
                     name = name.replace(old, new)
-                if not re.match(r"^[\u4e00-\u9fa5]+$", name):
+                # 引擎3 可能把角色名与等级粘连（如「心LV.90」），取首段中文
+                han = re.search(r"[\u4e00-\u9fa5]+", name)
+                if not han:
                     return None
+                name = han.group()
                 # 过滤「玩家名稱」被 OCR 打成乱码后的残片
                 if re.search(r"(?:玩家|特徵|特征|家名|名秘|名抽|名稀)", name):
                     return None
-                if len(name) < 2:
+                name = cc.convert(name)
+                if len(name) < 2 and name not in single_char_names:
                     return None
-                return cc.convert(name)
+                return name
 
             # 优先：同一物理行里「角色名 … LV.xx」（避免玩家名乱码抢先当角色名）
             lv_line_re = re.compile(r"(?i)(?:LV|L\.?V\.?)\s*\.?\s*(\d{1,2})")
@@ -567,10 +573,12 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
                     break
 
             # 文本预处理：删除非数字中英文的符号及多余空白
-            line = re.sub(r" ", "", line)
+            # line = re.sub(r" ", "", line)
             line_clean_text = re.sub(
-                r"[^\u4e00-\u9fa5\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7A3\u00C0-\u00FFA-Za-z0-9\s]", "", line
-            )  # 先删除特殊符号, 匹配“漂泊者·湮灭”
+                r"[^\u4e00-\u9fa5\u3041-\u3096\u30A1-\u30FA\uAC00-\uD7A3\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FFA-Za-z0-9\s]",
+                "",
+                line,
+            )  # 先删除特殊符号，匹配“漂泊者·湮灭”，并剔除“・”等中点/长音/迭代符号
             line_clean_text = re.sub(r"\s+", " ", line_clean_text).strip()  # 再合并多余空白
 
             # UID提取
@@ -593,7 +601,7 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
                     if name_match:
                         name = normalize_char_name(name_match.group())
                         if name is None:
-                            if name_match.group() and not re.match(r"^[\u4e00-\u9fa5]+$", name_match.group()):
+                            if name_match.group() and not re.search(r"[\u4e00-\u9fa5]", name_match.group()):
                                 logger.warning(
                                     f" [鸣潮][dc卡片识别] 识别出非中文角色名:{name_match.group()}，退出识别！"
                                 )
@@ -618,6 +626,7 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
                     .replace("質作的矮星", "赝作的矮星")
                     .replace("永遠啟明星", "永远的启明星")
                     .replace("萬物持存注釋", "万物持存的注释")
+                    .replace("玉關玄華", "玉阙玄华")
                 )
                 line_clean = re.sub(r".*古洑流$", "千古洑流", line_clean)
                 if not final_result["武器信息"].get("武器名"):
@@ -632,7 +641,13 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
     # 处理技能等级（第3个结果）下标：2
     if len(ocr_results) > 2 and ocr_results[2]["text"] is not None:
         text = ocr_results[2]["text"]
-        for seg in text.split("\t"):  # 按 \t 分割逐个处理
+        if "\t" in text:
+            tab = "\t"
+        else:
+            text = text.replace("\n", " ")  # 引擎3 'LV.6/10\nLV.5/10 LV.10/10 LV.6/10\nLV.10/10'
+            tab = " "
+
+        for seg in text.split(tab):  # 按 tab 分割逐个处理
             if len(final_result["技能等级"]) >= 5:  # 只要前五个
                 break
             if not seg.strip():
