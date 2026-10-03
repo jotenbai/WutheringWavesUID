@@ -101,7 +101,7 @@ async def _send_url(bot: Bot, ev: Event, url: str):
             f"[鸣潮][抽卡记录编辑] 您的id为【{ev.user_id}】",
             "请复制地址到浏览器打开",
             f" <{url}>",
-            "链接10分钟内有效",
+            "链接3小时内有效",
         ]
         if WutheringWavesConfig.get_config("WavesLoginForward").data:
             if not ev.group_id and ev.bot_id == "onebot":

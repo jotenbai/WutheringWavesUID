@@ -19,8 +19,8 @@ from .get_gachalogs import export_gachalogs, import_gachalogs, save_gachalogs
 sv_gacha_log = SV("waves抽卡记录")
 sv_edit_gacha_log = SV("waves修改抽卡记录")
 sv_gacha_help_log = SV("waves抽卡记录帮助")
-sv_get_gachalog_by_link = SV("waves导入抽卡链接", area="DIRECT")
-sv_import_gacha_log = SV("waves导入抽卡记录", area="DIRECT")
+sv_get_gachalog_by_link = SV("waves导入抽卡链接")
+sv_import_gacha_log = SV("waves导入抽卡记录")
 sv_export_json_gacha_log = SV("waves导出抽卡记录")
 
 ERROR_MSG_NOTIFY = (
@@ -100,11 +100,14 @@ async def send_gacha_log_card_info(bot: Bot, ev: Event):
 @sv_edit_gacha_log.on_fullmatch("修改抽卡记录")
 async def edit_gacha_log(bot: Bot, ev: Event):
     await bot.logger.info("[鸣潮]开始执行 修改抽卡记录")
-    url, is_local = await get_url()
-    if is_local:
-        await send_edit_link(bot, ev, url)
-    else:
-        await bot.send("当前环境不支持外网访问，请使用本地地址。")
+    # 管理员的编辑页可写入任意 UID，链接不能出现在公开频道
+    if ev.user_type != "direct" and ev.user_pm <= 1:
+        return await bot.send(
+            f"[鸣潮] 管理员的编辑链接可修改任意UID的记录，请【私聊机器人】发送【{PREFIX}修改抽卡记录】。",
+            at_sender=True,
+        )
+    url, _ = await get_url()
+    await send_edit_link(bot, ev, url)
 
 
 @sv_gacha_help_log.on_fullmatch(("抽卡帮助", "抽卡分析"))
