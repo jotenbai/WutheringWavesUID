@@ -54,6 +54,24 @@ from ..wutheringwaves_grouprank.models import GroupRankRecord
 
 TEXT_PATH = Path(__file__).parent / "texture2d"
 
+# 未满5件声骸角色的头像网格：左右与详情行对齐（头像可见左缘 66 ~ 底框右缘 931），
+# 等宽 10 列，横纵同一 gap；头像裁掉透明边（draw_pic 可见区 101x93）后等比填满格子
+BRIEF_COLS = 10
+BRIEF_LEFT = 66
+BRIEF_RIGHT = 931
+BRIEF_GAP = 8
+BRIEF_AVATAR_BOX = (6, 6, 107, 99)
+BRIEF_CELL_W = (BRIEF_RIGHT - BRIEF_LEFT - (BRIEF_COLS - 1) * BRIEF_GAP) / BRIEF_COLS
+BRIEF_CELL_H = BRIEF_CELL_W * (BRIEF_AVATAR_BOX[3] - BRIEF_AVATAR_BOX[1]) / (BRIEF_AVATAR_BOX[2] - BRIEF_AVATAR_BOX[0])
+BRIEF_TITLE_H = 50
+
+
+def get_equipped_phantom_num(role_detail: RoleDetailData) -> int:
+    phantom_data = role_detail.phantomData
+    if not phantom_data or not phantom_data.equipPhantomList:
+        return 0
+    return sum(1 for p in phantom_data.equipPhantomList if p)
+
 
 async def save_train_data_to_db(
     user_id: str,
@@ -185,13 +203,23 @@ async def draw_char_list_img(
         if rank.starLevel == 5:
             all_num_5 += 1
 
-    # 单页显示全部角色（鸣潮角色数量尚少，无需分页）
-    render_list = waves_char_rank
+    # 五件声骸都佩戴才展示详情行，其余只在末尾列头像
+    render_list = []
+    brief_list = []
+    for _rank in waves_char_rank:
+        if get_equipped_phantom_num(all_role_detail[_rank.roleId]) >= 5:
+            render_list.append(_rank)
+        else:
+            brief_list.append(_rank)
 
     avatar_h = 230
     info_bg_h = 260
     bar_star_h = 110
-    h = avatar_h + info_bg_h + len(render_list) * bar_star_h + 80
+    brief_h = 0
+    if brief_list:
+        brief_rows = (len(brief_list) + BRIEF_COLS - 1) // BRIEF_COLS
+        brief_h = BRIEF_TITLE_H + round(brief_rows * BRIEF_CELL_H + (brief_rows - 1) * BRIEF_GAP) + 30
+    h = avatar_h + info_bg_h + len(render_list) * bar_star_h + brief_h + 80
     card_img = get_waves_bg(1000, h, "bg3")
 
     # 基础信息 名字 特征码
@@ -335,6 +363,29 @@ async def draw_char_list_img(
 
         card_img.paste(bar_star, (0, avatar_h + info_bg_h + index * bar_star_h), bar_star)
 
+    if brief_list:
+        brief_y = avatar_h + info_bg_h + len(render_list) * bar_star_h + 10
+        card_draw = ImageDraw.Draw(card_img)
+        card_draw.text(
+            ((BRIEF_LEFT + BRIEF_RIGHT) // 2, brief_y + BRIEF_TITLE_H // 2),
+            "以下角色未装配5件声骸，仅显示头像",
+            GREY,
+            waves_font_22,
+            "mm",
+        )
+        grid_y = brief_y + BRIEF_TITLE_H
+        for index, _rank in enumerate(brief_list):
+            role_detail = all_role_detail[_rank.roleId]
+            tile = await draw_brief_tile(role_detail)
+            col, row = index % BRIEF_COLS, index // BRIEF_COLS
+            card_img.alpha_composite(
+                tile,
+                (
+                    round(BRIEF_LEFT + col * (BRIEF_CELL_W + BRIEF_GAP)),
+                    round(grid_y + row * (BRIEF_CELL_H + BRIEF_GAP)),
+                ),
+            )
+
     # 简单描述
     info_bg = Image.open(TEXT_PATH / "info_bg.png")
     info_bg_draw = ImageDraw.Draw(info_bg)
@@ -387,6 +438,22 @@ async def draw_pic(roleId):
     img.paste(resize_pic, (0, 0), mask_pic_temp)
 
     return img
+
+
+async def draw_brief_tile(role_detail: RoleDetailData) -> Image.Image:
+    """未满5件声骸角色：头像 + 右上共鸣链标签（与详情行同样的相对位置）"""
+    tile = Image.new("RGBA", (130, 120))
+    role_avatar = await draw_pic(role_detail.role.roleId)
+    tile.alpha_composite(role_avatar.crop((0, 0, 130, 120)))
+
+    chain_block = Image.new("RGBA", (40, 20), color=(255, 255, 255, 0))
+    chain_draw = ImageDraw.Draw(chain_block)
+    fill = CHAIN_COLOR[role_detail.get_chain_num()] + (int(0.9 * 255),)
+    chain_draw.rectangle([0, 0, 40, 20], fill=fill)
+    chain_draw.text((2, 10), f"{role_detail.get_chain_name()}", "white", waves_font_18, "lm")
+    tile.alpha_composite(chain_block, (60, 15))
+    tile = tile.crop(BRIEF_AVATAR_BOX)
+    return tile.resize((round(BRIEF_CELL_W), round(BRIEF_CELL_H)), Image.LANCZOS)
 
 
 def get_weapon_icon_bg(star: int = 3) -> Image.Image:
