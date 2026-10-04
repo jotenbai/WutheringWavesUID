@@ -54,10 +54,10 @@ from ..wutheringwaves_grouprank.models import GroupRankRecord
 
 TEXT_PATH = Path(__file__).parent / "texture2d"
 
-# 未满5件声骸角色的头像网格：左右与详情行对齐（头像可见左缘 66 ~ 底框右缘 931），
+# 未满5件声骸角色的头像网格：左右与详情行底框对齐（bar_*star.png 不透明区 79 ~ 931），
 # 等宽 10 列，横纵同一 gap；头像裁掉透明边（draw_pic 可见区 101x93）后等比填满格子
 BRIEF_COLS = 10
-BRIEF_LEFT = 66
+BRIEF_LEFT = 79
 BRIEF_RIGHT = 931
 BRIEF_GAP = 8
 BRIEF_AVATAR_BOX = (6, 6, 107, 99)
@@ -364,7 +364,7 @@ async def draw_char_list_img(
         card_img.paste(bar_star, (0, avatar_h + info_bg_h + index * bar_star_h), bar_star)
 
     if brief_list:
-        brief_y = avatar_h + info_bg_h + len(render_list) * bar_star_h + 10
+        brief_y = avatar_h + info_bg_h + len(render_list) * bar_star_h - 1
         card_draw = ImageDraw.Draw(card_img)
         card_draw.text(
             ((BRIEF_LEFT + BRIEF_RIGHT) // 2, brief_y + BRIEF_TITLE_H // 2),
