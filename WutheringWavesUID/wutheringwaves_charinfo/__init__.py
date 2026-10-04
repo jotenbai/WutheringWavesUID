@@ -215,17 +215,17 @@ async def send_char_detail_msg(bot: Bot, ev: Event):
 
 
 @waves_new_char_detail.on_regex(
-    rf"^(?P<trad>繁)?(\d+)?{CHAR_NAME_PATTERN}(?:(?:面板|面包)(\d{{4}})?|伤害(\d+)?)(pk|对比|PK|比|比较)?(?:\s*)((换[^换]*)*)?$",
+    rf"^(?P<trad>繁)?(\d+)?(?P<trad2>繁)?{CHAR_NAME_PATTERN}(?:(?:面板|面包)(\d{{4}})?|伤害(\d+)?)(pk|对比|PK|比|比较)?(?:\s*)((换[^换]*)*)?$",
     block=True,
 )
 async def send_char_detail_msg2(bot: Bot, ev: Event):
     match = re.search(
-        rf"(?P<trad>繁)?(?P<waves_id>\d+)?(?P<char>{CHAR_NAME_PATTERN})(?:(?:(?P<query_type>面板|面包)(?P<pile_id>\d{{4}})?)|(?:(?P<query_type_dmg>伤害)(?P<damage>\d*)))(?P<is_pk>pk|对比|PK|比|比较)?(\s*)?(?P<change_list>((换[^换]*)*)?)",
+        rf"(?P<trad>繁)?(?P<waves_id>\d+)?(?P<trad2>繁)?(?P<char>{CHAR_NAME_PATTERN})(?:(?:(?P<query_type>面板|面包)(?P<pile_id>\d{{4}})?)|(?:(?P<query_type_dmg>伤害)(?P<damage>\d*)))(?P<is_pk>pk|对比|PK|比|比较)?(\s*)?(?P<change_list>((换[^换]*)*)?)",
         get_event_command_text(ev),
     )
     if not match:
         return
-    traditional = bool(match.group("trad"))
+    traditional = bool(match.group("trad") or match.group("trad2"))
     _ui_token = enable_traditional_ui(traditional)
     try:
         ev.regex_dict = match.groupdict()

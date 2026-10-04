@@ -17,18 +17,18 @@ sv_waves_char_list = SV("ww角色练度统计")
 
 
 @sv_waves_char_list.on_regex(
-    r"^(?P<trad>繁)?(\d+)?(练度统计|刷新练度统计|练度|刷新练度|角色列表|刷新角色列表)(\d+)?$",
+    r"^(?P<trad>繁)?(\d+)?(?P<trad2>繁)?(练度统计|刷新练度统计|练度|刷新练度|角色列表|刷新角色列表)(\d+)?$",
     block=True,
 )
 async def send_char_list_msg_new(bot: Bot, ev: Event):
     cmd = get_event_command_text(ev)
     match = re.search(
-        r"(?P<trad>繁)?(?P<waves_id>\d+)?(?P<query_type>练度统计|刷新练度统计|练度|刷新练度|角色列表|刷新角色列表)(?P<num>\d+)?",
+        r"(?P<trad>繁)?(?P<waves_id>\d+)?(?P<trad2>繁)?(?P<query_type>练度统计|刷新练度统计|练度|刷新练度|角色列表|刷新角色列表)(?P<num>\d+)?",
         cmd,
     )
     if not match:
         return
-    traditional = bool(match.group("trad"))
+    traditional = bool(match.group("trad") or match.group("trad2"))
     _ui_token = enable_traditional_ui(traditional)
     try:
         query_waves_id = match.group("waves_id")
