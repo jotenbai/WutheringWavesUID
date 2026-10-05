@@ -213,7 +213,9 @@ async def draw_char_list_img(
             brief_list.append(_rank)
 
     avatar_h = 230
-    info_bg_h = 260
+    # 统计框（info_bg）相对 avatar_h 上移；avatar_h + info_bg_h 为首个详情行的 y
+    info_bg_y = avatar_h - 14
+    info_bg_h = 208
     bar_star_h = 110
     brief_h = 0
     if brief_list:
@@ -401,10 +403,7 @@ async def draw_char_list_img(
     info_bg_draw.text((750, 120), f"{chain_num_5}/{all_num_5}", "white", waves_font_40, "mm")
     info_bg_draw.text((750, 160), "高链5星", "white", waves_font_20, "mm")
 
-    char_info = f"共 {len(waves_char_rank)} 名角色"
-    info_bg_draw.text((500, 240), char_info, "white", waves_font_38, "mm")
-
-    card_img.paste(info_bg, (0, avatar_h), info_bg)
+    card_img.paste(info_bg, (0, info_bg_y), info_bg)
 
     card_img = add_footer(card_img)
     card_img = await convert_img(card_img)
