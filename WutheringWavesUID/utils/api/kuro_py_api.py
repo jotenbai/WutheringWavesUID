@@ -1,4 +1,5 @@
 # 集成 kuro.py 的国际服登录功能
+import asyncio
 import datetime
 from typing import Any
 
@@ -222,6 +223,20 @@ async def login_overseas(email: str, password: str, geetest_data: str | None = N
     }
 
 
+async def _get_player_role_with_delay(
+    client: kuro.Client, oauth_code: str, uid: str, region: str, attempts: int = 5, delay: float = 1.5
+) -> RoleInfo:
+    # 服务端返回 1005 "retrying" 时需间隔数秒再请求；kuro.py 自带重试无间隔，几乎总是失败
+    for i in range(attempts):
+        try:
+            return await client.get_player_role(oauth_code, int(uid), region, max_attempts=0)
+        except Exception as e:
+            if "retry" not in str(e).lower() or i == attempts - 1:
+                raise
+            await asyncio.sleep(delay)
+    raise RuntimeError("unreachable")
+
+
 async def get_role_info_overseas(bot_id: str, user_id: str, uid: str) -> RoleInfo | None:
     """获取国际服角色信息"""
     client = kuro.Client(region=Region.OVERSEAS)
@@ -233,7 +248,7 @@ async def get_role_info_overseas(bot_id: str, user_id: str, uid: str) -> RoleInf
     try:
         oauth_code = await client.generate_oauth_code(ck)
 
-        role_info = await client.get_player_role(oauth_code, int(uid), waves_user.platform)
+        role_info = await _get_player_role_with_delay(client, oauth_code, uid, waves_user.platform)
         if not role_info.basic or not role_info.battle_pass:
             logger.warning(f"[鸣潮] 获取国际服用户({uid})信息为空: {role_info}")
             await WavesUser.mark_cookie_invalid(uid, ck, "无效")
@@ -278,7 +293,7 @@ async def get_role_info_overseas(bot_id: str, user_id: str, uid: str) -> RoleInf
                         f"[鸣潮][刷新国际服登录] 更新成功: UID {existing_user.uid}, bot_id {existing_user.bot_id}, user_id {existing_user.user_id}"
                     )
 
-            role_info = await client.get_player_role(oauth_code, int(uid), waves_user.platform)
+            role_info = await _get_player_role_with_delay(client, oauth_code, uid, waves_user.platform)
             if not role_info.basic or not role_info.battle_pass:
                 logger.warning(f"[鸣潮] 获取国际服用户({uid})信息为空: {role_info}")
                 await WavesUser.mark_cookie_invalid(uid, token_result.access_token, "无效")
