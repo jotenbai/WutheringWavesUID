@@ -52,7 +52,7 @@
 2. 抓包得到 `.pcap`：对本机器人发 `pcap帮助`，或看 [Wuthery Data Import Guide](https://wuthery.com/guides/1)
    - **PC：用 Method 2（Wireshark）**；**安卓：用 Method 3（PCAPdroid）**
    - **不要用 Method 1（Wuthery Sniffer）**：杀软常误报病毒
-   - 加速器可能导致失败；尽量 ≤4MB；勿含隐私；公开频道慎发附件
+   - 加速器、VPN、代理、手机 USB/热点共享网络都可能导致解析失败，先关掉再抓；尽量 ≤4MB；勿含隐私；公开频道慎发附件
 3. `上传pcap`（网页，推荐）或 `解析pcap` + 附件
 4. `刷新面板`（写入本地；已登录时同时上传全服排行）
 5. 再查 `练度`、`莫宁面板`、`尤诺总排行` 等
