@@ -305,6 +305,8 @@ systemctl --user restart discordbot   # 或你的启动方式
 
 `screen` 在 VPS **内核更新重启后不会自动恢复**，长期运行请用 systemd。本仓库提供用户级 unit 模板：[`discord_bot/deploy/systemd/`](discord_bot/deploy/systemd/)。
 
+> `gscore.service` 启动前会先执行 `uv sync --frozen --inexact --no-dev`：gsuid_core 每晚自动 `git pull`，但不会同步它自己的依赖，新代码遇上旧依赖会起不来（2026-10-08 曾因此掉线约 16 小时）。`--inexact` 用来保留 `opencc`、`kuro-py` 等插件依赖，**不要去掉**；同步失败也会照常启动。
+
 **一次性安装（VPS 上，路径按你的用户目录调整）：**
 
 ```bash

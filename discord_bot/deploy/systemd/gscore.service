@@ -8,9 +8,12 @@ Type=simple
 WorkingDirectory=/home/admin/gsuid_core
 Environment=HOME=/home/admin
 Environment=PATH=/home/admin/gsuid_core/.venv/bin:/home/admin/.local/bin:/usr/local/bin:/usr/bin
+# core 每晚自动 git pull 但不同步自身依赖；--inexact 保留 opencc / kuro-py 等插件依赖，失败也照常启动
+ExecStartPre=-/home/admin/.local/bin/uv sync --frozen --inexact --no-dev
 ExecStart=/home/admin/gsuid_core/.venv/bin/core --host 0.0.0.0
 Restart=always
 RestartSec=10
+TimeoutStartSec=300
 KillMode=mixed
 TimeoutStopSec=30
 
