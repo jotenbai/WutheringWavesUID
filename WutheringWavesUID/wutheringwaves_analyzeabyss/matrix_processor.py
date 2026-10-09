@@ -11,6 +11,9 @@ from gsuid_core.bot import Bot
 from gsuid_core.logger import logger
 from PIL import Image
 
+from ..utils.image import pic_download_from_url
+from ..utils.resource.RESOURCE_PATH import MATRIX_PATH
+from ..wutheringwaves_abyss.draw_matrix_info import get_matrix_detail, get_matrix_schedule
 from ..wutheringwaves_analyzecard.cardOCR import cut_image, cut_image_need_data
 from ..wutheringwaves_analyzecard.ocrspace import ocrspace
 from ..wutheringwaves_analyzecard.ScoreQuery import can_score_query_card, set_cache_score_query_card
@@ -36,6 +39,42 @@ _RE_SCORE = re.compile(r"[+△▲▽◈◆▼▲⬡⬢]+\s*(\d+)")
 
 # UID 裁切: 右下角, 宽 10% 高 8%
 _UID_CROP_RATIOS = [(0.9, 0.92, 1.0, 1.0)]
+
+
+_buff_icon_checked_day: str = ""
+
+
+async def _ensure_buff_icons() -> None:
+    """buff 图标模板只在查矩阵信息/国服矩阵时顺带下载; 每天首次上传时从 encore 补齐当期图标."""
+    global _buff_icon_checked_day
+    today = datetime.now().strftime("%Y-%m-%d")
+    if _buff_icon_checked_day == today:
+        return
+    try:
+        seasons = await get_matrix_schedule()
+        detail = await get_matrix_detail(str(max(seasons))) if seasons else None
+        if detail is None:
+            logger.warning("[ww-matrix-processor] 获取当期矩阵信息失败, 跳过 buff 图标补全")
+            return
+        urls: set[str] = set()
+        for lvl in detail.Levels:
+            urls.update(b.Icon for b in lvl.NewTowerBuffs)
+            for w in lvl.Waves:
+                urls.update(b.SkillIcon for b in w.ShowBuffIds)
+                urls.update(r.Icon for r in w.RecommendTeamFeature)
+        missing = [
+            u
+            for u in urls
+            if u.startswith("http") and not (MATRIX_PATH / (u.split("/")[-1].split(".")[0] + ".png")).exists()
+        ]
+        for u in missing:
+            await pic_download_from_url(MATRIX_PATH, u)
+        _buff_icon_checked_day = today
+        if missing:
+            logger.info(f"[ww-matrix-processor] 补下载 buff 图标 {len(missing)} 个")
+            matrix_init(force=True)
+    except Exception as e:
+        logger.warning(f"[ww-matrix-processor] buff 图标补全失败: {e}")
 
 
 @dataclass
@@ -123,6 +162,7 @@ async def run_matrix_recognize(bot: Bot, ev, images: list[Image.Image], uid: str
 
 
 async def _run_matrix_recognize(bot, ev, images, uid, user_id, at) -> bytes | str:
+    await _ensure_buff_icons()
     try:
         matrix_init()
     except Exception as e:

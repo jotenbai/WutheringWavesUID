@@ -7,7 +7,6 @@ from PIL import Image
 from ..utils.resource.RESOURCE_PATH import CIRCLE_AVATAR_PATH, MATRIX_PATH
 from .match_core import (
     compare_slot,
-    is_gray_slot,
     pil_to_rgb_on_black,
     rgb_to_luma_np_uint8,
 )
@@ -21,8 +20,11 @@ BUFF_ICON_PATH = str(MATRIX_PATH)
 # PATH for numbers
 NUMBER_PATH = str(Path(__file__).parent / "number_images")
 
-# 空位检测: luma 标准差低于此值视为空位
-EMPTY_LUMA_STD_THRESHOLD = 35
+# 空位检测: 圆内 luma 标准差低于此值视为空位
+EMPTY_INNER_STD_THRESHOLD = 25
+
+# 未检出分隔线时按行高推算其横坐标 (1920x1080 实测 405/91)
+GRAY_BAR_RATIO = 4.45
 
 # 数字模板匹配参数
 NUMBER_COMPARE_SIZE = (32, 43)
@@ -34,7 +36,8 @@ num_data = []
 image_files = sorted([f for f in os.listdir(ROUND_AVATAR_PATH) if f.lower().endswith(".png")])
 img_data = []
 
-buff_imgs = sorted([f for f in os.listdir(BUFF_ICON_PATH) if f.lower().endswith(".png")])
+# buff 图标在运行中可能被补下载, 由 init() 每次重新扫描目录
+buff_imgs: list[str] = []
 buff_data = []
 
 
@@ -169,6 +172,45 @@ def to_hsv(r, g, b):
     return h, s, v
 
 
+def _mask_outside_circle(img: Image.Image, radius_ratio: float = 0.92) -> Image.Image:
+    """圆形头像外侧 (灰底+边框) 涂黑, 与黑底模板对齐, 避免背景色主导颜色相似度."""
+    arr = np.array(img)
+    h, w = arr.shape[:2]
+    yy, xx = np.ogrid[:h, :w]
+    outside = ((xx - (w - 1) / 2) / (w / 2)) ** 2 + ((yy - (h - 1) / 2) / (h / 2)) ** 2 > radius_ratio**2
+    arr[outside] = 0
+    return Image.fromarray(arr)
+
+
+def _crop_to_circle(img: Image.Image, diff_thr: int = 30) -> Image.Image:
+    """按与四角背景色的差异找出头像圆的外接框并裁切, 使圆与模板等大对齐."""
+    arr = np.array(img).astype(np.int32)
+    h, w = arr.shape[:2]
+    k = max(2, min(h, w) // 15)
+    corners = np.concatenate(
+        [arr[:k, :k].reshape(-1, 3), arr[:k, -k:].reshape(-1, 3), arr[-k:, :k].reshape(-1, 3), arr[-k:, -k:].reshape(-1, 3)]
+    )
+    bg = np.median(corners, axis=0)
+    fg = np.abs(arr - bg).max(axis=2) > diff_thr
+    rows = np.where(fg.sum(axis=1) > w // 20)[0]
+    cols = np.where(fg.sum(axis=0) > h // 20)[0]
+    if len(rows) == 0 or len(cols) == 0:
+        return img
+    x0, x1, y0, y1 = cols[0], cols[-1] + 1, rows[0], rows[-1] + 1
+    if (x1 - x0) < w * 0.6 or (y1 - y0) < h * 0.6:
+        return img
+    return img.crop((int(x0), int(y0), int(x1), int(y1)))
+
+
+def _inner_luma_std(img: Image.Image, radius_ratio: float = 0.75) -> float:
+    arr = np.array(img).astype(np.float64)
+    luma = arr[..., 0] * 0.299 + arr[..., 1] * 0.587 + arr[..., 2] * 0.114
+    h, w = luma.shape
+    yy, xx = np.ogrid[:h, :w]
+    inside = ((xx - (w - 1) / 2) / (w / 2)) ** 2 + ((yy - (h - 1) / 2) / (h / 2)) ** 2 <= radius_ratio**2
+    return float(luma[inside].std())
+
+
 def init(force: bool = False) -> None:
     if not force and num_data and img_data and buff_data:
         return
@@ -188,15 +230,22 @@ def init(force: bool = False) -> None:
     for img_name in image_files:
         img_ava = Image.open(os.path.join(ROUND_AVATAR_PATH, img_name))
         rgb = pil_to_rgb_on_black(img_ava).resize((128, 128), Image.Resampling.LANCZOS)
-        arr = np.array(rgb)[2:124, 0:127]
-        rgb = Image.fromarray(arr)
+        rgb = _mask_outside_circle(Image.fromarray(np.array(rgb)[2:124, 0:127]))
+        arr = np.array(rgb)
         luma_np = rgb_to_luma_np_uint8(rgb)
         mean_rgb = arr.reshape(-1, 3).mean(axis=0).astype(np.float64)
         img_data.append((rgb, luma_np, mean_rgb))
 
     # Read BUFF icons
-    for img_name in buff_imgs:
+    # 同目录还存有 boss 立绘等大图, 只取近似正方形的小图标
+    buff_imgs.clear()
+    names = sorted(f for f in os.listdir(BUFF_ICON_PATH) if f.lower().endswith(".png")) if os.path.isdir(BUFF_ICON_PATH) else []
+    for img_name in names:
         img_ava = Image.open(os.path.join(BUFF_ICON_PATH, img_name))
+        w, h = img_ava.size
+        if abs(w - h) > max(w, h) * 0.1 or max(w, h) > 512:
+            continue
+        buff_imgs.append(img_name)
         rgb = pil_to_rgb_on_black(img_ava).resize((75, 75), Image.Resampling.LANCZOS)
         arr = np.array(rgb)
         luma_np = rgb_to_luma_np_uint8(rgb)
@@ -243,16 +292,19 @@ def ReadMatrixImg(Matrix_Img_PATH):
         grayBar_pos = 0
 
         # Locate the bar right next to 3 resonators
-        for i in range(start_pos[0], h_block * 5):
+        # 队伍栏半透明, 分隔线色相随背后画面在 ~200-215 间浮动, 上限放宽到 220
+        for i in range(start_pos[0], min(h_block * 5, team_to_test.shape[1])):
             count = 0
             for j in range(0, h_block):
                 pixel_rgb = team_to_test[j][i]
                 h, s, v = to_hsv(pixel_rgb[0], pixel_rgb[1], pixel_rgb[2])
-                if 200 < h < 210 and 5 < s < 15 and 40 < v < 60:
+                if 198 < h < 220 and 5 < s < 15 and 40 < v < 60:
                     count = count + 1
             if count > h_block // 4:
                 grayBar_pos = i
                 break
+        if grayBar_pos == 0:
+            grayBar_pos = int(h_block * GRAY_BAR_RATIO)
 
         area_w, area_h = 366 * h_block // 122, h_block
 
@@ -277,17 +329,23 @@ def ReadMatrixImg(Matrix_Img_PATH):
         for i, resonator_avatar in enumerate(resonator_in_team):
             ava_img = Image.fromarray(resonator_avatar)
 
-            # 空位检测: luma 标准差判断, 空位直接标记 empty.webp 跳过
-            if is_gray_slot(ava_img, AVATAR_COMPARE_SIZE, EMPTY_LUMA_STD_THRESHOLD):
+            plain = ava_img.resize(AVATAR_COMPARE_SIZE, Image.Resampling.LANCZOS)
+
+            # 空位检测: 只看圆内亮度标准差 (空位为灰底剪影 ~14, 真实头像 >35), 外圈边框/背景不参与
+            if _inner_luma_std(plain) < EMPTY_INNER_STD_THRESHOLD:
                 res_resonator.append("empty.webp")
                 continue
 
-            ava_arr = np.array(ava_img.resize(AVATAR_COMPARE_SIZE, Image.Resampling.LANCZOS))
+            # 切图中圆的位置/大小随行而异, 原切图与按圆裁切两种候选取高分
+            variants = [
+                _mask_outside_circle(plain),
+                _mask_outside_circle(_crop_to_circle(ava_img).resize(AVATAR_COMPARE_SIZE, Image.Resampling.LANCZOS)),
+            ]
 
             best_score = -1.0
             best_idx = 0
             for idx, tpl in enumerate(img_data):
-                final, _, _, _ = compare_slot(ava_img, tpl, AVATAR_COMPARE_SIZE)
+                final = max(compare_slot(v, tpl, AVATAR_COMPARE_SIZE)[0] for v in variants)
                 if final > best_score:
                     best_score = final
                     best_idx = idx
@@ -348,7 +406,7 @@ def ReadMatrixImg(Matrix_Img_PATH):
             {
                 "Team #": res_numbers,
                 "Resonators": res_resonator,
-                "BUFF": buff_imgs[best_idx],
+                "BUFF": buff_imgs[best_idx] if buff_imgs else "",
                 "Team Number Area": team_number_area,
                 "Wave Number Area": wave_number,
                 "Monster Count Area": monster_count,

@@ -139,11 +139,17 @@ async def _upload_entry(bot: Bot, ev: Event, ctype: str):
         processor = _process_slash_image
     if ok and imgs:
         return await processor(bot, ev, imgs)
-    hint = (
-        f"[鸣潮][上传{ctype_label(ctype)}] 请在30秒内发送{ctype_label(ctype)}分享截图"
-        + ("（可一次发送多张不同队伍组的截图）。\n" if ctype == TYPE_MATRIX else "。\n")
-        + "参考分辨率约 1747×983，过低可能导致识别失败。\n"
-    )
+    if ctype == TYPE_MATRIX:
+        hint = (
+            "[鸣潮][上传矩阵] 请在30秒内发送游戏内「终焉矩阵」界面的队伍列表截图（不支持分享图）。\n"
+            "· 队伍较多时滑动列表多截几张，可一次发送多张，按队伍编号自动合并\n"
+            "· 全屏截图即可，也可只截右侧队伍列表；分辨率过低可能导致识别失败\n"
+        )
+    else:
+        hint = (
+            f"[鸣潮][上传{ctype_label(ctype)}] 请在30秒内发送{ctype_label(ctype)}分享截图。\n"
+            "参考分辨率约 1747×983，过低可能导致识别失败。\n"
+        )
     await bot.send(hint, at)
     resp = await bot.receive_resp(timeout=30)
     if resp is None:
