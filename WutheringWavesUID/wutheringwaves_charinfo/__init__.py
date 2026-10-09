@@ -380,7 +380,7 @@ async def send_char_detail_msg2(bot: Bot, ev: Event):
         disable_traditional_ui(_ui_token)
 
 
-@waves_new_char_detail.on_regex(rf"^(\d+)?{CHAR_NAME_PATTERN}(?:权重)((换[^换]*)*)?$", block=True)
+@waves_new_char_detail.on_regex(rf"^(\d+)?{CHAR_NAME_PATTERN}(?:权重)(?:\s*)((换[^换]*)*)?$", block=True)
 async def send_char_detail_msg2_weight(bot: Bot, ev: Event):
     match = re.search(
         rf"(?P<waves_id>\d+)?(?P<char>{CHAR_NAME_PATTERN})(?:权重)(\s*)?(?P<change_list>((换[^换]*)*)?)",
