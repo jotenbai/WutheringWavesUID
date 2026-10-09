@@ -139,7 +139,10 @@ async def draw_char_list_img(
     is_refresh: bool = False,
     is_peek: bool = False,
     user_waves_id: str = "",
+    page_index: int = 1,
+    show_all: bool = False,
 ) -> str | bytes:
+    # 本 fork 不分页：未装满 5 件声骸的角色已折叠为末尾头像区，page_index / show_all 仅为兼容上游指令而保留
     _, ck = await waves_api.get_ck_result(user_waves_id, user_id, ev.bot_id)
     account_info = await get_user_detail_info(uid)
 
