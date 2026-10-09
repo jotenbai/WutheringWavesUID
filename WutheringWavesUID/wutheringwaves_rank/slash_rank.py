@@ -64,6 +64,11 @@ BOT_COLOR = [
     WAVES_MOONLIT,
 ]
 
+# 固定 bot 标签色（避免按出场顺序落到浅色）
+FIXED_BOT_COLOR = {
+    "守岸人": (30, 100, 160),
+}
+
 
 def get_score_color(score: int):
     if score >= 30000:
@@ -155,7 +160,7 @@ async def draw_all_slash_rank_card(bot: Bot, ev: Event):
     title_bg.paste(icon, (60, 240), icon)
 
     # title
-    title_text = "#无尽总排行"
+    title_text = "无尽总排行"
     title_bg_draw = ImageDraw.Draw(title_bg)
     title_bg_draw.text((220, 290), title_text, "white", waves_font_58, "lm")
 
@@ -225,7 +230,10 @@ async def draw_all_slash_rank_card(bot: Bot, ev: Event):
         botName = rank_temp.alias_name if rank_temp.alias_name else ""
         if botName:
             color = (54, 54, 54)
-            if botName in bot_color_map:
+            if botName in FIXED_BOT_COLOR:
+                color = FIXED_BOT_COLOR[botName]
+                bot_color_map[botName] = color
+            elif botName in bot_color_map:
                 color = bot_color_map[botName]
             elif bot_color:
                 color = bot_color.pop(0)
@@ -233,9 +241,9 @@ async def draw_all_slash_rank_card(bot: Bot, ev: Event):
 
             info_block = Image.new("RGBA", (200, 30), color=(255, 255, 255, 0))
             info_block_draw = ImageDraw.Draw(info_block)
-            info_block_draw.rounded_rectangle([0, 0, 200, 30], radius=6, fill=color + (int(0.6 * 255),))
+            info_block_draw.rounded_rectangle([0, 0, 200, 30], radius=6, fill=color + (int(0.85 * 255),))
             info_block_draw.text((100, 15), f"bot: {botName}", "white", waves_font_18, "mm")
-            role_bg.alpha_composite(info_block, (350, 66))
+            role_bg.alpha_composite(info_block, (350, 55))
 
         # 总分数
         role_bg_draw.text(

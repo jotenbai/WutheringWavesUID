@@ -129,7 +129,7 @@ async def draw_group_rank_card(bot: Bot, ev: Event, records: list[GroupRankRecor
     title_bg.paste(icon, (60, 240), icon)
 
     title_bg_draw = ImageDraw.Draw(title_bg)
-    title_bg_draw.text((220, 290), f"#{title}", "white", waves_font_58, "lm")
+    title_bg_draw.text((220, 290), f"{title}", "white", waves_font_58, "lm")
 
     from datetime import datetime
 

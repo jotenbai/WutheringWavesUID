@@ -67,6 +67,13 @@ BOT_COLOR = [
     WAVES_MOONLIT,
 ]
 
+# 固定 bot 标签色（避免按出场顺序落到浅色）
+FIXED_BOT_COLOR = {
+    "守岸人": (30, 100, 160),
+}
+# 本地记录即本 bot 的数据；总排行服务给本 bot token 分配的别名
+LOCAL_BOT_ALIAS = "守岸人"
+
 
 async def get_gacha_rank(
     rank_type: str,
@@ -143,6 +150,7 @@ def _merge_gacha_rank_data(
     """
     # 1. 将本地记录转换为 GachaRankDetail
     local_map: dict[str, GachaRankDetail] = {}
+    api_alias = {d.waves_id: d.alias_name for d in api_rank_list if d.alias_name}
     for rec in local_records:
         try:
             stats = json.loads(rec.gacha_data)
@@ -187,7 +195,7 @@ def _merge_gacha_rank_data(
             waves_id=rec.waves_id,
             user_id=rec.user_id or "",
             kuro_name=rec.name or rec.waves_id,
-            alias_name="LOCAL",  # 本地无主人别名
+            alias_name=api_alias.get(rec.waves_id, LOCAL_BOT_ALIAS),
             value=value,
             total_pulls=total_pulls,
             avg_gold=avg_gold if avg_gold is not None else 0.0,
@@ -517,7 +525,10 @@ async def draw_rank_card(
         botName = getattr(detail, "alias_name", None)
         if botName:
             color = (54, 54, 54)
-            if botName in bot_color_map:
+            if botName in FIXED_BOT_COLOR:
+                color = FIXED_BOT_COLOR[botName]
+                bot_color_map[botName] = color
+            elif botName in bot_color_map:
                 color = bot_color_map[botName]
             elif bot_color:
                 color = bot_color.pop(0)
@@ -525,9 +536,9 @@ async def draw_rank_card(
 
             info_block = Image.new("RGBA", (200, 30), color=(255, 255, 255, 0))
             info_block_draw = ImageDraw.Draw(info_block)
-            info_block_draw.rounded_rectangle([0, 0, 200, 30], radius=6, fill=color + (int(0.6 * 255),))
+            info_block_draw.rounded_rectangle([0, 0, 200, 30], radius=6, fill=color + (int(0.85 * 255),))
             info_block_draw.text((100, 15), f"bot: {botName}", "white", waves_font_18, "mm")
-            bar_bg.alpha_composite(info_block, (350, 66))
+            bar_bg.alpha_composite(info_block, (350, 55))
 
         # 数据显示 - 根据排行类型
         if rank_type == "欧狗榜":
@@ -669,7 +680,7 @@ async def draw_rank_card(
 
     # title
     user_type = "群" if user_type == "group" else user_type
-    title_text = f"#{user_type}{rank_type}" if user_type else f"#{rank_type}"
+    title_text = f"{user_type}{rank_type}" if user_type else f"{rank_type}"
     title_bg_draw = ImageDraw.Draw(title_bg)
     title_bg_draw.text((220, 290), title_text, "white", waves_font_58, "lm")
 

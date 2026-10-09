@@ -50,6 +50,7 @@ from ..utils.image import (
 )
 from ..utils.resource.RESOURCE_PATH import MATRIX_PATH
 from ..utils.util import get_end_time, get_version
+from ..wutheringwaves_analyzecard.user_info_utils import get_region_for_rank
 from ..wutheringwaves_config import WutheringWavesConfig
 from ..wutheringwaves_grouprank.models import GroupRankRecord
 
@@ -68,7 +69,10 @@ BOT_COLOR = [
     WAVES_MOONLIT,
 ]
 
-
+# 固定 bot 标签色（避免按出场顺序落到浅色）
+FIXED_BOT_COLOR = {
+    "守岸人": (30, 100, 160),
+}
 def get_score_color(score: int):
     """根据分数返回颜色"""
     if score >= 58000:
@@ -126,7 +130,6 @@ def _merge_rank_data(
     """
     merged_list: list[MatrixRank] = []
     local_uids: set[str] = set()
-
     for rec in local_records:
         # 矩阵仅有一个队伍（最高分队伍），取第一个
         team = rec.teams[0] if rec.teams else None
@@ -320,7 +323,7 @@ async def draw_all_matrix_rank_card(bot: Bot, ev: Event):
     title_bg.paste(icon, (60, 240), icon)
 
     # title
-    title_text = f"#{last_rank}矩阵{title}排行"
+    title_text = f"{last_rank}矩阵{title}排行"
     title_bg_draw = ImageDraw.Draw(title_bg)
     title_bg_draw.text((220, 290), title_text, "white", waves_font_58, "lm")
 
@@ -399,11 +402,21 @@ async def draw_all_matrix_rank_card(bot: Bot, ev: Event):
             uid_color = RED
         role_bg_draw.text((350, 40), f"特征码: {rank_temp.waves_id}", uid_color, waves_font_20, "lm")
 
-        # bot主人名字
+        # 群 / bot 排行全是本 bot 用户, 标签改显示服务器; 总排行仍显示来源 bot
         botName = rank_temp.alias_name if rank_temp.alias_name else ""
-        if botName:
+        if title != "总":
+            region_text, region_color = get_region_for_rank(rank_temp.waves_id)
+            info_block = Image.new("RGBA", (200, 30), color=(255, 255, 255, 0))
+            info_block_draw = ImageDraw.Draw(info_block)
+            info_block_draw.rounded_rectangle([0, 0, 200, 30], radius=6, fill=region_color + (int(0.85 * 255),))
+            info_block_draw.text((100, 15), region_text, "white", waves_font_18, "mm")
+            role_bg.alpha_composite(info_block, (350, 55))
+        elif botName:
             color = (54, 54, 54)
-            if botName in bot_color_map:
+            if botName in FIXED_BOT_COLOR:
+                color = FIXED_BOT_COLOR[botName]
+                bot_color_map[botName] = color
+            elif botName in bot_color_map:
                 color = bot_color_map[botName]
             elif bot_color:
                 color = bot_color.pop(0)
@@ -411,9 +424,9 @@ async def draw_all_matrix_rank_card(bot: Bot, ev: Event):
 
             info_block = Image.new("RGBA", (200, 30), color=(255, 255, 255, 0))
             info_block_draw = ImageDraw.Draw(info_block)
-            info_block_draw.rounded_rectangle([0, 0, 200, 30], radius=6, fill=color + (int(0.6 * 255),))
+            info_block_draw.rounded_rectangle([0, 0, 200, 30], radius=6, fill=color + (int(0.85 * 255),))
             info_block_draw.text((100, 15), f"bot: {botName}", "white", waves_font_18, "mm")
-            role_bg.alpha_composite(info_block, (350, 66))
+            role_bg.alpha_composite(info_block, (350, 55))
 
         # 总分数评级图标（与矩阵卡片中的奇点扩张评分标准一致）
         score = rank_temp.total_score
