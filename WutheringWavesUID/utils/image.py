@@ -414,7 +414,8 @@ def _parse_discord_rank_user_id(qid: str) -> tuple[str, str] | None:
         return None
     left, right = qid.split("/", 1)
     right = _normalize_discord_avatar_hash(right)
-    if not left.isdigit() or not right:
+    # QQ 官方 bot 的 appid/openid（如 102796456/C645…）后段也是十六进制，只能靠前段雪花长度区分
+    if not _looks_like_discord_user_id(left) or not right:
         return None
     # QQ 官方多为 appid/openid（后段常为纯数字）；Discord hash 含 a-f
     if right.isdigit():
