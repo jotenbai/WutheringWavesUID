@@ -2,7 +2,7 @@
 
 本仓库在 [MoonShadow1976/WutheringWavesUID](https://github.com/MoonShadow1976/WutheringWavesUID) 基础上**侧重国际服 + Discord 桥接部署**（`discord_bot/` 目录）。
 
-**主要目的：** 帮助玩家把握角色培养进度（面板、练度、声骸评分等）。国际服新手可先看 [指令使用说明与示例](discord_bot/command-guide/manual.md)。
+**主要目的：** 帮助玩家把握角色培养进度（面板、练度、声骸评分等）。国际服新手可先看 [「守岸人」使用说明](discord_bot/command-guide/manual.md)。
 
 私聊或 `@机器人` 发送「帮助」「练度统计」等指令，体验可参考 [nahida-examples](https://github.com/gamer-mitsuha/nahida-examples) 一类无前缀用法。
 
@@ -346,12 +346,12 @@ Discord 发 `core重启` 仍可重启 core；若用了 systemd，core 退出后�
 | 私聊       | `帮助`、`练度统计`、`绑定<特征码>`                                                                                                    |
 | 服务器频道 | `@机器人 帮助`                                                                                                                        |
 | 免 @ 频道  | 配置见 [§2.5](#25-免--频道白名单推荐)；频道内可直接 `帮助`                                                                            |
-| 国际服数据 | 绑定 UID → `pcap` 上传 / 或 DC 卡 `分析` → `角色面板`（持有率样本须 pcap） |
+| 国际服数据 | 绑定 UID → `pcap` 上传 / 或 DC 卡 `分析` → `角色面板`（持有率样本须 pcap）                                                            |
 | 国际服登录 | `登录` → 浏览器（默认已选国际服）→ 邮箱密码（可能需 Geetest）                                                                         |
 | 国际服体力 | 登录成功后发 `体力` 或 `mr`（走 `kuro-py`，非国服库街区 API）                                                                         |
 | 面板图集   | 浏览 / 投稿：[图集站](https://core.jotenbai.moe/gallery/)；出图如 `莫宁面板0001`；详见下节与 [开放 API](#开放-api第三方-bot-同步图集) |
 
-指令详情见插件内 `帮助` 图、本仓库 [国际服指令使用说明](discord_bot/command-guide/manual.md)，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
+指令详情见插件内 `帮助` 图、本仓库 [「守岸人」使用说明](discord_bot/command-guide/manual.md)，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
 
 **角色面板图集（玩家向）：**
 
@@ -415,9 +415,9 @@ Discord 发 `core重启` 仍可重启 core；若用了 systemd，core 退出后�
 
 | 现象                                                      | 处理                                                                                    |
 | --------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `尤诺面板` / `练度统计` 无回复，gscore 只有 `[Receive]`   | 安装 `opencc`（见 [§1.1](#11-插件-python-依赖重要)），`core重启`                          |
-| 国际服网页登录「登入失敗」                                | 安装 `kuro-py`（见 §1.1），`core重启`；账号需 Geetest 时在页面上完成验证                  |
-| `体力` / `mr` 无回复或提示 token 失效                     | 确认已 `登录` 国际服账号；安装 `kuro-py` 并 `core重启`                                    |
+| `尤诺面板` / `练度统计` 无回复，gscore 只有 `[Receive]`   | 安装 `opencc`（见 [§1.1](#11-插件-python-依赖重要)），`core重启`                        |
+| 国际服网页登录「登入失敗」                                | 安装 `kuro-py`（见 §1.1），`core重启`；账号需 Geetest 时在页面上完成验证                |
+| `体力` / `mr` 无回复或提示 token 失效                     | 确认已 `登录` 国际服账号；安装 `kuro-py` 并 `core重启`                                  |
 | 私聊/频道无回复，discordbot 有 `【发送】` 但无 `【接收】` | 确认 gscore 在监听 8765；**重启 discordbot**                                            |
 | 发图报错 Snowflake                                        | 运行 `apply_snowflake_patch.py`，重启 discordbot                                        |
 | 按钮「该交互失败」                                        | 运行 `apply_discord_button_patch.py`，重启 discordbot                                   |

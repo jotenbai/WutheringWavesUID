@@ -34,7 +34,7 @@ async def send_help_img(bot: Bot, ev: Event):
     ]
     await bot.send_option(await get_help(ev.user_pm), buttons)
     # Discord：<> 包裹链接可抑制嵌入预览，仍可点击
-    await bot.send(f"国际服新手说明（指令示例与配图）：\n<{MANUAL_URL}>")
+    await bot.send(f"「守岸人」使用说明：\n<{MANUAL_URL}>")
 
 
 @sv_waves_change_help.on_fullmatch(("替换帮助", "面板替换帮助"))
