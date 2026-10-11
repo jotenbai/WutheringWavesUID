@@ -16,7 +16,7 @@ from ..utils.name_convert import alias_to_char_name
 from ..utils.resource.constant import CHAR_DETAIL
 from ..wutheringwaves_analyzecard.userData import save_card_dict_to_json
 from ..wutheringwaves_config import WutheringWavesConfig
-from .ocrspace import get_upload_img, ocrspace
+from .ocrspace import get_upload_img, ocrspace, reocr_with_other_engines
 
 cc = OpenCC("t2s")  # 繁体转简体
 
@@ -121,6 +121,7 @@ async def async_ocr(bot: Bot, ev: Event):
     bool_i, images = await get_upload_img(ev)
     if not bool_i or not images:
         return await bot.send("[鸣潮]获取dc卡片图失败！卡片分析已停止。\n", at_sender)
+    await bot.send("[鸣潮]正在识别卡片，通常需要 10～60 秒，OCR 服务繁忙时会更久，请稍候…\n", at_sender)
     # 获取dc卡片与共鸣链
     chain_num, chek_imgs, cropped_images = await cut_card_to_ocr(images[0])
 
@@ -145,6 +146,21 @@ async def async_ocr(bot: Bot, ev: Event):
         )
 
     name, char_id = await which_char(bot, ev, final_result["角色信息"].get("角色名", ""))
+    if char_id is None:
+        # 角色名误识（如「穗穗」→「穩穩」）时，只对角色头图块换引擎重识别
+        set_cache_analyze_card(ev.user_id, True)
+        api_key_list = WutheringWavesConfig.get_config("OCRspaceApiKeyList").data
+        async for engine, first in reocr_with_other_engines(api_key_list, cropped_images[0]):
+            ok, retry_result = await ocr_results_to_dict(chain_num, chek_imgs, [first] + ocr_results[1:])
+            retry_name = retry_result["角色信息"].get("角色名", "") if ok else ""
+            if not retry_name or retry_name == name:
+                continue
+            logger.info(f"[鸣潮][dc卡片识别] 角色名用engine：{engine} 重识别为[{retry_name}]")
+            name, char_id = await which_char(bot, ev, retry_name)
+            if char_id is not None:
+                final_result["角色信息"]["角色名"] = retry_name
+                break
+        set_cache_analyze_card(ev.user_id, False)
     if char_id is None:
         logger.warning(f"[鸣潮][dc卡片识别] 角色[{name}]识别错误！")
         return await bot.send(f"[鸣潮]无法识别的角色名{name}，请确保图片清晰\n", at_sender)
@@ -530,6 +546,7 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
                 "清育": "清宵",
                 "ト靈": "卜灵",
                 "狭玄翎": "玄翎",
+                "穩穩": "穗穗",
             }
             single_char_names = {info["name"] for info in CHAR_DETAIL.values() if len(info["name"]) == 1}
 

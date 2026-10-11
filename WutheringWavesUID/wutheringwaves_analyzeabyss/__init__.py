@@ -120,6 +120,7 @@ async def _process_matrix_images(bot: Bot, ev: Event, imgs):
             at,
         )
     logger.info(f"[鸣潮][上传{ctype_label(TYPE_MATRIX)}] 开始识别 {len(imgs)} 张图, 特征码: {save_uid}")
+    await bot.send(f"[鸣潮]正在识别{len(imgs)}张{ctype_label(TYPE_MATRIX)}截图，通常需要 20～40 秒，请稍候…\n", at)
     result = await run_matrix_recognize(bot, ev, imgs, save_uid, user_id)
     if isinstance(result, str):
         return await bot.send(result, at)

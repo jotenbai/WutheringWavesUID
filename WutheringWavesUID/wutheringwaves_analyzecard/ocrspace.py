@@ -4,6 +4,7 @@ import base64
 from io import BytesIO
 import re
 import ssl
+import time
 
 import aiohttp
 from aiohttp import ClientTimeout
@@ -18,7 +19,9 @@ from PIL import Image
 from ..wutheringwaves_config import WutheringWavesConfig
 
 # 全局配置
-OCR_TIMEOUT = 60  # 访问超时
+OCR_TIMEOUT = 30  # 单块访问超时；超时的块会换引擎重试
+OCR_CONCURRENCY = 3  # 同时在途的请求数；免费档限制的是每 IP 每天 500 次，并非并发
+FALLBACK_ENGINES = (2, 3)  # 重试时的引擎顺序；引擎 1 官方已弃用，引擎 3 免费档每月仅 1000 次
 OCR_SESSION = None  # 全局会话实例
 
 
@@ -119,6 +122,8 @@ async def check_ocr_engine_accessible(plan: str) -> int:
                 match = pattern.search(name)
                 if match:
                     engine_num = int(match.group(1))
+                    if engine_num not in FALLBACK_ENGINES:  # 引擎 1 已弃用
+                        continue
                     has_failures = item.get("status", {}).get("hasFailures", True)
                     is_up = not has_failures
                     engine_status.append((engine_num, is_up))
@@ -127,16 +132,7 @@ async def check_ocr_engine_accessible(plan: str) -> int:
                 logger.warning(f"[鸣潮][OCRspace Checkly] 未找到 {plan} 套餐的任何引擎")
                 return 0
 
-            # 优先级：引擎2 > 其他引擎 > 引擎1
-            def priority(engine_num: int) -> int:
-                if engine_num == 2:
-                    return 0
-                elif engine_num == 1:
-                    return 10000  # 让引擎1排到最后
-                else:
-                    return engine_num  # 其他引擎按编号升序
-
-            engine_status.sort(key=lambda x: priority(x[0]))
+            engine_status.sort(key=lambda x: FALLBACK_ENGINES.index(x[0]))
 
             logger.info(f"[鸣潮][OCRspace Checkly] {plan} 套餐引擎状态: {engine_status}")
             for engine_num, is_up in engine_status:
@@ -235,14 +231,16 @@ async def ocrspace(
         else:
             NEGINE_NUM = await check_ocr_engine_accessible("FREE")
 
-        if NEGINE_NUM != 2 and API_KEY == api_key_list[0]:
-            await bot.send("[鸣潮] 当前OCR服务器识别准确率不高，可能会导致识别失败，请考虑稍后使用。\n", at_sender)
-        elif NEGINE_NUM == 0:
+        if NEGINE_NUM == 0:
             return "[鸣潮] OCR服务暂时不可用，请稍后再试。\n"
         elif NEGINE_NUM == -1:
             return "[鸣潮] 服务器访问OCR服务失败，请检查服务器网络状态。\n"
+        elif NEGINE_NUM != 2 and API_KEY == api_key_list[0]:
+            await bot.send("[鸣潮] 当前OCR服务器识别准确率不高，可能会导致识别失败，请考虑稍后使用。\n", at_sender)
 
         ocr_results = await images_ocrspace(API_KEY, NEGINE_NUM, cropped_images, language=language, isTable=isTable)
+        if len(ocr_results) == len(cropped_images):
+            await _retry_failed_chunks(API_KEY, NEGINE_NUM, cropped_images, ocr_results, language, isTable)
         logger.info(f"[鸣潮][OCRspace]dc卡片识别数据: {ocr_results}")
         if ocr_results:
             if need_all_pass:
@@ -271,6 +269,39 @@ async def ocrspace(
         return error_msg
 
     return ocr_results
+
+
+async def _retry_failed_chunks(
+    api_key: str,
+    used_engine: int,
+    cropped_images: list[Image.Image],
+    ocr_results: list[dict],
+    language: str,
+    isTable: bool,
+) -> None:
+    """只把失败的块换其他引擎重识别，原地填回 ocr_results"""
+    for engine in [e for e in FALLBACK_ENGINES if e != used_engine]:
+        failed_idx = [i for i, r in enumerate(ocr_results) if r.get("error") is not None]
+        if not failed_idx:
+            return
+        logger.info(f"[鸣潮]OCR.space 第{failed_idx}块失败，改用engine：{engine} 重试")
+        retry = await images_ocrspace(
+            api_key, engine, [cropped_images[i] for i in failed_idx], language=language, isTable=isTable
+        )
+        for i, r in zip(failed_idx, retry):
+            if r.get("error") is None:
+                ocr_results[i] = r
+
+
+async def reocr_with_other_engines(api_key_list: list[str], image: Image.Image, language: str = "cht", isTable: bool = True):
+    """对单块图依次用各引擎重识别，逐个产出成功的文本结果（供角色名识别错误时重试）"""
+    api_key = next((k for k in api_key_list if k), None)
+    if not api_key:
+        return
+    for engine in FALLBACK_ENGINES:
+        result = await images_ocrspace(api_key, engine, [image], language=language, isTable=isTable)
+        if result and result[0].get("error") is None and result[0].get("text"):
+            yield engine, result[0]
 
 
 async def images_ocrspace(api_key, engine_num, cropped_images, language="cht", isTable=True):
@@ -329,10 +360,10 @@ async def images_ocrspace(api_key, engine_num, cropped_images, language="cht", i
     # 创建所有任务
     tasks = [delayed_fetch(payload) for payload in payloads]
 
-    # 限制并发数为1防止超过API限制
-    semaphore = asyncio.Semaphore(1)
-    # 修改返回结果处理
+    semaphore = asyncio.Semaphore(OCR_CONCURRENCY)
+    start = time.monotonic()
     results = await asyncio.gather(*(process_with_semaphore(task, semaphore) for task in tasks))
+    logger.info(f"[鸣潮]OCR.space engine{ENGINE_NUM} {len(tasks)}块 耗时{time.monotonic() - start:.1f}秒")
 
     # 扁平化处理（合并所有子列表）
     return [item for sublist in results for item in sublist]
