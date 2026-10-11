@@ -124,9 +124,10 @@ def _merge_rank_data(
     waves_id_list: list[str],
     page_num: int,
     self_uid: str | None = None,
-) -> list[MatrixRank]:
+) -> tuple[list[MatrixRank], int]:
     """
     合并本地DB数据和API返回结果，按照uid去重，本地数据为主，API做补充。
+    返回 (展示列表, 合并后总人数)。
     """
     merged_list: list[MatrixRank] = []
     local_uids: set[str] = set()
@@ -189,7 +190,7 @@ def _merge_rank_data(
                 rank_list.append(item)
                 break
 
-    return rank_list
+    return rank_list, len(merged_list)
 
 
 async def draw_all_matrix_rank_card(bot: Bot, ev: Event):
@@ -236,6 +237,7 @@ async def draw_all_matrix_rank_card(bot: Bot, ev: Event):
 
     api_rank_list: list[MatrixRank] = []  # Step A: 从API获取数据（用于补充本地没有的uid）
     local_records: list[GroupRankRecord] = []  # Step B: 从本地数据库获取记录
+    sample_count = 0
 
     if "上期" in ev.raw_text:
         # “总上期”不支持（无本地数据）
@@ -256,7 +258,7 @@ async def draw_all_matrix_rank_card(bot: Bot, ev: Event):
         if not local_records:
             return "暂无上期排行数据"
         # 用本地记录构建 display_list（API 列表传空）
-        display_list = _merge_rank_data(
+        display_list, sample_count = _merge_rank_data(
             local_records,
             [],  # 无 API 数据
             waves_id_list or [],
@@ -290,7 +292,9 @@ async def draw_all_matrix_rank_card(bot: Bot, ev: Event):
                 if waves_id_list
                 else []
             )
-            display_list = _merge_rank_data(local_records, api_rank_list, waves_id_list or [], page_num, waves_id)
+            display_list, sample_count = _merge_rank_data(
+                local_records, api_rank_list, waves_id_list or [], page_num, waves_id
+            )
 
     if not display_list:
         return "暂无矩阵排行数据" if "上期" not in ev.raw_text else "暂无上期排行数据"
@@ -324,6 +328,8 @@ async def draw_all_matrix_rank_card(bot: Bot, ev: Event):
 
     # title
     title_text = f"{last_rank}矩阵{title}排行"
+    if title != "总":
+        title_text += f"·{sample_count}人"
     title_bg_draw = ImageDraw.Draw(title_bg)
     title_bg_draw.text((220, 290), title_text, "white", waves_font_58, "lm")
 
