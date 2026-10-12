@@ -79,6 +79,8 @@ valid_values = [
 ]
 # fmt: on
 
+MAIN2_BY_VALUE = {"2280": "生命", "100": "攻击", "150": "攻击"}
+
 WAIT_TIME = 120  # 等待时间 2分钟
 timed_cache = TimedCache(timeout=WAIT_TIME, maxsize=10000)
 
@@ -120,9 +122,10 @@ def extract_valid_info(info: list[str]) -> list[tuple[list, list, int]]:
 
         if len(keys) < 7:
             txt = cc.convert(txt)
-            key = check_in(txt, valid_keys)
+            key_txt = txt.replace("市", "命")  # OCR 常把「生命」认成「生市」
+            key = check_in(key_txt, valid_keys)
             if not key:  # 适配ww面板图
-                key = check_in(f"{txt}加成", valid_keys)
+                key = check_in(f"{key_txt}加成", valid_keys)
             if key:
                 keys.append(key)
                 continue
@@ -152,6 +155,12 @@ def extract_valid_info(info: list[str]) -> list[tuple[list, list, int]]:
             keys = []
             values = []
             cost = None
+
+    # 第二主词条按 cost 固定（1c 生命 2280 / 3c 攻击 100 / 4c 攻击 150），名字认不出时按数值补回
+    if len(values) >= 2 and len(keys) == len(values) - 1:
+        main2 = MAIN2_BY_VALUE.get(values[1])
+        if main2 and (len(keys) < 2 or keys[1] != main2):
+            keys.insert(1, main2)
 
     # 循环结束后，处理可能剩余的不完整声骸
     if keys and values and len(keys) == len(values):
