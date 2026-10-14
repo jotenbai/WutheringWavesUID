@@ -4,7 +4,7 @@
 
 **主要目的：** 帮助玩家把握角色培养进度（面板、练度、声骸评分等）。国际服新手可先看 [「守岸人」使用说明](discord_bot/command-guide/manual.md)。
 
-私聊或 `@机器人` 发送「帮助」「练度统计」等指令，体验可参考 [nahida-examples](https://github.com/gamer-mitsuha/nahida-examples) 一类无前缀用法。
+在服务器频道 `@机器人` 发送「帮助」「练度统计」等指令即可使用；在某服务器用过一次后，也可以私聊机器人。体验可参考 [nahida-examples](https://github.com/gamer-mitsuha/nahida-examples) 一类无前缀用法。
 
 ### 怎么用（三选一）
 
@@ -12,14 +12,83 @@
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **加入支持服**   | 进入维护者的 [Discord 服务器](https://discord.com/invite/eWnWyGqEXM)，在频道内（或完成归属后私聊）使用「守岸人」                                           |
 | **邀请到你的服** | 用 [邀请链接](https://discord.com/oauth2/authorize?client_id=1482666240140116099) 把「守岸人」加进你的服务器。别服数据会进同一套维护者服务器，详见隐私政策 |
-| **自己部署**     | 按下文在 VPS 上部署本仓库，在 Discord 开发者门户**新建自己的 Bot**，使用你自己的 Token 与配置（数据与维护者实例互不相通）                                  |
+| **自己部署**     | 按 [自建部署](#自建部署) 在 VPS 上部署本仓库，在 Discord 开发者门户**新建自己的 Bot**，使用你自己的 Token 与配置（数据与维护者实例互不相通）                |
 
-**邀请到你的服 · 免 @ 频道：** 默认其它频道仍须真正 `@守岸人`。若希望某一频道免 @（例如「鸣潮 bot 专用」），请先加入上面的支持服联系维护者，提供该**频道雪花 ID**，由维护者加入白名单后再生效。自建实例则自行配置 `DISCORD_NO_MENTION_CHANNELS`（见 [§2.5](#25-免--频道白名单推荐)）。
+**邀请到你的服 · 免 @ 频道：** 默认其它频道仍须真正 `@守岸人`。若希望某一频道免 @（例如「鸣潮 bot 专用」），请先加入上面的支持服联系维护者，提供该**频道雪花 ID**，由维护者加入白名单后再生效。自建实例的配置方法见 [§2.5](#25-免--频道白名单推荐)。
 
 个人兴趣维护，非官方、非商业；**不保证**长期可用。  
 [服务条款](discord_bot/docs/terms-of-service.md) · [隐私政策](discord_bot/docs/privacy-policy.md)
 
-## 架构
+## 使用
+
+| 场景       | 示例                                                                                         |
+| ---------- | -------------------------------------------------------------------------------------------- |
+| 服务器频道 | `@机器人 帮助`；免 @ 频道内可直接 `帮助`                                                     |
+| 私聊       | `帮助`、`练度统计`、`绑定<特征码>`（须先在某服务器频道用过机器人，见 [群归属](#discord-与群归属)） |
+| 国际服数据 | 绑定 UID → `pcap` 上传 / 或 DC 卡 `分析` → `角色面板`                                        |
+| 国际服登录 | `登录` → 浏览器（默认已选国际服）→ 邮箱密码（可能需 Geetest）                                |
+| 国际服体力 | 登录成功后发 `体力` 或 `mr`                                                                  |
+| 面板图集   | 浏览 / 投稿：[图集站](https://core.jotenbai.moe/gallery/)；出图如 `莫宁面板0001`             |
+
+指令详情见插件内 `帮助` 图、本仓库 [「守岸人」使用说明](discord_bot/command-guide/manual.md)，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
+
+**角色面板图集（玩家向）：**
+
+- 公网页：[https://core.jotenbai.moe/gallery/](https://core.jotenbai.moe/gallery/)（游客可浏览；绑定过 UID 的用户可投稿；管理员审核）。
+- Discord 出图：`角色名面板`（有自定义图时随机一张）；`角色名面板1234` 指定图号。图号不存在时回退官方立绘并提示。
+- 审核通过后需同步到机器人本地才可出图：可等启动/定时同步，或由管理员发 `更新图集`。
+
+## Discord 与群归属
+
+- **逻辑群**（`群排行` / `群持有率` / WavesBind 归属）= **Discord 服务器（guild）**，与 QQ 群对齐。桥接回信用的 `group_id` 仍是**频道 ID**（发消息必需）；服务器 ID 经补丁 `apply_discord_guild_as_group_patch.py` 写入 `sender.discord_guild_id`。
+- **多服归属**：一人可同时属于多个服务器（`WavesBind.group_id` 下划线拼接，与 QQ 多群相同）。伤害、评分、练度、持有率、共鸣链持有率的**群层**都按这套规则：
+  - 在**某服频道**里查「群排行 / 群持有率」等 → 只统计绑定含**该服**的用户，返回**本服**榜。
+  - **私聊**须先有服务器归属（否则提示去频道）；私聊查「群\*」时，取绑定里**最近在频道对话过**的那一服。
+  - `bot*` = 本机全体绑定（跨服务器 + 私聊录入）；`总*` = 远端全服榜（不按服隔离）。
+- 旧绑定里可能残留历史**频道** ID；用户在服务器频道再发一次会触发的指令（绑定 / 群排行 / 群持有率等）会把服务器写入归属。
+
+## 国际服与总排行
+
+**国际服：** 体力、先约电台、结晶波片等数据由 `kuro-py` 从 Kuro 国际服接口拉取，**并非**国服「库街区便笺」同一套 API。登录成功后应能出图；若只绑定 UID、未 `登录`，或 token 过期，会提示重新登录。周度游历等国际服暂无的字段会显示「国际服暂无数据」。
+
+**持有率：** 国际服的群 / bot 持有率只统计有 **pcap** 的 UID（避免只「分析」热门角色造成虚高）；伤害 / 评分 / 练度排行仍用本地面板（含分析）。
+
+**总排行：** 接入全服总排行所需的 token / URL 为防止滥用**并未公开**，详情请咨询 [MoonShadow1976](https://github.com/MoonShadow1976)。
+
+## 开放 API（第三方 Bot 同步图集）
+
+维护者图集站对外提供**只读 API**，方便其他鸣潮机器人增量同步立绘出图。完整投稿站（网页审核、OAuth 等）为维护者自建服务，**不会**因你 clone 本仓库而自动在服务器上启用 `/gallery`。
+
+公网根路径：`https://core.jotenbai.moe/gallery/`（下列路径均相对该前缀）。
+
+| 方法 | 路径                                        | 说明                                       |
+| ---- | ------------------------------------------- | ------------------------------------------ |
+| GET  | `/api/health`                               | 探活                                       |
+| GET  | `/api/chars`                                | 角色列表                                   |
+| GET  | `/api/chars/{id}/images`                    | 某角色已通过图列表                         |
+| GET  | `/api/manifest`                             | 含本图 sha256，适合增量 sync               |
+| GET  | `/files/{id}/{image_id}?variant=pile\|orig` | 取本图 / 原图侧车；`download=1` 作附件下载 |
+
+示例：
+
+- Manifest：<https://core.jotenbai.moe/gallery/api/manifest>
+- 角色列表：<https://core.jotenbai.moe/gallery/api/chars>
+
+本仓库插件侧：配置 `GalleryApiUrl` 指向上述 API 根（或自建实例），`更新图集` /（可选）启动同步即可拉到 `custom_role_pile`。  
+若要**自建**整套图集站，可参考仓内可选目录 [`discord_bot/gallery/`](discord_bot/gallery/)（运维说明见该目录 README；与日常 bot 部署相互独立）。
+
+**出图贴图注意（第三方 / 上游画卡逻辑）：**
+
+- 本图均为审核裁好的 **9:16** JPG，选景以「整张进面板可见区」为准。
+- 上游 `WutheringWavesUID` 一类实现常把自定义立绘先铺满整卡槽（如 560×1000）再经 `char_mask` 抠边；若 mask 四周有内缩，会把本图四周多切掉一圈，看起来像无端放大/吃边。
+- **本 fork** 已改为按 mask **可见框 cover 居中**（少吃边）。若你只用本图集 API、仍用上游或自研画卡，请自行把「铺满整槽再 mask」改成「相对可见框 cover/contain」，或接受多切一圈。
+- API 只提供文件；贴图算法在各 Bot 本地，**同步本图不会自动改你的画卡代码**。
+
+---
+
+## 自建部署
+
+### 架构
 
 ```text
 Discord
@@ -62,9 +131,9 @@ Discord
 - **插件**跟 gsuid_core 走：更新 = 在 `plugins/WutheringWavesUID` 里 `git pull`，再 `restart gscore`。
 - **桥接**跟 `~/discord_bot` 走：`.env` 只放这里；改补丁后 `restart discordbot`。
 - 仓库内的 `discord_bot/` ≠ VPS 上的 `~/discord_bot`：前者是随插件仓的模板；后者是独立运行的桥接副本。
-- 完整图集投稿站为**维护者自建服务**（与 bot 平级另跑，非 clone 后自动启用）。第三方开发者一般只需调用公开 API，见下文 [开放 API](#开放-api第三方-bot-同步图集)；若要自建整站，可参考仓内可选目录 `discord_bot/gallery/`。
+- 完整图集投稿站为**维护者自建服务**（与 bot 平级另跑，非 clone 后自动启用）。第三方开发者一般只需调用公开 API，见 [开放 API](#开放-api第三方-bot-同步图集)。
 
-## 前置要求
+### 前置要求
 
 - 一台可公网访问的 Linux VPS（或云服务器）
 - Python 3.12+（`discord_bot`）与 Python 3.13（`gsuid_core`，以官方文档为准）
@@ -72,8 +141,6 @@ Discord
 - Discord 开发者账号与 Bot Token
 
 更完整的 gsuid_core 安装说明见 [Sayu 文档](https://docs.sayu-bot.com/Started/InstallCore.html)。
-
----
 
 ## 一、部署 gsuid_core 插件
 
@@ -106,7 +173,7 @@ Web 控制台默认 `http://<主机>:8765/app`（域名反代则为 `https://cor
 | `disable_force_prefix`（禁用强制前缀）              | 不用 `ww` 等前缀也能触发指令                                                                     | **开**                                                                         |
 | `allow_empty_prefix`（允许空命令前缀）              | 允许无前缀匹配                                                                                   | **开**                                                                         |
 | `WavesLoginUrl`（鸣潮登录 url）                     | `登录` / `上传pcap` 等网页根地址；填如 `https://core.你的域名`（勿尾斜杠）。空则易拼成 `IP:8765` | **必填域名**                                                                   |
-| `OCRspaceApiKeyList`                                | 国际服 `分析` / DC 角色卡 OCR                                                                    | **填**（要用分析时）                                                           |
+| `OCRspaceApiKeyList`                                | 国际服 `分析` / 声骸 / 矩阵截图 OCR，见 [§2.6](#26-ocrspace国际服-discord-卡片识别)               | **填**（要用分析时）                                                           |
 | `botData`（bot排行查询开关）                        | 是否开放 `bot排行` / `bot持有率` 等「本机器人全体绑定用户」层                                    | **开**（Discord 分层需要）                                                     |
 | `WavesRankUrl` / `WavesToken`（全排行 url / token） | `角色名总排行` 远端榜；`刷新面板` 上传也依赖                                                     | 要用总排行再填；勿公开                                                         |
 | `CharCardRefresh`（角色面板自动刷新）               | 国服查面板时自动刷；国际服主要靠 pcap/`分析`                                                     | 可保持默认开                                                                   |
@@ -130,7 +197,7 @@ Web 控制台默认 `http://<主机>:8765/app`（域名反代则为 `https://cor
 | 自动更新时通知主人                 | 凌晨把更新日志私聊推给主人       | **关**（免 Discord 刷屏）            |
 | 主人 / masters                     | 主人 Discord 雪花 ID（权限最高） | **填你的 ID**；改后须重启 core       |
 
-主人 ID、黑名单等若在「权限 / 用户」页，以控制台实际菜单为准；改 masters 后必须重启 gscore。
+主人 ID、黑名单等若在「权限 / 用户」页，以控制台实际菜单为准。
 
 ### 1.1 插件 Python 依赖（重要）
 
@@ -181,8 +248,7 @@ VPS 推荐目录：`~/discord_bot`
 
 - 建议权限：View Channels、Send Messages、Read Message History、Attach Files、Embed Links
 - 用 OAuth2 URL Generator 生成邀请链接
-- **指定频道免 @（可选，推荐）：** 完整步骤见 [§2.5](#25-免--频道白名单推荐)（Message Content Intent + `DISCORD_NO_MENTION_CHANNELS` + 免 @ 补丁）。**不要**只靠服务器「整合 → 频道」限制。
-- 若不用免 @：Portal 与 `.env` 可保持 `message_content: false`（私聊、@、回复机器人仍有正文）
+- 想让指定频道免 @：见 [§2.5](#25-免--频道白名单推荐)。不用免 @ 时，门户与 `.env` 可保持 `message_content: false`（私聊、@、回复机器人仍有正文）
 
 ### 2.2 环境变量
 
@@ -214,7 +280,7 @@ cp .env.example .env
 }
 ```
 
-门户与 `.env` 中 `message_content` 设置须一致。免 @ 频道 ID 填入 `DISCORD_NO_MENTION_CHANNELS`（可多个，逗号分隔）。
+门户与 `.env` 中 `message_content` 设置须一致。`DISCORD_NO_MENTION_CHANNELS` 用法见 [§2.5](#25-免--频道白名单推荐)。
 
 ### 2.3 安装与启动
 
@@ -240,7 +306,7 @@ python3.12 -m venv .venv
 
 ### 2.4 补丁说明
 
-`nonebot-plugin-genshinuid` 对 Discord 有几处已知问题，补丁脚本会修改 **venv 内已安装的 GenshinUID**：
+`nonebot-plugin-genshinuid` 对 Discord 有几处已知问题，补丁脚本会修改 **venv 内已安装的 GenshinUID**（不是本仓插件业务代码）：
 
 | 脚本                                                                                                         | 作用                                                          | 典型现象（未打补丁时）                                  |
 | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------- |
@@ -250,7 +316,7 @@ python3.12 -m venv .venv
 | [`apply_discord_no_mention_channel_patch.py`](discord_bot/patches/apply_discord_no_mention_channel_patch.py) | 白名单频道免 @；其它频道仍须 @；忽略「只 @ 了别的 bot」的消息 | 开 Intent 后全频道误触发；或免 @ 无响应；与纳西妲等抢答 |
 | [`apply_discord_guild_as_group_patch.py`](discord_bot/patches/apply_discord_guild_as_group_patch.py)         | `sender.discord_guild_id`：Discord 服务器≈QQ 群               | 群排行/群持有率仍按频道隔离或私聊误计入群               |
 
-打完补丁需 **重启 discordbot**。升级 / 重建 venv 后**五个**补丁都要重跑。
+打完补丁需 **重启 discordbot**。`pip install -U nonebot-plugin-genshinuid`、升级或重建 venv 后，**五个**补丁都要重跑。
 
 ### 2.5 免 @ 频道（白名单，推荐）
 
@@ -285,21 +351,21 @@ systemctl --user restart discordbot   # 或你的启动方式
 
 - **不要**用服务器「整合 → 频道」把 bot 限制成只能进一个频道——那主要管斜杠命令；踢出其它频道会导致那里连 `@` 也不能用。
 - 免 @ 频道里机器人会处理该频道普通文字；已忽略「只 @ 了其它机器人」的消息，减少与纳西妲等抢答。仍建议频道名写清用途，原神指令放别的频道。
-- 补丁改的是 **venv 里的 GenshinUID**，不是本仓插件业务代码；`pip install -U nonebot-plugin-genshinuid` 后须重跑补丁。
+- 白名单只管打字发的指令；机器人消息上的按钮在任何频道都能直接点。
 - 改 Intent / 白名单 **不用**踢服重邀；只有缺具体权限（发图等）时才在该服补权限或换带权限的邀请链接。
 
 ### 2.6 OCR.space（国际服 Discord 卡片识别）
 
-国际服缺少库街区，**角色面板截图识别**（如 `分析` / `ww分析`）依赖 [OCR.space](https://ocr.space/OCRAPI) API。
+国际服缺少库街区，**角色面板截图识别**（`分析`）、单张声骸评分、矩阵截图识别都依赖 [OCR.space](https://ocr.space/OCRAPI) API。
 
-**配置：** gsuid_core 网页控制台 → WutheringWavesUID → `OCRspaceApiKeyList`，填入 API Key（可多个，插件轮询）。
+**配置：** gsuid_core 网页控制台 → WutheringWavesUID → `OCRspaceApiKeyList`，填入 API Key。可填多个：先用第一个，识别整体失败时才换下一个。
 
 **注意：**
 
 - VPS 需能访问 `api.ocr.space`
+- 免费档每个 IP 每天约 500 次请求（与 key 数量无关）；一次 `分析` 约 8 次请求
 - 游戏内卡片须为**中文界面**（默认 `cht`）；英文卡会提示 `Please use chinese card!`
 - 可选 `CardImgCheck`：声骸图标额外校验（默认 `False`）
-- 私聊或频道 @ 机器人后，发角色详情截图 + 指令
 
 ### 2.7 后台常驻（systemd，推荐）
 
@@ -326,88 +392,19 @@ sudo loginctl enable-linger $USER
 
 ```bash
 systemctl --user status gscore discordbot
-systemctl --user restart gscore          # 改插件 / 装依赖后
-systemctl --user restart discordbot      # 打补丁后；重启 core 后也建议重启
+systemctl --user restart gscore          # 改插件 / 装依赖后；会连带重启 discordbot
+systemctl --user restart discordbot      # 打补丁、改 .env 后
 journalctl --user -u gscore -f           # 跟日志
 journalctl --user -u discordbot -f
 ```
 
-Discord 发 `core重启` 仍可重启 core；若用了 systemd，core 退出后会由 `Restart=always` 自动拉起。  
-**重启 gscore 后建议再 `systemctl --user restart discordbot`**，避免 WebSocket 断连无响应。
+`discordbot.service` 声明了 `Requires=gscore.service`：
+
+- `restart gscore` 会连带重启 discordbot，无需再手动重启。
+- `stop gscore` 也会连带停掉 discordbot，之后 `start gscore` **不会**把它拉起来，须再执行 `systemctl --user reset-failed discordbot; systemctl --user start discordbot`。
+- Discord 发 `core重启` 时 core 由 `Restart=always` 自动拉起；若之后 Discord 无响应，再 `restart discordbot`。
 
 > 不推荐再用 `screen` 长期挂进程；与 systemd 同时跑同一端口会冲突。
-
----
-
-## 使用
-
-| 场景       | 示例                                                                                                                                  |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 私聊       | `帮助`、`练度统计`、`绑定<特征码>`                                                                                                    |
-| 服务器频道 | `@机器人 帮助`                                                                                                                        |
-| 免 @ 频道  | 配置见 [§2.5](#25-免--频道白名单推荐)；频道内可直接 `帮助`                                                                            |
-| 国际服数据 | 绑定 UID → `pcap` 上传 / 或 DC 卡 `分析` → `角色面板`（持有率样本须 pcap）                                                            |
-| 国际服登录 | `登录` → 浏览器（默认已选国际服）→ 邮箱密码（可能需 Geetest）                                                                         |
-| 国际服体力 | 登录成功后发 `体力` 或 `mr`（走 `kuro-py`，非国服库街区 API）                                                                         |
-| 面板图集   | 浏览 / 投稿：[图集站](https://core.jotenbai.moe/gallery/)；出图如 `莫宁面板0001`；详见下节与 [开放 API](#开放-api第三方-bot-同步图集) |
-
-指令详情见插件内 `帮助` 图、本仓库 [「守岸人」使用说明](discord_bot/command-guide/manual.md)，或 [官方插件文档](https://docs.sayu-bot.com/PluginsHelp/WutheringWavesUID.html)。
-
-**角色面板图集（玩家向）：**
-
-- 公网页：[https://core.jotenbai.moe/gallery/](https://core.jotenbai.moe/gallery/)（游客可浏览；绑定过 UID 的用户可投稿；管理员审核）。
-- Discord 出图：`角色名面板`（有自定义图时随机一张）；`角色名面板1234` 指定图号。图号不存在时回退官方立绘并提示。
-- 审核通过后需同步到机器人本地才可出图：可等启动/定时同步，或由管理员发 `更新图集`。
-
-## 开放 API（第三方 Bot 同步图集）
-
-维护者图集站对外提供**只读 API**，方便其他鸣潮机器人增量同步立绘出图。完整投稿站（网页审核、OAuth 等）为维护者自建服务，**不会**因你 clone 本仓库而自动在服务器上启用 `/gallery`。
-
-公网根路径：`https://core.jotenbai.moe/gallery/`（下列路径均相对该前缀）。
-
-| 方法 | 路径                                        | 说明                                       |
-| ---- | ------------------------------------------- | ------------------------------------------ |
-| GET  | `/api/health`                               | 探活                                       |
-| GET  | `/api/chars`                                | 角色列表                                   |
-| GET  | `/api/chars/{id}/images`                    | 某角色已通过图列表                         |
-| GET  | `/api/manifest`                             | 含本图 sha256，适合增量 sync               |
-| GET  | `/files/{id}/{image_id}?variant=pile\|orig` | 取本图 / 原图侧车；`download=1` 作附件下载 |
-
-示例：
-
-- Manifest：<https://core.jotenbai.moe/gallery/api/manifest>
-- 角色列表：<https://core.jotenbai.moe/gallery/api/chars>
-
-本仓库插件侧：配置 `GalleryApiUrl` 指向上述 API 根（或自建实例），`更新图集` /（可选）启动同步即可拉到 `custom_role_pile`。  
-若要**自建**整套图集站，可参考仓内可选目录 [`discord_bot/gallery/`](discord_bot/gallery/)（运维说明见该目录 README；与日常 bot 部署相互独立）。
-
-**出图贴图注意（第三方 / 上游画卡逻辑）：**
-
-- 本图均为审核裁好的 **9:16** JPG，选景以「整张进面板可见区」为准。
-- 上游 `WutheringWavesUID` 一类实现常把自定义立绘先铺满整卡槽（如 560×1000）再经 `char_mask` 抠边；若 mask 四周有内缩，会把本图四周多切掉一圈，看起来像无端放大/吃边。
-- **本 fork** 已改为按 mask **可见框 cover 居中**（少吃边）。若你只用本图集 API、仍用上游或自研画卡，请自行把「铺满整槽再 mask」改成「相对可见框 cover/contain」，或接受多切一圈。
-- API 只提供文件；贴图算法在各 Bot 本地，**同步本图不会自动改你的画卡代码**。
-
-## Discord 与群归属
-
-- 桥接回信用的 `group_id` 仍是**频道 ID**（发消息必需）。
-- **逻辑群**（`群排行` / `群持有率` / WavesBind 归属）= **Discord 服务器 ID（guild）**，与 QQ 群对齐；经 `sender.discord_guild_id` + 补丁 `apply_discord_guild_as_group_patch.py`。
-- **bot 层**：本机全部绑定用户（跨服务器 + 私聊录入）。
-- **私聊**：须先有服务器 `dg:` 归属（否则提示去频道）；查「群\*」时用绑定里**最近 touch** 的那一服；也可用 `bot排行` / `bot持有率`。
-- **多服 / `dg:` 归属**（伤害、评分、练度、持有率、共鸣链持有率五种的**群层**同一套）：
-  - 一人可同时挂多个 `dg:`（`WavesBind.group_id` 下划线拼接，与 QQ 多群相同），**不是**只能属一个服。
-  - 在 **某服频道**里查「群排行 / 群持有率」等 → 只统计绑定含**该服** `dg:` 的用户，返回**本服**榜。
-  - **仅私聊**查「群\*」时，才取绑定里**最近在频道对话过**的那一个 `dg:`。
-  - `bot*` = 本机全体绑定；`总*` = 远端全服榜（不按服隔离）。
-- **国际服群/bot 持有率**：仅统计有 **pcap** 的 UID（避免只「分析」热门角造成虚高）；伤害/评分/练度排行仍用本地面板（含分析）。
-
-旧绑定里可能残留历史**频道** ID；用户在服务器频道再发一次会触发的指令（绑定 / 群排行 / 群持有率等）会把 **guild** 写入归属。
-
-## 国际服与总排行
-
-**国际服：** 体力、先约电台、结晶波片等数据由 `kuro-py` 从 Kuro 国际服接口拉取，**并非**国服「库街区便笺」同一套 API。登录成功后应能出图；若只绑定 UID、未 `登录`，或 token 过期，会提示重新登录。周度游历等国际服暂无的字段会显示「国际服暂无数据」。
-
-**总排行：** 接入全服总排行所需的 token / URL 为防止滥用**并未公开**，详情请咨询 [MoonShadow1976](https://github.com/MoonShadow1976)。
 
 ---
 
@@ -419,11 +416,12 @@ Discord 发 `core重启` 仍可重启 core；若用了 systemd，core 退出后�
 | 国际服网页登录「登入失敗」                                | 安装 `kuro-py`（见 §1.1），`core重启`；账号需 Geetest 时在页面上完成验证                |
 | `体力` / `mr` 无回复或提示 token 失效                     | 确认已 `登录` 国际服账号；安装 `kuro-py` 并 `core重启`                                  |
 | 私聊/频道无回复，discordbot 有 `【发送】` 但无 `【接收】` | 确认 gscore 在监听 8765；**重启 discordbot**                                            |
+| 私聊提示去频道                                            | 先在任一已加入机器人的服务器频道里用一次（见 [群归属](#discord-与群归属)）              |
 | 发图报错 Snowflake                                        | 运行 `apply_snowflake_patch.py`，重启 discordbot                                        |
 | 按钮「该交互失败」                                        | 运行 `apply_discord_button_patch.py`，重启 discordbot                                   |
-| 重启 core 后 Discord 无响应                               | `systemctl --user restart discordbot`                                                   |
+| 重启 core 后 Discord 无响应                               | `systemctl --user restart discordbot`（stop/start 过 gscore 时见 §2.7）                 |
 | VPS 重启后 bot 全挂、网页打不开                           | 确认已 `sudo loginctl enable-linger $USER`；`systemctl --user status gscore discordbot` |
-| `pip install -U` 或重建 venv 后问题复发                   | 重新运行**五个**补丁脚本（含免 @、guild 归属）                                          |
+| `pip install -U` 或重建 venv 后问题复发                   | 重新运行**五个**补丁脚本（见 §2.4）                                                     |
 | 免 @ 频道仍必须 @ / 开 Intent 后乱触发                    | 查 §2.5：门户与 `.env` 的 `message_content`、白名单 ID、是否重跑免 @ 补丁并重启         |
 | 免 @ 频道里 @纳西妲 也被「守岸人」回                      | 确认已打免 @ 补丁 **v3+**（忽略只 @ 其它 bot）；频道建议专用于鸣潮                      |
 | 私聊 / 另一频道 `莫宁排行` 人很少或只有自己               | 确认对方是否已绑定并录入该角色面板（`分析` / `刷新面板`）；全服用 `总排行`              |
