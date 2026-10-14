@@ -181,22 +181,27 @@ async def send_waves_bind_uid_msg(bot: Bot, ev: Event):
         if retcode == 0:
             uid_list = await WavesBind.get_uid_list_by_game(qid, ev.bot_id)
             if uid_list:
-                _buttons: list[Any] = []
-                for uid in uid_list:
-                    _buttons.append(WavesButton(f"{uid}", f"切换{uid}"))
+                _buttons: list[Any] = [WavesButton(f"切换到{uid}", f"切换{uid}") for uid in uid_list[1:]]
                 return await bot.send_option(f"[鸣潮] 切换特征码[{uid_list[0]}]成功！\n", _buttons)
             else:
                 return await bot.send("[鸣潮] 尚未绑定任何特征码\n", at_sender)
+        elif retcode == -3:
+            return await bot.send("[鸣潮] 只绑定了一个特征码，无需切换\n", at_sender)
+        elif retcode == -1:
+            return await bot.send("[鸣潮] 尚未绑定任何特征码\n", at_sender)
         else:
             return await bot.send(f"[鸣潮] 尚未绑定该特征码[{uid}]\n", at_sender)
     elif "查看" in ev.command:
         uid_list = await WavesBind.get_uid_list_by_game(qid, ev.bot_id)
         if uid_list:
             uids = "\n".join(uid_list)
-            buttons: list[Any] = []
-            for uid in uid_list:
-                buttons.append(WavesButton(f"{uid}", f"切换{uid}"))
-            return await bot.send_option(f"[鸣潮] 绑定的特征码列表为：\n{uids}\n", buttons)
+            if len(uid_list) < 2:
+                return await bot.send(f"[鸣潮] 绑定的特征码为：\n{uids}\n", at_sender)
+            # 第一个是当前特征码，按钮只给其余的用于切换
+            buttons: list[Any] = [WavesButton(f"切换到{uid}", f"切换{uid}") for uid in uid_list[1:]]
+            return await bot.send_option(
+                f"[鸣潮] 绑定的特征码列表为（第一个为当前）：\n{uids}\n", buttons
+            )
         else:
             return await bot.send("[鸣潮] 尚未绑定任何特征码\n", at_sender)
     elif "删除全部" in ev.command:
