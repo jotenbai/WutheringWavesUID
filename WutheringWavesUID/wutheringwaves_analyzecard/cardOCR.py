@@ -140,14 +140,26 @@ async def async_ocr(bot: Bot, ev: Event):
 
     bool_d, final_result = await ocr_results_to_dict(chain_num, chek_imgs, ocr_results)
     if not bool_d:
+        # 头图块偶发只认出 LV / 无中文角色名时，先换引擎重试第 0 块再判定
+        set_cache_analyze_card(ev.user_id, True)
+        api_key_list = WutheringWavesConfig.get_config("OCRspaceApiKeyList").data
+        async for engine, first in reocr_with_other_engines(api_key_list, cropped_images[0]):
+            ok, retry_result = await ocr_results_to_dict(chain_num, chek_imgs, [first] + ocr_results[1:])
+            if ok and retry_result["角色信息"].get("角色名"):
+                logger.info(f"[鸣潮][dc卡片识别] 头图块用engine：{engine} 解析成功")
+                bool_d, final_result = True, retry_result
+                break
+        set_cache_analyze_card(ev.user_id, False)
+    if not bool_d:
         return await bot.send(
-            "[鸣潮]未能解析卡片内容。请确认使用的是繁体中文官方dc卡（英文卡暂不支持）。\n",
+            "[鸣潮]未能解析卡片内容。请确认使用的是繁体中文官方dc卡（英文卡暂不支持）；"
+            "若确认是繁体卡，多为角色名识别失败，请换更清晰原图后重试。\n",
             at_sender,
         )
 
     name, char_id = await which_char(bot, ev, final_result["角色信息"].get("角色名", ""))
     if char_id is None:
-        # 角色名误识（如「穗穗」→「穩穩」）时，只对角色头图块换引擎重识别
+        # 角色名误识（如「穗穗」→「穩穩」）或漏识时，只对角色头图块换引擎重识别
         set_cache_analyze_card(ev.user_id, True)
         api_key_list = WutheringWavesConfig.get_config("OCRspaceApiKeyList").data
         async for engine, first in reocr_with_other_engines(api_key_list, cropped_images[0]):
@@ -158,12 +170,17 @@ async def async_ocr(bot: Bot, ev: Event):
             logger.info(f"[鸣潮][dc卡片识别] 角色名用engine：{engine} 重识别为[{retry_name}]")
             name, char_id = await which_char(bot, ev, retry_name)
             if char_id is not None:
+                final_result = retry_result
                 final_result["角色信息"]["角色名"] = retry_name
                 break
         set_cache_analyze_card(ev.user_id, False)
     if char_id is None:
         logger.warning(f"[鸣潮][dc卡片识别] 角色[{name}]识别错误！")
-        return await bot.send(f"[鸣潮]无法识别的角色名{name}，请确保图片清晰\n", at_sender)
+        shown = name or "（空）"
+        return await bot.send(
+            f"[鸣潮]无法识别角色名[{shown}]，请确认繁体中文官方dc卡且图片清晰后重试。\n",
+            at_sender,
+        )
     final_result["角色信息"]["角色名"] = name
     final_result["角色信息"]["角色ID"] = char_id
 
@@ -403,6 +420,42 @@ def extract_digits_clean(
     return Image.fromarray(result)
 
 
+def prepare_char_name_level_strip(image: Image.Image) -> Image.Image:
+    """角色名+等级条预处理：白字角色名与金底 LV 徽章分开提取再拼接。
+
+    OCR 常漏掉单字白名（如「心」）却读到徽章里的 LV，解析端还会把 LV 误当角色名。
+    这里把白名抠到黑底，并把徽章内深色字反相成白字，避免 LV 抢戏又保留等级。
+    """
+    arr = np.array(image.convert("RGB"))
+    r, g, b = arr[..., 0], arr[..., 1], arr[..., 2]
+    # 金色 LV 徽章（角色名右侧小黄条）
+    gold = (r > 140) & (g > 110) & (b < 130) & (r > b + 30)
+
+    name_arr = arr.copy()
+    name_arr[gold] = 0
+    white = (name_arr[..., 0] >= 180) & (name_arr[..., 1] >= 180) & (name_arr[..., 2] >= 180)
+    name_out = np.zeros_like(name_arr)
+    name_out[white] = name_arr[white]
+    name_pil = Image.fromarray(name_out)
+
+    if not gold.any():
+        # 找不到金徽章时不做分离，避免丢掉等级信息
+        return image
+
+    ys, xs = np.where(gold)
+    y1, y2, x1, x2 = int(ys.min()), int(ys.max()), int(xs.min()), int(xs.max())
+    # 稍微外扩，避免贴边裁掉笔画
+    y1, x1 = max(0, y1 - 1), max(0, x1 - 1)
+    y2, x2 = min(arr.shape[0] - 1, y2 + 1), min(arr.shape[1] - 1, x2 + 1)
+    badge = arr[y1 : y2 + 1, x1 : x2 + 1]
+    gray = badge.mean(axis=2)
+    # 徽章内 LV 为深色字；反相到白字黑底便于 OCR
+    text_mask = gray < 120
+    lv_out = np.zeros_like(badge)
+    lv_out[text_mask] = 255
+    return cut_image_need_data([name_pil, Image.fromarray(lv_out)], direction="right")
+
+
 def sharpen_and_clean(img: Image.Image, k: float = 10, median_size: int = 5, resize: int = 3) -> Image.Image:
     """
     锐化 + 中值滤波降噪（背景干净、边缘平滑）
@@ -441,6 +494,9 @@ async def cut_card_to_ocr(image: Image.Image) -> tuple[int, list[dict], list[Ima
 
     # 进一步处理角色头图
     image_char = cut_image(cropped_images[0], char_crop_ratios)
+    # 角色名+等级：白字抠名、金徽章反相取 LV，避免 OCR 只认出 LV 把等级当角色名
+    image_char[0] = prepare_char_name_level_strip(image_char[0])
+    image_char[0] = sharpen_and_clean(image_char[0], k=0, median_size=1, resize=3)
     # 处理 丽贝卡 背景遮蔽uid的情况: 先按颜色分离，再进行锐化+中值滤波
     image_char[2] = extract_digits_clean(image_char[2])
     image_char[1] = sharpen_and_clean(image_char[1], k=0, median_size=1)  # 只放大
@@ -550,9 +606,23 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
             }
             single_char_names = {info["name"] for info in CHAR_DETAIL.values() if len(info["name"]) == 1}
 
+            LV_TOKEN_RE = re.compile(r"(?i)^L\.?V\.?\d*$")
+
+            def is_level_token(token: str) -> bool:
+                t = token.strip()
+                if not t:
+                    return True
+                if LV_TOKEN_RE.fullmatch(t) or re.fullmatch(r"(?i)L\.?V\.?", t):
+                    return True
+                return False
+
+
             def normalize_char_name(name: str) -> str | None:
                 for old, new in REPLACE_MAP.items():
                     name = name.replace(old, new)
+                # LV.90 是等级徽章，绝不是角色名
+                if is_level_token(name) or re.fullmatch(r"(?i)L\.?V\.?\s*\d*", name.strip()):
+                    return None
                 # 引擎3 可能把角色名与等级粘连（如「心LV.90」），取首段中文
                 han = re.search(r"[\u4e00-\u9fa5]+", name)
                 if not han:
@@ -581,7 +651,7 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
                     final_result["角色信息"]["等级"] = min(int(lv_m.group(1)), 90)
                 for token in before_lv.split(" "):
                     token = token.strip()
-                    if not token or re.fullmatch(r"(?i)L\.?V\.?\d*", token):
+                    if not token or is_level_token(token):
                         continue
                     # 跳过「特徵碼xxxx」粘连块
                     if re.search(r"(?:特|徵|碼)", token) and re.search(r"\d", token):
@@ -619,14 +689,15 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
                 # 角色名提取（仅当 LV 行未取到时回退）
                 if not final_result["角色信息"].get("角色名"):
                     name_match = patterns["name"].search(line_clean)
-                    if name_match:
+                    if name_match and not is_level_token(name_match.group()):
                         name = normalize_char_name(name_match.group())
                         if name is None:
-                            if name_match.group() and not re.search(r"[\u4e00-\u9fa5]", name_match.group()):
+                            # LV / 英文残片不是角色名，跳过；勿整卡失败（否则换引擎重试进不去）
+                            raw = name_match.group()
+                            if raw and not re.search(r"[\u4e00-\u9fa5]", raw):
                                 logger.warning(
-                                    f" [鸣潮][dc卡片识别] 识别出非中文角色名:{name_match.group()}，退出识别！"
+                                    f" [鸣潮][dc卡片识别] 跳过非中文角色名残片:{raw}"
                                 )
-                                return False, final_result
                             continue
                         final_result["角色信息"]["角色名"] = name
 
