@@ -184,7 +184,7 @@ Web 控制台默认 `http://<主机>:8765/app`（域名反代则为 `https://cor
 | `MaxBindNum`                                        | 未登录时可绑定特征码上限                                                                         | 默认即可                                                                       |
 | `RankUseToken`（有 token 才能进排行）               | 收紧进本地排行条件                                                                               | 自用一般**关**                                                                 |
 | `AllowImportGachaLogs`                              | 允许用户直接导入抽卡记录                                                                         | 一般**关**                                                                     |
-| `CardImgCheck`（国际服 dc 卡片声骸图标识别）        | 分析卡片时额外认声骸图标                                                                         | 按需                                                                           |
+| `CardImgCheck`（国际服 dc 卡片声骸图标识别）        | 分析时用本地模板认声骸/合鸣图标；关则套角色默认合鸣，种类可能与卡片不符（影响伤害、不影响评分）   | **开**                                                                         |
 | `GalleryApiUrl`（图集 API 根地址）                  | 插件 sync / `更新图集` 拉取图集的根 URL（未自建图集可留空或忽略）                                | 自建本机常用 `http://127.0.0.1:8787`；也可填维护者公网 API                     |
 | `GallerySyncOnStart`（启动时同步图集）              | gscore 启动时后台同步图集到 `custom_role_pile`                                                   | 指向可达的图集 API（自建或维护者公网）时可开；未配置、仍指向本机且无服务时请关 |
 
@@ -365,7 +365,7 @@ systemctl --user restart discordbot   # 或你的启动方式
 - VPS 需能访问 `api.ocr.space`
 - 免费档每个 IP 每天约 500 次请求（与 key 数量无关）；一次 `分析` 约 8 次请求
 - 游戏内卡片须为**中文界面**（默认 `cht`）；英文卡会提示 `Please use chinese card!`
-- 可选 `CardImgCheck`：声骸图标额外校验（默认 `False`）
+- `CardImgCheck` 建议**开**：按卡片上的声骸/合鸣图标匹配；关闭时用角色默认合鸣，种类可能与实际不符（影响伤害计算，不影响声骸评分）
 
 ### 2.7 后台常驻（systemd，推荐）
 
