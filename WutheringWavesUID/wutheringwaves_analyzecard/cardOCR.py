@@ -475,6 +475,7 @@ def sharpen_and_clean(img: Image.Image, k: float = 10, median_size: int = 5, res
     result[1:-1, 1:-1] = sharp
     out = Image.fromarray(result)
     # Pillow 12.3 中 MedianFilter(size=1) 会触发 SIGFPE 直接崩溃进程；size=1 本身等同不滤波
+    # Refs MoonShadow1976/WutheringWavesUID#22 / upstream d2aaff6d
     if median_size <= 1:
         return out
     return out.filter(ImageFilter.MedianFilter(size=median_size))
