@@ -604,6 +604,9 @@ async def ocr_results_to_dict(chain_num: int, chek_imgs: list[dict], ocr_results
                 "ト靈": "卜灵",
                 "狭玄翎": "玄翎",
                 "穩穩": "穗穗",
+                "銷暝": "锁暝",
+                "銀暝": "锁暝",
+                "鎻暝": "锁暝",
             }
             single_char_names = {info["name"] for info in CHAR_DETAIL.values() if len(info["name"]) == 1}
 
