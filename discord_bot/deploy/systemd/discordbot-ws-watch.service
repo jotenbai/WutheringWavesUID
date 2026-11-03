@@ -1,0 +1,7 @@
+[Unit]
+Description=Reconnect discordbot if GsCore WS is missing
+After=gscore.service discordbot.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/admin/bin/discordbot-ws-watch.sh

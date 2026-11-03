@@ -1,0 +1,12 @@
+[Unit]
+Description=Watch GsCore↔discordbot WebSocket every 30 minutes
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=30min
+AccuracySec=1min
+Persistent=true
+Unit=discordbot-ws-watch.service
+
+[Install]
+WantedBy=timers.target
