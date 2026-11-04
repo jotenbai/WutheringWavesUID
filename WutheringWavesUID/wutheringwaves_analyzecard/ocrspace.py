@@ -107,9 +107,11 @@ async def check_ocr_engine_accessible(plan: str) -> int:
             # 根据套餐匹配检查项名称
             plan_upper = plan.upper()
             if plan_upper == "FREE":
-                pattern = re.compile(r"Free - Engine(\d+)", re.IGNORECASE)
+                # 匹配 "Free OCR API (OcrEngine=2)"
+                pattern = re.compile(r"Free OCR API.*?OcrEngine=(\d+)", re.IGNORECASE)
             elif plan_upper == "PRO":
-                pattern = re.compile(r"PRO\d?\s*\-?\s*Engine(\d+)", re.IGNORECASE)
+                # 匹配 "PRO Endpoint 1 - (OcrEngine=2)"
+                pattern = re.compile(r"PRO Endpoint.*?OcrEngine=(\d+)", re.IGNORECASE)
             else:
                 logger.warning(f"[鸣潮][OCRspace Checkly] 不支持的套餐类型: {plan}")
                 return -1

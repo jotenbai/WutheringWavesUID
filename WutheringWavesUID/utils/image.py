@@ -468,7 +468,12 @@ def _extract_discord_avatar_hash_from_url(user_id: str, avatar_url: str) -> str:
 
 
 async def sync_non_onebot_user_avatar(ev: Event):
-    """从事件中提取头像 avatar_hash 并自动更新数据库中的 hash 映射"""
+    """从事件中提取头像 hash 并自动更新数据库中的 hash 映射。
+
+    - Discord: 从 ev.sender['avatar'] 解析 hash（支持默认 embed 头像、gif 头像）
+    - qqgroup / qq_official: 存的是 appid（ev.bot_self_id），供 get_user_avatar 拼接 URL
+    - 其它 bot: 不处理
+    """
     avatar_hash = "error"
     if ev.bot_id == "discord":
         # 无自定义头像时 Discord 常给 embed/avatars 或空；存空串，拉取时用默认纯色头
@@ -478,6 +483,8 @@ async def sync_non_onebot_user_avatar(ev: Event):
         )
     elif ev.bot_id in ["qqgroup", "qq_official"]:
         avatar_hash = ev.bot_self_id
+    else:
+        avatar_hash = "NotYetSupported"
 
     data = await WavesUserAvatar.select_data(ev.user_id, ev.bot_id)
     old_avatar_hash = data.avatar_hash if data else ""
