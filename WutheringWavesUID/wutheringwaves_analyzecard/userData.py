@@ -10,7 +10,7 @@ from ..utils.ascension.echo import get_echo_model
 from ..utils.ascension.weapon import get_weapon_detail
 from ..utils.at_help import ruser_id
 from ..utils.database.models import WavesBind
-from ..utils.name_convert import alias_to_weapon_name, char_id_to_char_name, phantom_id_to_phantom_name, weapon_name_to_weapon_id
+from ..utils.name_convert import alias_to_weapon_name, char_id_to_char_name, weapon_name_to_weapon_id
 from ..utils.refresh_char_detail import save_card_info
 from ..wutheringwaves_config import PREFIX, WutheringWavesConfig
 from .changeEcho import get_local_all_role_detail
@@ -144,8 +144,6 @@ async def save_card_dict_to_json(bot: Bot, ev: Event, result_dict: dict):
         # 先根据主词条推断 cost 作为默认值
         echo_id, cost = await echo_data_to_cost(char_id, echo["mainProps"], slot - 1, cost4_counter)
         name = f"识别默认{cost}c"
-        if cost == 4:
-            name = phantom_id_to_phantom_name(str(echo_id))
 
         # 图标匹配结果仅在 cost 与主词条推断一致时才采用
         if check_echo_id and (check_echo := get_echo_model(check_echo_id)) and check_echo.get_cost() == cost:
