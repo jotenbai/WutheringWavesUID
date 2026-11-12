@@ -15,6 +15,7 @@ from ..utils.waves_group import get_waves_group_id
 from ..wutheringwaves_config import PREFIX, WutheringWavesConfig
 from ..wutheringwaves_user.login_succ import login_success_msg
 from .deal import add_cookie, delete_cookie, get_cookie
+from .draw_user_card import draw_uid_list_card, resolve_uid_input, sort_uid_list
 
 waves_bind_uid = SV("鸣潮绑定特征码", priority=10)
 waves_add_ck = SV("鸣潮添加token", priority=5)
@@ -177,31 +178,37 @@ async def send_waves_bind_uid_msg(bot: Bot, ev: Event):
             at_sender=at_sender,
         )
     elif "切换" in ev.command:
-        retcode = await WavesBind.switch_uid_by_game(qid, ev.bot_id, uid)
-        if retcode == 0:
-            uid_list = await WavesBind.get_uid_list_by_game(qid, ev.bot_id)
-            if uid_list:
-                _buttons: list[Any] = [WavesButton(f"切换到{uid}", f"切换{uid}") for uid in uid_list[1:]]
-                return await bot.send_option(f"[鸣潮] 切换特征码[{uid_list[0]}]成功！\n", _buttons)
-            else:
-                return await bot.send("[鸣潮] 尚未绑定任何特征码\n", at_sender)
-        elif retcode == -3:
-            return await bot.send("[鸣潮] 只绑定了一个特征码，无需切换\n", at_sender)
-        elif retcode == -1:
+        uid_list = sort_uid_list(await WavesBind.get_uid_list_by_game(qid, ev.bot_id))
+        if not uid_list:
             return await bot.send("[鸣潮] 尚未绑定任何特征码\n", at_sender)
-        else:
-            return await bot.send(f"[鸣潮] 尚未绑定该特征码[{uid}]\n", at_sender)
-    elif "查看" in ev.command:
-        uid_list = await WavesBind.get_uid_list_by_game(qid, ev.bot_id)
-        if uid_list:
-            uids = "\n".join(uid_list)
-            if len(uid_list) < 2:
-                return await bot.send(f"[鸣潮] 绑定的特征码为：\n{uids}\n", at_sender)
-            # 第一个是当前特征码，按钮只给其余的用于切换
-            buttons: list[Any] = [WavesButton(f"切换到{uid}", f"切换{uid}") for uid in uid_list[1:]]
-            return await bot.send_option(
-                f"[鸣潮] 绑定的特征码列表为（第一个为当前）：\n{uids}\n", buttons
+
+        if not uid:
+            return await bot.send(
+                f"[鸣潮] 该命令末尾需要跟序号或特征码!\n例如【{PREFIX}切换1】或【{PREFIX}切换123456789】\n",
+                at_sender,
             )
+
+        target_uid = resolve_uid_input(uid_list, uid)
+        if not target_uid:
+            return await bot.send(
+                f"[鸣潮] 未找到序号或特征码[{uid}]\n使用【{PREFIX}查看】查看已绑定的特征码\n",
+                at_sender,
+            )
+
+        current_uid = await WavesBind.get_uid_by_game(qid, ev.bot_id)
+        if len(uid_list) <= 1 or current_uid == target_uid:
+            return await send_uid_card(bot, uid_list, target_uid, f"当前已是特征码[{target_uid}]")
+
+        retcode = await WavesBind.switch_uid_by_game(qid, ev.bot_id, target_uid)
+        if retcode != 0:
+            return await bot.send(f"[鸣潮] 尚未绑定该特征码[{target_uid}]\n", at_sender)
+
+        return await send_uid_card(bot, uid_list, target_uid, f"切换特征码[{target_uid}]成功")
+    elif "查看" in ev.command:
+        uid_list = sort_uid_list(await WavesBind.get_uid_list_by_game(qid, ev.bot_id))
+        if uid_list:
+            current_uid = await WavesBind.get_uid_by_game(qid, ev.bot_id)
+            return await send_uid_card(bot, uid_list, current_uid)
         else:
             return await bot.send("[鸣潮] 尚未绑定任何特征码\n", at_sender)
     elif "删除全部" in ev.command:
@@ -217,19 +224,33 @@ async def send_waves_bind_uid_msg(bot: Bot, ev: Event):
     else:
         if not uid:
             return await bot.send(
-                f"[鸣潮] 该命令末尾需要跟正确的特征码!\n例如【{PREFIX}删除123456】\n",
+                f"[鸣潮] 该命令末尾需要跟正确的特征码或序号!\n例如【{PREFIX}删除123456】或【{PREFIX}删除1】\n",
                 at_sender,
             )
-        data = await WavesBind.delete_uid(qid, ev.bot_id, uid)
-        return await send_diff_msg(
-            bot,
-            data,
-            {
-                0: f"[鸣潮] 删除特征码[{uid}]成功！\n",
-                -1: f"[鸣潮] 该特征码[{uid}]不在已绑定列表中！\n",
-            },
-            at_sender=at_sender,
-        )
+
+        uid_list = sort_uid_list(await WavesBind.get_uid_list_by_game(qid, ev.bot_id))
+        target_uid = resolve_uid_input(uid_list, uid)
+        if not target_uid:
+            return await bot.send(f"[鸣潮] 该特征码[{uid}]不在已绑定列表中！\n", at_sender)
+
+        data = await WavesBind.delete_uid(qid, ev.bot_id, target_uid)
+        if data != 0:
+            return await bot.send(f"[鸣潮] 该特征码[{target_uid}]不在已绑定列表中！\n", at_sender)
+
+        uid_list = sort_uid_list(await WavesBind.get_uid_list_by_game(qid, ev.bot_id))
+        if not uid_list:
+            return await bot.send(f"[鸣潮] 删除特征码[{target_uid}]成功！\n\n[鸣潮] 尚未绑定任何特征码\n", at_sender)
+
+        current_uid = await WavesBind.get_uid_by_game(qid, ev.bot_id)
+        return await send_uid_card(bot, uid_list, current_uid, f"删除特征码[{target_uid}]成功")
+
+
+async def send_uid_card(bot: Bot, uid_list: list[str], current_uid: str | None, tip: str = ""):
+    buttons: list[Any] = []
+    for index, _uid in enumerate(uid_list, start=1):
+        buttons.append(WavesButton(f"{index}.{_uid}", f"切换{index}"))
+    im = await draw_uid_list_card(uid_list, current_uid, tip)
+    return await bot.send_option(im, buttons)
 
 
 async def send_diff_msg(bot: Bot, code: Any, data: dict, at_sender=False):

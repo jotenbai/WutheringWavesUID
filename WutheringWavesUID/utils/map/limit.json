@@ -1261,6 +1261,44 @@
                     ]
                 }
             ]
+        },
+        {
+            "libId": 39,
+            "fetterList": [
+                {
+                    "fetterDetailName": "浮星祛暗",
+                    "equipPhantomList": [
+                        {
+                            "phantomId": 6000045,
+                            "cost": 4
+                        },
+                        {
+                            "phantomId": 390070067,
+                            "subPropName":[
+                                "生命%",
+                                "暴击"
+                            ],
+                            "cost": 1
+                        },
+                        {
+                            "phantomId": 390070076,
+                            "subPropName":[
+                                "生命%",
+                                "暴击"
+                            ],
+                            "cost": 1
+                        },
+                        {
+                            "phantomId": 6000051,
+                            "cost": 1
+                        },
+                        {
+                            "phantomId": 390070074,
+                            "cost": 1
+                        }
+                    ]
+                }
+            ]
         }
     ],
     "charList": [
@@ -1690,6 +1728,13 @@
             "name": "锁暝",
             "weaponId": 21020107,
             "sonataLibId": 38
+        },
+        {
+            "calcFile": "calc.json",
+            "charId": 1512,
+            "name": "莉莉",
+            "weaponId": 21030076,
+            "sonataLibId": 39
         }
     ]
 }
