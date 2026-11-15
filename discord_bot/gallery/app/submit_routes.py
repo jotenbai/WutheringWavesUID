@@ -3,20 +3,26 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from .auth import GalleryUser, get_session_user
 from .notify import format_review_message, notify_submitter
 from .submissions import (
     REJECT_TAGS,
+    SOURCE_STORY,
     approve_submission,
     create_submission,
+    ensure_daily_quota,
     get_submission,
     list_reviewed_submissions,
     list_submissions,
     next_image_id,
+    parse_orig_url_lines,
+    pending_orig_path,
     reject_submission,
     save_submission,
+    validate_orig_url,
 )
 
 router = APIRouter(prefix="/api", tags=["submit"])
@@ -45,7 +51,8 @@ def _require_admin(request: Request) -> GalleryUser:
 
 class SubmitBody(BaseModel):
     char_id: str
-    orig_url: str
+    orig_url: str = ""
+    orig_urls: list[str] = Field(default_factory=list)
 
 
 class RejectBody(BaseModel):
@@ -60,18 +67,91 @@ def reject_tags():
 
 @router.post("/submit")
 async def submit(request: Request, body: SubmitBody):
+    """外链投稿（Pixiv / 其它作品页）；支持多行 / 多条链接一次提交。"""
     user = _require_submitter(request)
+    urls = parse_orig_url_lines(body.orig_url, *body.orig_urls)
+    if not urls:
+        raise HTTPException(400, "请填写原图链接（可多行，每行一条）")
     try:
-        meta = create_submission(
-            char_id=body.char_id.strip(),
-            orig_url=body.orig_url,
-            submitter_id=user.id,
-            submitter_name=user.display_name,
-            submitter_username=user.username,
-        )
+        validated = [validate_orig_url(u) for u in urls]
+        ensure_daily_quota(user.id, len(validated))
+        created = [
+            create_submission(
+                char_id=body.char_id.strip(),
+                orig_url=url,
+                submitter_id=user.id,
+                submitter_name=user.display_name,
+                submitter_username=user.username,
+            )
+            for url in validated
+        ]
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
-    return {"ok": True, "submission": meta}
+    return {
+        "ok": True,
+        "created": len(created),
+        "submission": created[0],
+        "submissions": created,
+    }
+
+
+@router.post("/submit/upload")
+async def submit_upload(
+    request: Request,
+    char_id: str = Form(...),
+    orig: list[UploadFile] = File(...),
+    source_label: str = Form(SOURCE_STORY),
+):
+    """剧情截图投稿：可一次多选原图，来源记为「剧情截图」。"""
+    user = _require_submitter(request)
+    files = [f for f in (orig or []) if f is not None]
+    if not files:
+        raise HTTPException(400, "请上传剧情截图原图（可一次多选）")
+    try:
+        ensure_daily_quota(user.id, len(files))
+        created = []
+        for f in files:
+            raw = await f.read()
+            created.append(
+                create_submission(
+                    char_id=char_id.strip(),
+                    orig_url=source_label or SOURCE_STORY,
+                    submitter_id=user.id,
+                    submitter_name=user.display_name,
+                    submitter_username=user.username,
+                    orig_bytes=raw,
+                    orig_filename=f.filename,
+                )
+            )
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    return {
+        "ok": True,
+        "created": len(created),
+        "submission": created[0],
+        "submissions": created,
+    }
+
+
+@router.get("/submissions/{sub_id}/orig")
+async def pending_orig(request: Request, sub_id: str):
+    """查看投稿上传的原图（管理员，或投稿者本人）。"""
+    user = _require_user(request)
+    meta = get_submission(sub_id)
+    if not meta:
+        raise HTTPException(404, "投稿不存在")
+    if not user.is_admin and meta.get("submitter_id") != user.id:
+        raise HTTPException(403, "无权查看")
+    path = pending_orig_path(sub_id)
+    if path is None:
+        raise HTTPException(404, "该投稿没有上传原图")
+    media = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".webp": "image/webp",
+    }.get(path.suffix.lower(), "application/octet-stream")
+    return FileResponse(path, media_type=media, filename=path.name)
 
 
 @router.get("/me/submissions")

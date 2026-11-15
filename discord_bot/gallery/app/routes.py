@@ -86,6 +86,10 @@ def char_images(char_id: str):
                 "size": im.pile_size(),
                 "mtime": im.pile_mtime(),
                 "orig_url": im.orig_url,
+                "has_orig_file": im.has_orig,
+                "orig_file_url": (
+                    _file_url(char_id, im.image_id, "orig") if im.has_orig else None
+                ),
                 "submitter": im.submitter,
                 "reviewer": im.reviewer,
                 "pile_url": _file_url(char_id, im.image_id, "pile"),

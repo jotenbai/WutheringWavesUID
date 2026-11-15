@@ -25,7 +25,14 @@ REJECT_TAGS = [
     "缺乏美感",
     "已存在类似图片",
     "打不开原图",
+    "无法竖屏裁剪",
 ]
+
+# 无外链时的固定来源文案（简体）
+SOURCE_STORY = "剧情截图"
+SOURCE_STORY_ALIASES = frozenset({SOURCE_STORY})
+ORIG_UPLOAD_MAX_BYTES = 20 * 1024 * 1024
+_ORIG_NAME = "orig"  # pending 目录内投稿原图：orig.jpg / orig.png / …
 
 _META = "meta.json"
 _TZ_UTC9 = ZoneInfo("Asia/Tokyo")
@@ -155,13 +162,65 @@ def count_submissions_today(submitter_id: str) -> int:
     return n
 
 
+def ensure_daily_quota(submitter_id: str, need: int) -> int:
+    """批量投稿前检查今日剩余额度；返回剩余可投张数。"""
+    used = count_submissions_today(submitter_id)
+    remaining = max(0, DAILY_SUBMIT_LIMIT - used)
+    if need <= 0:
+        raise ValueError("请至少提交 1 条")
+    if remaining <= 0:
+        raise ValueError(f"今日投稿已达上限（{DAILY_SUBMIT_LIMIT} 张），请明天再试")
+    if need > remaining:
+        raise ValueError(
+            f"本次提交 {need} 张，今日还可投 {remaining} 张（上限 {DAILY_SUBMIT_LIMIT}/日）"
+        )
+    return remaining
+
+
+def parse_orig_url_lines(*chunks: str | None) -> list[str]:
+    """从多段文本解析链接：按行拆分，去空，保序去重。"""
+    out: list[str] = []
+    seen: set[str] = set()
+    for chunk in chunks:
+        if not chunk:
+            continue
+        for line in str(chunk).replace("\r\n", "\n").replace("\r", "\n").split("\n"):
+            url = line.strip()
+            if not url or url.startswith("#"):
+                continue
+            if url in seen:
+                continue
+            seen.add(url)
+            out.append(url)
+    return out
+
+
+def is_http_orig_url(value: str | None) -> bool:
+    raw = (value or "").strip()
+    if not raw:
+        return False
+    parsed = urlparse(raw)
+    return parsed.scheme in ("http", "https") and bool(parsed.netloc)
+
+
+def normalize_source_label(raw: str) -> str | None:
+    text = (raw or "").strip()
+    if text in SOURCE_STORY_ALIASES:
+        return SOURCE_STORY
+    return None
+
+
 def validate_orig_url(url: str) -> str:
+    """校验外链原图；仅接受 http(s)。"""
     raw = (url or "").strip()
     if not raw:
         raise ValueError("请填写原图链接")
+    label = normalize_source_label(raw)
+    if label:
+        raise ValueError("剧情截图请改用「上传原图」方式提交")
     parsed = urlparse(raw)
     if parsed.scheme not in ("http", "https") or not parsed.netloc:
-        raise ValueError("链接须为 http(s) 地址")
+        raise ValueError("链接须为 http(s) 地址；剧情截图请改用上传原图")
     host = parsed.netloc.split("@")[-1].split(":")[0].lower()
     if "pximg.net" in host:
         raise ValueError(
@@ -170,6 +229,54 @@ def validate_orig_url(url: str) -> str:
     if "pixiv.net" in host and "/artworks/" not in parsed.path:
         raise ValueError("Pixiv 请使用作品页链接，例如 https://www.pixiv.net/artworks/12345678")
     return raw
+
+
+def _guess_image_ext(filename: str | None, data: bytes) -> str:
+    name = (filename or "").lower()
+    for ext in (".jpg", ".jpeg", ".png", ".webp"):
+        if name.endswith(ext):
+            return ".jpg" if ext == ".jpeg" else ext
+    if data[:2] == b"\xff\xd8":
+        return ".jpg"
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return ".png"
+    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return ".webp"
+    raise ValueError("仅支持 JPG / PNG / WebP 原图")
+
+
+def validate_orig_upload(data: bytes, filename: str | None = None) -> tuple[str, int, int]:
+    """校验投稿上传的原图；返回 (扩展名, w, h)。"""
+    if not data:
+        raise ValueError("请上传剧情截图原图")
+    if len(data) > ORIG_UPLOAD_MAX_BYTES:
+        raise ValueError(
+            f"原图过大（上限 {ORIG_UPLOAD_MAX_BYTES // (1024 * 1024)}MB；请改用 JPG，或缩小后重试）"
+        )
+    ext = _guess_image_ext(filename, data)
+    try:
+        im = Image.open(io.BytesIO(data))
+        im.load()
+    except Exception as e:
+        raise ValueError(f"无法解析原图（仅支持 JPG / PNG / WebP）：{e}") from e
+    w, h = im.size
+    if w < 200 or h < 200:
+        raise ValueError(f"原图太小（当前 {w}×{h}），请上传更高清截图")
+    return ext, w, h
+
+
+def find_pending_orig(sub_dir: Path) -> Path | None:
+    for ext in (".jpg", ".jpeg", ".png", ".webp"):
+        path = sub_dir / f"{_ORIG_NAME}{ext}"
+        if path.is_file():
+            return path
+    return None
+
+
+def pending_orig_path(sub_id: str) -> Path | None:
+    if not re.fullmatch(r"[a-f0-9]{16}", sub_id or ""):
+        return None
+    return find_pending_orig(_sub_dir(sub_id))
 
 
 def _sub_dir(sub_id: str) -> Path:
@@ -201,6 +308,8 @@ def create_submission(
     submitter_id: str,
     submitter_name: str,
     submitter_username: str,
+    orig_bytes: bytes | None = None,
+    orig_filename: str | None = None,
 ) -> dict[str, Any]:
     char = catalog.find_char(char_id)
     if not char:
@@ -208,14 +317,32 @@ def create_submission(
     used = count_submissions_today(submitter_id)
     if used >= DAILY_SUBMIT_LIMIT:
         raise ValueError(f"今日投稿已达上限（{DAILY_SUBMIT_LIMIT} 张），请明天再试")
-    url = validate_orig_url(orig_url)
+
+    has_file = bool(orig_bytes)
+    if has_file:
+        # 剧情截图：必须带原图文件；来源文案固定为「剧情截图」
+        label = normalize_source_label(orig_url) or SOURCE_STORY
+        if label != SOURCE_STORY:
+            raise ValueError("上传原图仅用于剧情截图来源")
+        ext, orig_w, orig_h = validate_orig_upload(orig_bytes or b"", orig_filename)
+        source_kind = "story"
+        source_value = SOURCE_STORY
+    else:
+        source_value = validate_orig_url(orig_url)
+        source_kind = "url"
+        ext = ""
+        orig_w = orig_h = 0
+
     sub_id = secrets.token_hex(8)
+    sub_path = _sub_dir(sub_id)
     data = {
         "id": sub_id,
         "char_id": char.char_id,
         "char_name": char.name,
         "dirname": char.dirname,
-        "orig_url": url,
+        "orig_url": source_value,
+        "source_kind": source_kind,
+        "has_orig_file": has_file,
         "submitter_id": submitter_id,
         "submitter_name": submitter_name,
         "submitter_username": submitter_username,
@@ -229,7 +356,13 @@ def create_submission(
         "image_id": None,
         "notify_error": None,
     }
-    _write_meta(_sub_dir(sub_id), data)
+    if has_file:
+        data["orig_width"] = orig_w
+        data["orig_height"] = orig_h
+        data["orig_ext"] = ext.lstrip(".")
+    _write_meta(sub_path, data)
+    if has_file:
+        (sub_path / f"{_ORIG_NAME}{ext}").write_bytes(orig_bytes or b"")
     return data
 
 
@@ -414,6 +547,18 @@ def approve_submission(
     pile_path = dest_dir / f"{iid}.jpg"
     pile_path.write_bytes(pile_bytes)
     append_orig_url_line(dest_dir, iid, str(meta["orig_url"]))
+
+    # 剧情截图：把投稿原图一并归档为 {图号}.orig.*
+    pending_orig = find_pending_orig(_sub_dir(sub_id))
+    if pending_orig and pending_orig.is_file():
+        for old in dest_dir.glob(f"{iid}.orig.*"):
+            try:
+                old.unlink()
+            except OSError:
+                pass
+        dest_orig = dest_dir / f"{iid}.orig{pending_orig.suffix.lower()}"
+        dest_orig.write_bytes(pending_orig.read_bytes())
+
     submitter_label = (
         str(meta.get("submitter_name") or "").strip()
         or str(meta.get("submitter_username") or "").strip()

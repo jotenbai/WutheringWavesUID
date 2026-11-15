@@ -885,6 +885,52 @@ body {
   font-size: 0.85rem;
 }
 
+.form-card .source-mode {
+  border: 1px solid var(--line);
+  padding: 0.75rem 0.9rem 0.35rem;
+  margin: 0 0 0.85rem;
+}
+
+.form-card #mode-url,
+.form-card #mode-story {
+  margin-bottom: 0.85rem;
+}
+
+.form-card #mode-url textarea,
+.form-card #mode-story input[type="file"] {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 0.35rem;
+}
+
+.form-card .source-mode legend {
+  padding: 0 0.35rem;
+  color: var(--fog);
+  font-size: 0.9rem;
+}
+
+.form-card .source-mode .tag-check {
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 0.55rem;
+}
+
+.review-orig-preview {
+  margin: 0.5rem 0 1rem;
+}
+
+.review-orig-preview img {
+  display: block;
+  max-width: min(100%, 420px);
+  max-height: 360px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.25);
+}
+
 .btn {
   display: inline-block;
   font: inherit;

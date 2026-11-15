@@ -43,6 +43,27 @@ function absUrl(url) {
   return url.startsWith("/") ? url : `${publicPrefix}/${url}`;
 }
 
+function isHttpOrigUrl(value) {
+  return /^https?:\/\//i.test(String(value || "").trim());
+}
+
+/** 投稿 / 审核列表里展示来源：外链可点，剧情截图显示文案。 */
+function formatOrigSourceHtml(s, opts = {}) {
+  const url = (s && s.orig_url) || s || "";
+  const text = String(url || "").trim();
+  if (!text) return "—";
+  if (isHttpOrigUrl(text)) {
+    return `<a href="${escapeHtml(text)}" target="_blank" rel="noopener">原图链接</a>`;
+  }
+  const id = s && s.id;
+  const hasFile = Boolean(s && (s.has_orig_file || opts.forceFile));
+  if (hasFile && id) {
+    const href = `${publicPrefix}/api/submissions/${encodeURIComponent(id)}/orig`;
+    return `来源：${escapeHtml(text)} · <a href="${escapeHtml(href)}" target="_blank" rel="noopener">查看上传原图</a>`;
+  }
+  return `来源：${escapeHtml(text)}`;
+}
+
 function appHref(sub = "") {
   const root = publicPrefix || "";
   if (!sub) return root ? `${root}/` : "/";
@@ -189,9 +210,10 @@ function helpSubmitter() {
     <details class="help-card help-fold">
       <summary>投稿说明</summary>
       <ul>
-        <li>选择角色，粘贴<strong>原图链接</strong>（任意可打开的作品页均可；尽量最大分辨率，避免审核裁成 9:16 后面板太糊）。</li>
+        <li>两种方式择一：<strong>原图链接</strong>（Pixiv / 其它作品页），或<strong>剧情截图</strong>（上传自己过剧情时截的图）。均可一次提交多条。</li>
+        <li>外链尽量最大分辨率，避免审核裁成 9:16 后面板太糊。</li>
         <li><strong>Pixiv 的情况</strong>：请用作品页 <code>https://www.pixiv.net/artworks/…</code>，不要用 <code>i.pximg.net</code> 直链（会 403）；多图作品在链接后加 <code>#N</code> 标明第几张（从 <strong>1</strong> 起：文件名 <code>_p0</code>→<code>#1</code>，<code>_p1</code>→<code>#2</code>，例如 <code>…/artworks/148785181#8</code>）。</li>
-        <li>本图裁剪由管理员完成；通过后可在 Discord 用 <code>角色名面板图号</code> 指定立绘。</li>
+        <li>本图裁剪由管理员完成；通过后可在 Discord 用 <code>角色名面板图号</code> 指定立绘。每日上限 100 张。</li>
       </ul>
     </details>`;
 }
@@ -343,7 +365,8 @@ function helpAdminReview() {
         <li>
           <strong>第一步·下载原图与裁剪 9:16 宽高比</strong>
           <div class="help-desc">
-            打开原图链接并<strong>下载原图</strong>。Pixiv 多图若链接带 <code>#N</code>（从 1 起），请翻到对应那一张再下。<br />
+            外链投稿：打开原图链接并<strong>下载原图</strong>。Pixiv 多图若链接带 <code>#N</code>（从 1 起），请翻到对应那一张再下。<br />
+            剧情截图投稿：在待审卡片里可预览 /「查看上传原图」，另存后再裁。<br />
             用 Windows 自带「照片」打开进入【编辑】，点击下方的【自由】（宽高比选项）切换为【<strong>9:16</strong>】，调整取景后保存。<br />
             <span class="muted">（注：此步骤仅负责裁剪宽高比，请勿在此缩放；宽度留到下一步调整）</span>
           </div>
@@ -445,6 +468,8 @@ async function renderChar(charId) {
       image_id: im.image_id,
       pile_url: im.pile_url,
       orig_url: im.orig_url || "",
+      has_orig_file: Boolean(im.has_orig_file),
+      orig_file_url: im.orig_file_url || "",
       submitter: im.submitter || "",
       reviewer: im.reviewer || "",
       label: detail.label,
@@ -503,16 +528,42 @@ async function renderSubmit() {
         <datalist id="char-list">
           ${data.chars.map((c) => `<option value="${escapeHtml(c.label)}"></option>`).join("")}
         </datalist>
-        <label>原图链接
-          <input type="url" name="orig_url" required placeholder="https://www.pixiv.net/artworks/… 或其它原图页" />
-        </label>
-        <p class="field-hint">只交链接即可；裁剪由管理员完成。</p>
+        <fieldset class="source-mode">
+          <legend>来源方式</legend>
+          <label class="tag-check"><input type="radio" name="source_mode" value="url" checked /> 原图链接</label>
+          <label class="tag-check"><input type="radio" name="source_mode" value="story" /> 剧情截图</label>
+        </fieldset>
+        <div id="mode-url">
+          <textarea name="orig_url" id="orig-url" rows="4" aria-label="原图链接" placeholder="每行一条链接&#10;https://www.pixiv.net/artworks/…"></textarea>
+          <p class="field-hint">每行一条作品页链接，可一次提交多条。</p>
+        </div>
+        <div id="mode-story" hidden>
+          <input type="file" name="orig_file" id="orig-file" aria-label="剧情截图" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple />
+          <p class="field-hint">可一次多选。限 JPG / PNG / WebP，单文件 ≤ 20MB。</p>
+        </div>
         <button type="submit" class="btn">提交审核</button>
         <p class="form-msg muted" id="submit-msg"></p>
       </form>`;
 
     const select = document.getElementById("char-select");
     const input = document.getElementById("char-input");
+    const modeUrl = document.getElementById("mode-url");
+    const modeStory = document.getElementById("mode-story");
+    const origUrlInput = document.getElementById("orig-url");
+    const origFileInput = document.getElementById("orig-file");
+    const syncMode = () => {
+      const mode = document.querySelector('input[name="source_mode"]:checked')?.value || "url";
+      const isStory = mode === "story";
+      modeUrl.hidden = isStory;
+      modeStory.hidden = !isStory;
+      origUrlInput.required = !isStory;
+      origFileInput.required = isStory;
+    };
+    document.querySelectorAll('input[name="source_mode"]').forEach((el) => {
+      el.addEventListener("change", syncMode);
+    });
+    syncMode();
+
     input.addEventListener("change", () => {
       const v = input.value.trim();
       const hit = data.chars.find((c) => c.label === v || c.char_id === v || c.name === v);
@@ -523,16 +574,47 @@ async function renderSubmit() {
       e.preventDefault();
       const msg = document.getElementById("submit-msg");
       const charId = select.value;
-      const origUrl = e.target.orig_url.value.trim();
+      if (!charId) {
+        msg.textContent = "请选择角色";
+        return;
+      }
+      const mode = document.querySelector('input[name="source_mode"]:checked')?.value || "url";
       msg.textContent = "提交中…";
       try {
-        await api("/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ char_id: charId, orig_url: origUrl }),
-        });
-        msg.textContent = "已提交，等待审核。可在「我的投稿」查看状态。";
+        let created = 1;
+        if (mode === "story") {
+          const files = Array.from(origFileInput.files || []);
+          if (!files.length) {
+            msg.textContent = "请选择至少一张剧情截图";
+            return;
+          }
+          const fd = new FormData();
+          fd.append("char_id", charId);
+          fd.append("source_label", "剧情截图");
+          for (const file of files) {
+            fd.append("orig", file);
+          }
+          const res = await api("/submit/upload", { method: "POST", body: fd });
+          created = res.created || files.length;
+        } else {
+          const origUrl = origUrlInput.value.trim();
+          if (!origUrl) {
+            msg.textContent = "请填写至少一条原图链接";
+            return;
+          }
+          const res = await api("/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ char_id: charId, orig_url: origUrl }),
+          });
+          created = res.created || 1;
+        }
+        msg.textContent =
+          created > 1
+            ? `已提交 ${created} 条，等待审核。可在「我的投稿」查看状态。`
+            : "已提交，等待审核。可在「我的投稿」查看状态。";
         e.target.reset();
+        syncMode();
       } catch (err) {
         msg.textContent = err.message || String(err);
       }
@@ -584,7 +666,7 @@ async function renderMySubmissions() {
               <strong>${escapeHtml(s.char_name || s.char_id)}</strong>
               <span class="badge">${statusLabel(s.status)}</span>
             </div>
-            <div class="muted"><a href="${escapeHtml(s.orig_url)}" target="_blank" rel="noopener">原图链接</a> · ${escapeHtml(formatLocalTime(s.created_at))}</div>
+            <div class="muted">${formatOrigSourceHtml(s)} · ${escapeHtml(formatLocalTime(s.created_at))}</div>
             ${extra}
           </article>`;
       })
@@ -642,7 +724,7 @@ async function renderReviewHistory() {
               <span class="badge">${statusLabel(s.status)}</span>
             </div>
             <div class="muted">投稿人 ${submitter} · 审核人 ${reviewer} · ${reviewed}</div>
-            <div class="muted"><a href="${escapeHtml(s.orig_url)}" target="_blank" rel="noopener">原图链接</a></div>
+            <div class="muted">${formatOrigSourceHtml(s)}</div>
             ${extra}
           </article>`;
       })
@@ -700,7 +782,14 @@ async function renderReview() {
               <span class="muted review-summary-time">${escapeHtml(formatLocalTime(s.created_at))}</span>
             </summary>
             <div class="review-body">
-              <p><a href="${escapeHtml(s.orig_url)}" target="_blank" rel="noopener">打开原图链接</a></p>
+              <p>${formatOrigSourceHtml(s)}</p>
+              ${
+                s.has_orig_file
+                  ? `<p class="review-orig-preview"><img src="${publicPrefix}/api/submissions/${escapeHtml(
+                      s.id
+                    )}/orig" alt="投稿原图预览" loading="lazy" /></p>`
+                  : ""
+              }
               <div class="review-branches">
                 <div class="review-approve">
                   <p class="review-branch-title">通过</p>
@@ -891,8 +980,9 @@ function renderLightbox() {
   const imageId = escapeHtml(data.image_id);
   const atStart = index <= 0;
   const atEnd = index >= list.length - 1;
-  const hasOrig = Boolean(data.orig_url);
-  const origHref = hasOrig ? escapeHtml(data.orig_url) : "#";
+  const hasHttpOrig = isHttpOrigUrl(data.orig_url);
+  const hasOrigFile = Boolean(data.has_orig_file && data.orig_file_url);
+  const hasSourceLabel = Boolean(data.orig_url) && !hasHttpOrig;
   if (lightboxKeyHandler) window.removeEventListener("keydown", lightboxKeyHandler);
   root.innerHTML = `
     <div class="lightbox open" role="dialog" aria-modal="true">
@@ -909,6 +999,13 @@ function renderLightbox() {
               <dt>指令</dt><dd>${label}面板${imageId}</dd>
               <dt>投稿人</dt><dd>${escapeHtml(data.submitter || "—")}</dd>
               <dt>审核人</dt><dd>${escapeHtml(data.reviewer || "—")}</dd>
+              <dt>来源</dt><dd>${
+                hasHttpOrig
+                  ? "外链"
+                  : hasSourceLabel
+                    ? escapeHtml(data.orig_url)
+                    : "—"
+              }</dd>
               <dt>序号</dt><dd>${index + 1} / ${list.length}</dd>
             </dl>
             <div class="actions">
@@ -916,9 +1013,11 @@ function renderLightbox() {
               <button type="button" class="btn ghost" data-next ${atEnd ? "disabled" : ""}>下一张</button>
               <a class="btn" href="${withDownload(data.pile_url)}">下载本图</a>
               ${
-                hasOrig
-                  ? `<a class="btn" href="${origHref}" target="_blank" rel="noopener noreferrer">原图链接</a>`
-                  : `<span class="btn ghost" aria-disabled="true">原图链接</span>`
+                hasHttpOrig
+                  ? `<a class="btn" href="${escapeHtml(data.orig_url)}" target="_blank" rel="noopener noreferrer">原图链接</a>`
+                  : hasOrigFile
+                    ? `<a class="btn" href="${escapeHtml(absUrl(data.orig_file_url))}" target="_blank" rel="noopener noreferrer">下载原图</a>`
+                    : `<span class="btn ghost" aria-disabled="true">原图链接</span>`
               }
               <button type="button" class="btn ghost" data-close>关闭</button>
             </div>
